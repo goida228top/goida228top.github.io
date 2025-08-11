@@ -288,21 +288,19 @@
 
         // Глобальные переменные, предоставляемые Canvas средой
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Запасная (фиктивная) конфигурация Firebase для автономного запуска
-        // Это позволяет приложению загружаться локально, но без реального подключения к БД.
-        const DUMMY_FIREBASE_CONFIG = {
-          apiKey: "dummy-api-key",
-          authDomain: "dummy-project.firebaseapp.com",
-          projectId: "dummy-project",
-          storageBucket: "dummy-project.appspot.com",
-          messagingSenderId: "1234567890",
-          appId: "1:1234567890:web:abcdef1234567890",
-          measurementId: "G-ABCDEFG"
-        };
-        // Используем реальную конфигурацию Firebase, если она доступна, иначе - фиктивную.
-        // В случае Cordova/Capacitor, эта конфигурация будет предоставлена нативным окружением Firebase плагина.
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : DUMMY_FIREBASE_CONFIG;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Вставьте сюда ВАШУ РЕАЛЬНУЮ КОНФИГУРАЦИЮ FIREBASE, которую вы скопировали
+        // из настроек вашего веб-приложения в консоли Firebase!
+        const firebaseConfig = {
+            apiKey: "AIzaSyACp2E3rZi1It8yWOeFoZnDzNV-pxSFHnc",
+            authDomain: "my-game-2cd1e.firebaseapp.com",
+            projectId: "my-game-2cd1e",
+            storageBucket: "my-game-2cd1e.firebasestorage.app",
+            messagingSenderId: "920986300653",
+            appId: "1:920986300653:web:d0141ebb18839c1de19ce4",
+            measurementId: "G-JC9LMKPSB7"
+        };
 
         let app, db, auth;
         let currentUserId = null;
@@ -825,3 +823,4 @@
     </script>
 </body>
 </html>
+
