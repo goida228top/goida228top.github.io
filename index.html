@@ -399,7 +399,7 @@
             const centerY = Math.floor(MAP_SIZE / 2);
 
             for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
+                for (let j = 0; j < MAP_SIZE; j++) {
                     const dist = Math.sqrt(Math.pow(i - centerX, 2) + Math.pow(j - centerY, 2));
                     if (dist < MAP_SIZE / 2 - 1) {
                         map[i][j] = TILE_TYPES.GRASS;
@@ -408,8 +408,8 @@
             }
 
             for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
-                    if (map[i][j] === TILE_TYPES.GRASS) { // Исправлено: = на ===
+                for (let j = 0; j < MAP_SIZE; j++) {
+                    if (map[i][j] === TILE_TYPES.GRASS) {
                         const rand = Math.random();
                         if (rand < 0.2) map[i][j] = TILE_TYPES.FOREST;
                         else if (rand < 0.3) map[i][j] = TILE_TYPES.ROCK;
@@ -525,12 +525,12 @@
             let newX = currentPlayer.x + dx;
             let newY = currentPlayer.y + dy;
 
-            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) { // Исправлено: = MAP_SIZE на >= MAP_SIZE
+            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) {
                 displayMessage('Нельзя выйти за пределы карты!');
                 return;
             }
 
-            if (currentMap[newX][newY] === TILE_TYPES.WATER) { // Исправлено: = на ===
+            if (currentMap[newX][newY] === TILE_TYPES.WATER) {
                 displayMessage('Нельзя ходить по воде!');
                 return;
             }
@@ -550,15 +550,15 @@
             let updatedSurvivalDays = survivalDays;
 
             const tileTypeAtNewPos = updatedMap[newX][newY];
-            if (tileTypeAtNewPos === TILE_TYPES.FOREST) { // Исправлено: = на ===
+            if (tileTypeAtNewPos === TILE_TYPES.FOREST) {
                 newPlayerState.resources.wood++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 displayMessage(`${currentPlayer.name} собрал дерево!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) { // Исправлено: = на ===
+            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) {
                 newPlayerState.resources.stone++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 displayMessage(`${currentPlayer.name} собрал камень!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) { // Исправлено: = на ===
+            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) {
                 newPlayerState.resources.berry++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 updatedSurvivalDays++;
@@ -743,9 +743,9 @@
                         const mapFromFirestore = gameData.map ? JSON.parse(gameData.map) : [];
 
                         for (let i = 0; i < MAP_SIZE; i++) {
-                            for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
+                            for (let j = 0; j < MAP_SIZE; j++) {
                                 const isOccupied = Object.values(existingPlayers).some(p => p.x === i && p.y === j);
-                                if (mapFromFirestore[i][j] === TILE_TYPES.WATER && !isOccupied) { // Исправлено: = на ===
+                                if (mapFromFirestore[i][j] === TILE_TYPES.WATER && !isOccupied) {
                                     newPlayerX = i;
                                     newPlayerY = j;
                                     placed = true;
@@ -762,7 +762,7 @@
                             newPlayerY = player1Pos ? player1Pos.y + 1 : Math.floor(Math.random() * MAP_SIZE);
                             newPlayerX = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerX));
                             newPlayerY = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerY));
-                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) { // Исправлено: = на ===
+                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) {
                                 newPlayerX = Math.floor(Math.random() * MAP_SIZE);
                                 newPlayerY = Math.floor(Math.random() * MAP_SIZE);
                             }
