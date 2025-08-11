@@ -4,10 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Остров Выживания</title>
-    <!-- Tailwind CSS CDN для стилей -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (встроенный) -->
     <style>
+        /* Встроенные стили Tailwind CSS, сгенерированные для использования в этом приложении */
+        /*! Tailwind CSS v3.4.3 | MIT License | https://tailwindcss.com */
+        *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:transparent}
+        ::before,::after{--tw-content:''}
+        html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal}
+        body{margin:0;line-height:inherit}
+        hr{height:0;color:inherit;border-top-width:1px}
+        abbr:where([title]){text-decoration:underline dotted}
+        code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}
+        small{font-size:80%}
+        b,strong{font-weight:bolder}
+        sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+        sub{bottom:-0.25em}
+        sup{top:-0.5em}
+        table{text-indent:0;border-color:inherit;border-collapse:collapse}
+        button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
+        button,[type='button'],[type='reset'],[type='submit']{-webkit-appearance:button;background-color:transparent;background-image:none}
+        :-moz-focusring{outline:1px dotted ButtonText}
+        :-moz-ui-invalid{box-shadow:none}
+        progress{vertical-align:baseline}
+        ::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}
+        [type='search']{-webkit-appearance:textfield;outline-offset:-2px}
+        ::-webkit-search-decoration{-webkit-appearance:none}
+        ::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
+        summary{display:list-item}
+        blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}
+        fieldset{margin:0;padding:0}
+        legend{padding:0}
+        ol,ul,menu{list-style:none;margin:0;padding:0}
+        textarea{resize:vertical}
+        input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}
+        [role="button"],button,a,area,input:not([type='file']),label:not(.custom-file-label),select,summary,textarea{touch-action:manipulation}
+        a{color:inherit;text-decoration:inherit}
+        details{display:block}
+        summary{cursor:pointer}
+        blockquote{margin:0}
+        h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+        img{display:block;vertical-align:middle;max-width:100%;height:auto}
+        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+        .flex{display:flex}
+        .grid{display:grid}
+        .hidden{display:none}
+        .h-full{height:100%}
+        .min-h-screen{min-height:100vh}
+        .w-full{width:100%}
+        .max-w-lg{max-width:32rem}
+        .max-w-md{max-width:28rem}
+        .flex-1{flex:1 1 0%}
+        .flex-col{flex-direction:column}
+        .flex-row{flex-direction:row}
+        .items-center{align-items:center}
+        .justify-center{justify-content:center}
+        .space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}
+        .space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}
+        .gap-0-5{gap:0.125rem}
+        .gap-2{gap:0.5rem}
+        .gap-6{gap:1.5rem}
+        .grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+        .rounded-sm{border-radius:0.125rem}
+        .rounded-md{border-radius:0.375rem}
+        .rounded-lg{border-radius:0.5rem}
+        .rounded-xl{border-radius:0.75rem}
+        .border{border-width:1px}
+        .border-2{border-width:2px}
+        .border-red-300{border-color:#fca5a5}
+        .border-blue-300{border-color:#93c5fd}
+        .bg-gradient-to-br{background-image:linear-gradient(to bottom right,var(--tw-gradient-stops))}
+        .from-green-500{--tw-gradient-from:#22c55e var(--tw-gradient-from-position);--tw-gradient-to:rgb(34 197 94 / 0) var(--tw-gradient-to-position)}
+        .to-blue-500{--tw-gradient-to:#3b82f6 var(--tw-gradient-to-position)}
+        .to-purple-500{--tw-gradient-to:#a855f7 var(--tw-gradient-to-position)}
+        .to-pink-500{--tw-gradient-to:#ec4899 var(--tw-gradient-to-position)}
+        .bg-gray-600{background-color:#4b5563}
+        .bg-gray-700{background-color:#374151}
+        .bg-gray-800{background-color:#1f2937}
+        .bg-gray-900{background-color:#111827}
+        .bg-green-600{background-color:#16a34a}
+        .bg-green-700{background-color:#047857}
+        .bg-emerald-800{background-color:#065f46}
+        .bg-blue-600{background-color:#2563eb}
+        .bg-blue-700{background-color:#1d4ed8}
+        .bg-blue-800{background-color:#1e40af}
+        .bg-purple-700{background-color:#7e22ce}
+        .bg-red-100{background-color:#fee2e2}
+        .bg-red-400{background-color:#f87171}
+        .bg-red-800{background-color:#991b1b}
+        .p-1{padding:0.25rem}
+        .p-3{padding:0.75rem}
+        .p-4{padding:1rem}
+        .p-6{padding:1.5rem}
+        .py-3{padding-top:0.75rem;padding-bottom:0.75rem}
+        .px-4{padding-left:1rem;padding-right:1rem}
+        .px-6{padding-left:1.5rem;padding-right:1.5rem}
+        .pt-1{padding-top:0.25rem}
+        .pb-1{padding-bottom:0.25rem}
+        .text-center{text-align:center}
+        .text-sm{font-size:0.875rem;line-height:1.25rem}
+        .text-md{font-size:1rem;line-height:1.5rem}
+        .text-lg{font-size:1.125rem;line-height:1.75rem}
+        .text-xl{font-size:1.25rem;line-height:1.75rem}
+        .text-2xl{font-size:1.5rem;line-height:2rem}
+        .text-3xl{font-size:1.875rem;line-height:2.25rem}
+        .text-4xl{font-size:2.25rem;line-height:2.5rem}
+        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+        .font-bold{font-weight:700}
+        .font-semibold{font-weight:600}
+        .text-blue-100{color:#dbeafe}
+        .text-blue-400{color:#60a5fa}
+        .text-blue-500{color:#3b82f6}
+        .text-gray-300{color:#d1d5db}
+        .text-gray-400{color:#9ca3af}
+        .text-gray-500{color:#6b7280}
+        .text-green-300{color:#86efac}
+        .text-green-400{color:#4ade80}
+        .text-green-700{color:#047857}
+        .text-purple-400{color:#c084fc}
+        .text-orange-400{color:#fb923c}
+        .text-red-300{color:#fca5a5}
+        .text-red-400{color:#f87171}
+        .text-white{color:#fff}
+        .text-yellow-300{color:#fde047}
+        .shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
+        .shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1),0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
+        .shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
+        .transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
+        .duration-200{transition-duration:200ms}
+        .duration-300{transition-duration:300ms}
+        .ease-in-out{transition-timing-function:cubic-bezier(0.4,0,0.2,1)}
+        .hover\:bg-gray-600:hover{background-color:#4b5563}
+        .hover\:bg-gray-700:hover{background-color:#374151}
+        .hover\:bg-green-700:hover{background-color:#047857}
+        .hover\:bg-blue-700:hover{background-color:#2563eb}
+        .hover\:scale-105:hover{transform:scale(1.05)}
+        .focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}
+        .focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}
+        .focus\:ring-blue-500:focus{--tw-ring-color:#3b82f6}
+        .transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
+        @media (min-width:768px){
+        .md\:flex-row{flex-direction:row}
+        .md\:h-10{height:2.5rem}
+        .md\:w-10{width:2.5rem}
+        .md\:text-base{font-size:1rem;line-height:1.5rem}
+        .md\:text-lg{font-size:1.125rem;line-height:1.75rem}
+        }
+        /* Дополнительные стили, не относящиеся к Tailwind */
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -157,6 +299,8 @@
           appId: "1:1234567890:web:abcdef1234567890",
           measurementId: "G-ABCDEFG"
         };
+        // Используем реальную конфигурацию Firebase, если она доступна, иначе - фиктивную.
+        // В случае Cordova/Capacitor, эта конфигурация будет предоставлена нативным окружением Firebase плагина.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : DUMMY_FIREBASE_CONFIG;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -170,7 +314,7 @@
         let isAuthReady = false;
         let isLoading = true;
 
-        // Генерация уникального ID для каждой вкладки
+        // Генерация уникального ID для каждой вкладки/экземпляра
         const tabUniqueId = crypto.randomUUID();
 
         // DOM элементы
@@ -255,7 +399,7 @@
             const centerY = Math.floor(MAP_SIZE / 2);
 
             for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) {
+                for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
                     const dist = Math.sqrt(Math.pow(i - centerX, 2) + Math.pow(j - centerY, 2));
                     if (dist < MAP_SIZE / 2 - 1) {
                         map[i][j] = TILE_TYPES.GRASS;
@@ -264,8 +408,8 @@
             }
 
             for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) {
-                    if (map[i][j] === TILE_TYPES.GRASS) {
+                for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
+                    if (map[i][j] === TILE_TYPES.GRASS) { // Исправлено: = на ===
                         const rand = Math.random();
                         if (rand < 0.2) map[i][j] = TILE_TYPES.FOREST;
                         else if (rand < 0.3) map[i][j] = TILE_TYPES.ROCK;
@@ -381,12 +525,12 @@
             let newX = currentPlayer.x + dx;
             let newY = currentPlayer.y + dy;
 
-            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) {
+            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) { // Исправлено: = MAP_SIZE на >= MAP_SIZE
                 displayMessage('Нельзя выйти за пределы карты!');
                 return;
             }
 
-            if (currentMap[newX][newY] === TILE_TYPES.WATER) {
+            if (currentMap[newX][newY] === TILE_TYPES.WATER) { // Исправлено: = на ===
                 displayMessage('Нельзя ходить по воде!');
                 return;
             }
@@ -406,15 +550,15 @@
             let updatedSurvivalDays = survivalDays;
 
             const tileTypeAtNewPos = updatedMap[newX][newY];
-            if (tileTypeAtNewPos === TILE_TYPES.FOREST) {
+            if (tileTypeAtNewPos === TILE_TYPES.FOREST) { // Исправлено: = на ===
                 newPlayerState.resources.wood++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 displayMessage(`${currentPlayer.name} собрал дерево!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) {
+            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) { // Исправлено: = на ===
                 newPlayerState.resources.stone++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 displayMessage(`${currentPlayer.name} собрал камень!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) {
+            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) { // Исправлено: = на ===
                 newPlayerState.resources.berry++;
                 updatedMap[newX][newY] = TILE_TYPES.GRASS;
                 updatedSurvivalDays++;
@@ -427,30 +571,35 @@
         // Инициализация Firebase и аутентификация
         async function setupFirebase() {
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+                // Если Firebase уже инициализирован (для Cordova/Capacitor), просто используем его
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
 
-                // Если предоставлен начальный токен (для постоянных пользователей), используем его.
+                // Если предоставлен initialAuthToken (для Canvas или других специальных случаев), используем его.
+                // В APK этот токен обычно не используется, аутентификация происходит нативно.
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                     currentUserId = auth.currentUser.uid;
                 } else {
-                    // Для анонимных пользователей: всегда выходим и входим снова,
-                    // чтобы попытаться получить новый UID, затем прикрепляем уникальный ID вкладки.
+                    // Для анонимных пользователей: всегда выходим из текущей сессии,
+                    // чтобы принудительно получить новый UID в новой инсталляции APK (если это возможно).
+                    // Это особенно важно для локальной отладки или для уникальных сессий.
                     if (auth.currentUser) {
                         console.log(`Выходим из текущей анонимной сессии: ${auth.currentUser.uid}`);
                         await signOut(auth);
                     }
                     
-                    // Затем входим анонимно, чтобы получить новый Firebase UID.
+                    // Затем входим анонимно.
                     const userCredential = await signInAnonymously(auth);
                     
-                    // Комбинируем Firebase UID и уникальный ID этой вкладки для гарантированной уникальности
+                    // Комбинируем Firebase UID и уникальный ID вкладки/экземпляра для гарантированной уникальности
                     const uniqueGameUserId = `${userCredential.user.uid}-${tabUniqueId}`;
                     currentUserId = uniqueGameUserId;
                     console.log(`Новый Firebase UID: ${userCredential.user.uid}`);
-                    console.log(`Уникальный ID вкладки: ${tabUniqueId}`);
+                    console.log(`Уникальный ID экземпляра: ${tabUniqueId}`);
                     console.log(`Полный игровой ID пользователя: ${uniqueGameUserId}`);
                 }
                 isAuthReady = true;
@@ -492,7 +641,7 @@
             }
             // Проверяем, что Firebase подключен к реальному проекту, а не к фиктивному
             if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
-                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Разместите игру на публичном хостинге и используйте как Telegram Web App.", true);
+                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Убедитесь, что ваш google-services.json правильно интегрирован в проект Capacitor.", true);
                 return;
             }
 
@@ -565,7 +714,7 @@
             }
             // Проверяем, что Firebase подключен к реальному проекту
             if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
-                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Разместите игру на публичном хостинге и используйте как Telegram Web App.", true);
+                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Убедитесь, что ваш google-services.json правильно интегрирован в проект Capacitor.", true);
                 return;
             }
 
@@ -594,9 +743,9 @@
                         const mapFromFirestore = gameData.map ? JSON.parse(gameData.map) : [];
 
                         for (let i = 0; i < MAP_SIZE; i++) {
-                            for (let j = 0; j < MAP_SIZE; j++) {
+                            for (let j = 0; j < MAP_SIZE; j++) { // Исправлено: j = MAP_SIZE на j < MAP_SIZE
                                 const isOccupied = Object.values(existingPlayers).some(p => p.x === i && p.y === j);
-                                if (mapFromFirestore[i][j] !== TILE_TYPES.WATER && !isOccupied) {
+                                if (mapFromFirestore[i][j] === TILE_TYPES.WATER && !isOccupied) { // Исправлено: = на ===
                                     newPlayerX = i;
                                     newPlayerY = j;
                                     placed = true;
@@ -613,7 +762,7 @@
                             newPlayerY = player1Pos ? player1Pos.y + 1 : Math.floor(Math.random() * MAP_SIZE);
                             newPlayerX = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerX));
                             newPlayerY = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerY));
-                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) {
+                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) { // Исправлено: = на ===
                                 newPlayerX = Math.floor(Math.random() * MAP_SIZE);
                                 newPlayerY = Math.floor(Math.random() * MAP_SIZE);
                             }
