@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Остров Выживания</title>
+    <!-- Tailwind CSS CDN для стилей -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .grid-container {
+            display: grid;
+            gap: 2px; /* Уменьшаем зазор для плотной карты */
+            background-color: #374151; /* bg-gray-700 */
+            padding: 4px; /* p-1 */
+            border-radius: 8px; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+        }
+        .tile {
+            width: 40px; /* Увеличиваем размер тайла для лучшей видимости */
+            height: 40px;
+            border-radius: 4px; /* rounded-sm */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem; /* text-sm -> text-lg для иконок */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        /* Медиа-запросы для адаптивности */
+        @media (min-width: 768px) {
+            .tile {
+                width: 50px; /* md:w-10 */
+                height: 50px; /* md:h-10 */
+            }
+        }
+
+        /* Цвета тайлов */
+        .tile-grass { background-color: #16a34a; /* bg-green-700 */ }
+        .tile-forest { background-color: #047857; /* bg-emerald-800 */ color: #86efac; /* text-green-300 */ }
+        .tile-rock { background-color: #4b5563; /* bg-gray-600 */ color: #d1d5db; /* text-gray-300 */ }
+        .tile-water { background-color: #2563eb; /* bg-blue-700 */ }
+        .tile-berry { background-color: #9333ea; /* bg-purple-700 */ color: #fca5a5; /* text-red-300 */ }
+
+        /* Игроки */
+        .tile-player1 { background: linear-gradient(to bottom right, #22c55e, #3b82f6); /* from-green-500 to-blue-500 */ border: 2px solid #93c5fd; /* ring-2 ring-blue-300 */ }
+        .tile-player2 { background: linear-gradient(to bottom right, #a855f7, #ec4899); /* from-purple-500 to-pink-500 */ border: 2px solid #fbcfe8; /* ring-2 ring-pink-300 */ }
+        .tile-players-overlap { background: linear-gradient(to bottom right, #22c55e, #a855f7); /* from-green-500 to-purple-500 */ }
+
+        /* Скрываем нативные стрелки для input type="number" */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div id="game-container" class="flex flex-col items-center w-full max-w-lg">
+        <!-- Загрузочный экран -->
+        <div id="loading-screen" class="text-xl font-bold">Загрузка...</div>
+        <!-- Экран ошибок -->
+        <div id="error-screen" class="hidden bg-red-800 text-red-100 p-4 rounded-lg"></div>
+
+        <!-- Экран создания/присоединения к игре -->
+        <div id="pre-game-screen" class="hidden flex flex-col items-center justify-center w-full">
+            <h1 class="text-4xl font-bold mb-8 text-blue-400">Остров Выживания</h1>
+            <p class="text-lg mb-4 text-gray-300">Ваш ID пользователя: <span id="user-id-display" class="font-mono text-yellow-300 break-all"></span></p>
+
+            <div class="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-md">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex-1">
+                    <h2 class="text-2xl font-semibold mb-4 text-center">Создать новую игру</h2>
+                    <button id="create-game-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Создать игру
+                    </button>
+                </div>
+
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex-1">
+                    <h2 class="text-2xl font-semibold mb-4 text-center">Присоединиться к игре</h2>
+                    <input type="text" id="game-id-input" placeholder="Введите ID комнаты" class="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                    <button id="join-game-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Присоединиться
+                    </button>
+                </div>
+            </div>
+            <p id="pre-game-message" class="text-green-400 mt-4 text-center"></p>
+            <p id="pre-game-error" class="text-red-400 mt-4 text-center"></p>
+        </div>
+
+        <!-- Основной игровой экран -->
+        <div id="main-game-screen" class="hidden flex flex-col items-center w-full">
+            <h1 class="text-3xl font-bold mb-4 text-blue-400">Остров Выживания</h1>
+            <p class="text-lg mb-2">ID Комнаты: <span id="current-room-id-display" class="font-mono text-yellow-300"></span></p>
+            <p class="text-md mb-2">Вы: <span id="current-player-name" class="font-semibold text-green-400"></span> (ID: <span id="current-player-id" class="font-mono text-gray-400 break-all"></span>)</p>
+            <div id="other-players-display"></div>
+            <p class="text-xl font-semibold mb-4">Дни выживания: <span id="survival-days-display" class="text-orange-400"></span></p>
+
+            <!-- Сообщения -->
+            <div id="game-message-display" class="bg-blue-800 text-blue-100 p-3 rounded-md mb-4 w-full max-w-md text-center hidden"></div>
+            <div id="game-error-display" class="bg-red-800 text-red-100 p-3 rounded-md mb-4 w-full max-w-md text-center hidden"></div>
+
+            <!-- Игровая карта -->
+            <div id="game-map" class="grid-container"></div>
+
+            <!-- Управление -->
+            <div class="flex flex-col items-center mt-8 space-y-4">
+                <h2 class="text-2xl font-bold mb-2">Управление</h2>
+                <div class="grid grid-cols-3 gap-2 w-48">
+                    <button id="move-up-btn" class="col-start-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬆️</button>
+                    <button id="move-left-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬅️</button>
+                    <button id="move-right-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">➡️</button>
+                    <button id="move-down-btn" class="col-start-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬇️</button>
+                </div>
+            </div>
+
+            <!-- Инвентарь -->
+            <div class="mt-8 bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-4 text-center">Ваш Инвентарь</h2>
+                <div class="flex flex-col space-y-2 text-lg">
+                    <p class="flex justify-between items-center">Дерево: <span id="wood-display" class="font-semibold text-green-300">0 🌳</span></p>
+                    <p class="flex justify-between items-center">Камень: <span id="stone-display" class="font-semibold text-gray-300">0 🪨</span></p>
+                    <p class="flex justify-between items-center">Ягоды: <span id="berry-display" class="font-semibold text-red-300">0 🍓</span></p>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center text-gray-500 text-sm">
+                <p>Ваши действия синхронизируются в реальном времени с вашим другом.</p>
+                <p>Если возникнут проблемы, убедитесь, что ваш друг использует тот же ID комнаты.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Глобальные переменные, предоставляемые Canvas средой
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Запасная (фиктивная) конфигурация Firebase для автономного запуска
+        // Это позволяет приложению загружаться локально, но без реального подключения к БД.
+        const DUMMY_FIREBASE_CONFIG = {
+          apiKey: "dummy-api-key",
+          authDomain: "dummy-project.firebaseapp.com",
+          projectId: "dummy-project",
+          storageBucket: "dummy-project.appspot.com",
+          messagingSenderId: "1234567890",
+          appId: "1:1234567890:web:abcdef1234567890",
+          measurementId: "G-ABCDEFG"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : DUMMY_FIREBASE_CONFIG;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let currentUserId = null;
+        let currentRoomId = null;
+        let players = {};
+        let currentMap = [];
+        let survivalDays = 0;
+        let gameDocRef = null;
+        let isAuthReady = false;
+        let isLoading = true;
+
+        // Генерация уникального ID для каждой вкладки
+        const tabUniqueId = crypto.randomUUID();
+
+        // DOM элементы
+        const loadingScreen = document.getElementById('loading-screen');
+        const errorScreen = document.getElementById('error-screen');
+        const preGameScreen = document.getElementById('pre-game-screen');
+        const mainGameScreen = document.getElementById('main-game-screen');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const createGameBtn = document.getElementById('create-game-btn');
+        const joinGameBtn = document.getElementById('join-game-btn');
+        const gameIdInput = document.getElementById('game-id-input');
+        const preGameMessage = document.getElementById('pre-game-message');
+        const preGameError = document.getElementById('pre-game-error');
+        const currentRoomIdDisplay = document.getElementById('current-room-id-display');
+        const currentPlayerNameDisplay = document.getElementById('current-player-name');
+        const currentPlayerIdDisplay = document.getElementById('current-player-id');
+        const otherPlayersDisplay = document.getElementById('other-players-display');
+        const survivalDaysDisplay = document.getElementById('survival-days-display');
+        const gameMessageDisplay = document.getElementById('game-message-display');
+        const gameErrorDisplay = document.getElementById('game-error-display');
+        const gameMapElement = document.getElementById('game-map');
+        const moveUpBtn = document.getElementById('move-up-btn');
+        const moveLeftBtn = document.getElementById('move-left-btn');
+        const moveRightBtn = document.getElementById('move-right-btn');
+        const moveDownBtn = document.getElementById('move-down-btn');
+        const woodDisplay = document.getElementById('wood-display');
+        const stoneDisplay = document.getElementById('stone-display');
+        const berryDisplay = document.getElementById('berry-display');
+
+        // Размеры карты и типы клеток
+        const MAP_SIZE = 10;
+        const TILE_TYPES = {
+            GRASS: 'grass',
+            FOREST: 'forest',
+            ROCK: 'rock',
+            WATER: 'water',
+            PLAYER1: 'player1', // Используется для логики, не для отрисовки
+            PLAYER2: 'player2', // Используется для логики, не для отрисовки
+            BERRY: 'berry', // Ягоды для энергии
+        };
+
+        // Начальные ресурсы
+        const INITIAL_RESOURCES = {
+            wood: 0,
+            stone: 0,
+            berry: 0,
+        };
+
+        // Вспомогательная функция для обновления сообщений
+        function displayMessage(msg, isError = false) {
+            // Сбрасываем видимость всех сообщений
+            gameMessageDisplay.classList.add('hidden');
+            gameErrorDisplay.classList.add('hidden');
+            preGameMessage.classList.add('hidden');
+            preGameError.classList.add('hidden');
+
+            if (isError) {
+                gameErrorDisplay.textContent = msg;
+                gameErrorDisplay.classList.remove('hidden');
+                preGameError.textContent = msg;
+                preGameError.classList.remove('hidden');
+            } else {
+                gameMessageDisplay.textContent = msg;
+                gameMessageDisplay.classList.remove('hidden');
+                preGameMessage.textContent = msg;
+                preGameMessage.classList.remove('hidden');
+            }
+            // Скрывать сообщения через некоторое время
+            setTimeout(() => {
+                gameMessageDisplay.classList.add('hidden');
+                gameErrorDisplay.classList.add('hidden');
+                preGameMessage.classList.add('hidden');
+                preGameError.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Функция для генерации случайной карты (простая генерация острова)
+        const generateRandomMap = () => {
+            const map = Array(MAP_SIZE).fill(null).map(() => Array(MAP_SIZE).fill(TILE_TYPES.WATER));
+
+            const centerX = Math.floor(MAP_SIZE / 2);
+            const centerY = Math.floor(MAP_SIZE / 2);
+
+            for (let i = 0; i < MAP_SIZE; i++) {
+                for (let j = 0; j < MAP_SIZE; j++) {
+                    const dist = Math.sqrt(Math.pow(i - centerX, 2) + Math.pow(j - centerY, 2));
+                    if (dist < MAP_SIZE / 2 - 1) {
+                        map[i][j] = TILE_TYPES.GRASS;
+                    }
+                }
+            }
+
+            for (let i = 0; i < MAP_SIZE; i++) {
+                for (let j = 0; j < MAP_SIZE; j++) {
+                    if (map[i][j] === TILE_TYPES.GRASS) {
+                        const rand = Math.random();
+                        if (rand < 0.2) map[i][j] = TILE_TYPES.FOREST;
+                        else if (rand < 0.3) map[i][j] = TILE_TYPES.ROCK;
+                        else if (rand < 0.35) map[i][j] = TILE_TYPES.BERRY;
+                    }
+                }
+            }
+            return map;
+        };
+
+        // Функция для отрисовки карты и игроков
+        function renderGame() {
+            gameMapElement.innerHTML = ''; // Очищаем карту перед отрисовкой
+            gameMapElement.style.gridTemplateColumns = `repeat(${MAP_SIZE}, minmax(0, 1fr))`;
+
+            currentMap.forEach((row, rowIndex) => {
+                row.forEach((tile, colIndex) => {
+                    const tileDiv = document.createElement('div');
+                    tileDiv.classList.add('tile');
+                    
+                    let tileClass = '';
+                    let content = '';
+
+                    // Стили для разных типов клеток
+                    if (tile === TILE_TYPES.GRASS) {
+                        tileClass += 'tile-grass';
+                    } else if (tile === TILE_TYPES.FOREST) {
+                        tileClass += 'tile-forest';
+                        content = '🌳'; // Дерево
+                    } else if (tile === TILE_TYPES.ROCK) {
+                        tileClass += 'tile-rock';
+                        content = '🪨'; // Камень
+                    } else if (tile === TILE_TYPES.WATER) {
+                        tileClass += 'tile-water';
+                    } else if (tile === TILE_TYPES.BERRY) {
+                        tileClass += 'tile-berry';
+                        content = '🍓'; // Ягоды
+                    }
+                    tileDiv.classList.add(tileClass);
+
+                    // Проверяем, есть ли игроки на этой клетке
+                    const playersOnTile = Object.entries(players).filter(([id, player]) =>
+                        player.x === rowIndex && player.y === colIndex
+                    );
+
+                    if (playersOnTile.length > 1) {
+                        tileDiv.classList.add('tile-players-overlap');
+                        content = '👫'; // Два игрока на одной клетке
+                    } else if (playersOnTile.length === 1) {
+                        const playerOnTile = playersOnTile[0];
+                        if (playerOnTile[0] === currentUserId) {
+                            tileDiv.classList.add('tile-player1');
+                            content = '👨‍🚀'; // Ваш персонаж
+                        } else {
+                            tileDiv.classList.add('tile-player2');
+                            content = '👩‍🚀'; // Персонаж другого игрока
+                        }
+                    }
+
+                    tileDiv.textContent = content;
+                    gameMapElement.appendChild(tileDiv);
+                });
+            });
+
+            // Обновляем информацию об игроках и инвентаре
+            const currentPlayer = players[currentUserId];
+            if (currentPlayer) {
+                currentPlayerNameDisplay.textContent = currentPlayer.name;
+                currentPlayerIdDisplay.textContent = currentUserId;
+                woodDisplay.textContent = `${currentPlayer.resources.wood} 🌳`;
+                stoneDisplay.textContent = `${currentPlayer.resources.stone} 🪨`;
+                berryDisplay.textContent = `${currentPlayer.resources.berry} 🍓`;
+                survivalDaysDisplay.textContent = survivalDays;
+            }
+
+            // Обновляем список других игроков
+            otherPlayersDisplay.innerHTML = '';
+            Object.entries(players).forEach(([id, player]) => {
+                if (id !== currentUserId) {
+                    const pElement = document.createElement('p');
+                    pElement.classList.add('text-md', 'mb-2');
+                    pElement.innerHTML = `Друг: <span class="font-semibold text-purple-400">${player.name}</span> (ID: <span class="font-mono text-gray-400 break-all">${id}</span>)`;
+                    otherPlayersDisplay.appendChild(pElement);
+                }
+            });
+        }
+
+        // Обновление состояния игры в Firestore
+        async function updateGameState(newPlayerState, newMap, newSurvivalDays) {
+            if (!gameDocRef || !currentUserId) {
+                displayMessage("Ошибка: Документ игры или ID пользователя не определены.", true);
+                return;
+            }
+            try {
+                const updatedPlayers = { ...players, [currentUserId]: { ...newPlayerState, lastActionTime: Date.now() } };
+                await updateDoc(gameDocRef, {
+                    players: updatedPlayers,
+                    map: JSON.stringify(newMap), // Сериализуем карту
+                    survivalDays: newSurvivalDays,
+                    lastActivity: Date.now(),
+                });
+            } catch (e) {
+                console.error("Ошибка обновления состояния игры:", e);
+                displayMessage("Ошибка обновления данных в реальном времени.", true);
+            }
+        }
+
+        // Обработка движения игрока
+        async function handleMove(dx, dy) {
+            if (!currentUserId || !players[currentUserId] || !currentMap.length || !gameDocRef) return;
+
+            const currentPlayer = players[currentUserId];
+            let newX = currentPlayer.x + dx;
+            let newY = currentPlayer.y + dy;
+
+            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) {
+                displayMessage('Нельзя выйти за пределы карты!');
+                return;
+            }
+
+            if (currentMap[newX][newY] === TILE_TYPES.WATER) {
+                displayMessage('Нельзя ходить по воде!');
+                return;
+            }
+
+            const occupiedByOtherPlayer = Object.entries(players).some(([id, player]) =>
+                id !== currentUserId && player.x === newX && player.y === newY
+            );
+
+            if (occupiedByOtherPlayer) {
+                displayMessage('Клетка занята другим игроком!');
+                return;
+            }
+
+            const newPlayerState = { ...currentPlayer, x: newX, y: newY };
+            const updatedMap = JSON.parse(JSON.stringify(currentMap)); // Глубокое копирование карты
+
+            let updatedSurvivalDays = survivalDays;
+
+            const tileTypeAtNewPos = updatedMap[newX][newY];
+            if (tileTypeAtNewPos === TILE_TYPES.FOREST) {
+                newPlayerState.resources.wood++;
+                updatedMap[newX][newY] = TILE_TYPES.GRASS;
+                displayMessage(`${currentPlayer.name} собрал дерево!`);
+            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) {
+                newPlayerState.resources.stone++;
+                updatedMap[newX][newY] = TILE_TYPES.GRASS;
+                displayMessage(`${currentPlayer.name} собрал камень!`);
+            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) {
+                newPlayerState.resources.berry++;
+                updatedMap[newX][newY] = TILE_TYPES.GRASS;
+                updatedSurvivalDays++;
+                displayMessage(`${currentPlayer.name} собрал ягоды и набрался сил!`);
+            }
+
+            await updateGameState(newPlayerState, updatedMap, updatedSurvivalDays);
+        }
+
+        // Инициализация Firebase и аутентификация
+        async function setupFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Если предоставлен начальный токен (для постоянных пользователей), используем его.
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    currentUserId = auth.currentUser.uid;
+                } else {
+                    // Для анонимных пользователей: всегда выходим и входим снова,
+                    // чтобы попытаться получить новый UID, затем прикрепляем уникальный ID вкладки.
+                    if (auth.currentUser) {
+                        console.log(`Выходим из текущей анонимной сессии: ${auth.currentUser.uid}`);
+                        await signOut(auth);
+                    }
+                    
+                    // Затем входим анонимно, чтобы получить новый Firebase UID.
+                    const userCredential = await signInAnonymously(auth);
+                    
+                    // Комбинируем Firebase UID и уникальный ID этой вкладки для гарантированной уникальности
+                    const uniqueGameUserId = `${userCredential.user.uid}-${tabUniqueId}`;
+                    currentUserId = uniqueGameUserId;
+                    console.log(`Новый Firebase UID: ${userCredential.user.uid}`);
+                    console.log(`Уникальный ID вкладки: ${tabUniqueId}`);
+                    console.log(`Полный игровой ID пользователя: ${uniqueGameUserId}`);
+                }
+                isAuthReady = true;
+                userIdDisplay.textContent = currentUserId; // Обновляем отображение ID пользователя
+                showScreen('pre-game-screen'); // Показываем экран до начала игры
+            } catch (e) {
+                console.error("Ошибка инициализации Firebase или аутентификации:", e);
+                displayMessage(`Ошибка: ${e.message}`, true);
+                showScreen('error-screen');
+            } finally {
+                isLoading = false;
+                loadingScreen.classList.add('hidden');
+            }
+        }
+
+        // Функция для отображения нужного экрана
+        function showScreen(screenId) {
+            loadingScreen.classList.add('hidden');
+            errorScreen.classList.add('hidden');
+            preGameScreen.classList.add('hidden');
+            mainGameScreen.classList.add('hidden');
+
+            document.getElementById(screenId).classList.remove('hidden');
+            if (screenId === 'error-screen') {
+                errorScreen.classList.add('flex'); // Для центрирования текста ошибки
+            } else if (screenId === 'pre-game-screen') {
+                preGameScreen.classList.add('flex');
+            } else if (screenId === 'main-game-screen') {
+                mainGameScreen.classList.add('flex');
+            }
+        }
+
+
+        // Обработчики кнопок
+        createGameBtn.addEventListener('click', async () => {
+            if (!db || !currentUserId) {
+                displayMessage("Firebase не готов или пользователь не авторизован.", true);
+                return;
+            }
+            // Проверяем, что Firebase подключен к реальному проекту, а не к фиктивному
+            if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
+                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Разместите игру на публичном хостинге и используйте как Telegram Web App.", true);
+                return;
+            }
+
+            isLoading = true;
+            displayMessage('', false); // Очищаем сообщения
+            preGameError.textContent = '';
+            
+            const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const initialMap = generateRandomMap();
+            const startX = Math.floor(Math.random() * MAP_SIZE);
+            const startY = Math.floor(Math.random() * MAP_SIZE);
+
+            const newPlayerState = {
+                [currentUserId]: {
+                    x: startX,
+                    y: startY,
+                    resources: { ...INITIAL_RESOURCES },
+                    lastActionTime: Date.now(),
+                    name: `Игрок_${currentUserId.substring(currentUserId.length - 8)}`,
+                }
+            };
+
+            const gameData = {
+                map: JSON.stringify(initialMap),
+                players: newPlayerState,
+                survivalDays: 0,
+                createdAt: Date.now(),
+                hostId: currentUserId,
+                turn: currentUserId,
+                lastActivity: Date.now(),
+            };
+
+            try {
+                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, newGameId);
+                await setDoc(gameRef, gameData);
+                currentRoomId = newGameId;
+                displayMessage(`Игра "${newGameId}" создана! Поделитесь этим ID с другом.`);
+                // Подписываемся на игру после создания
+                gameDocRef = gameRef;
+                onSnapshot(gameDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        players = data.players || {};
+                        currentMap = data.map ? JSON.parse(data.map) : [];
+                        survivalDays = data.survivalDays || 0;
+                        renderGame();
+                        showScreen('main-game-screen');
+                    } else {
+                        displayMessage('Игра не найдена или удалена.', true);
+                        showScreen('pre-game-screen');
+                    }
+                }, (err) => {
+                    console.error("Ошибка подписки:", err);
+                    displayMessage("Ошибка синхронизации игры.", true);
+                });
+
+            } catch (e) {
+                console.error("Ошибка при создании игры:", e);
+                displayMessage(`Не удалось создать игру: ${e.message}`, true);
+            } finally {
+                isLoading = false;
+            }
+        });
+
+        joinGameBtn.addEventListener('click', async () => {
+            const idToJoin = gameIdInput.value.toUpperCase().trim();
+            if (!db || !currentUserId || !idToJoin) {
+                displayMessage("Введите ID комнаты, и убедитесь, что Firebase готов.", true);
+                return;
+            }
+            // Проверяем, что Firebase подключен к реальному проекту
+            if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
+                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Разместите игру на публичном хостинге и используйте как Telegram Web App.", true);
+                return;
+            }
+
+            isLoading = true;
+            displayMessage('', false); // Очищаем сообщения
+            preGameError.textContent = '';
+
+            try {
+                const roomDocRef = doc(db, `artifacts/${appId}/public/data/games`, idToJoin);
+                const docSnap = await getDoc(roomDocRef);
+
+                if (docSnap.exists()) {
+                    const gameData = docSnap.data();
+                    let existingPlayers = gameData.players || {};
+
+                    if (Object.keys(existingPlayers).length >= 2 && !existingPlayers[currentUserId]) {
+                        displayMessage('В этой игре уже 2 игрока. Пожалуйста, выберите другую.', true);
+                        isLoading = false;
+                        return;
+                    }
+
+                    if (!existingPlayers[currentUserId]) {
+                        // Размещаем второго игрока на свободной клетке
+                        let newPlayerX, newPlayerY;
+                        let placed = false;
+                        const mapFromFirestore = gameData.map ? JSON.parse(gameData.map) : [];
+
+                        for (let i = 0; i < MAP_SIZE; i++) {
+                            for (let j = 0; j < MAP_SIZE; j++) {
+                                const isOccupied = Object.values(existingPlayers).some(p => p.x === i && p.y === j);
+                                if (mapFromFirestore[i][j] !== TILE_TYPES.WATER && !isOccupied) {
+                                    newPlayerX = i;
+                                    newPlayerY = j;
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (placed) break;
+                        }
+
+                        if (!placed) {
+                            // Если нет свободных мест, размещаем рядом с первым игроком (запасной вариант)
+                            const player1Pos = Object.values(existingPlayers)[0];
+                            newPlayerX = player1Pos ? player1Pos.x + 1 : Math.floor(Math.random() * MAP_SIZE);
+                            newPlayerY = player1Pos ? player1Pos.y + 1 : Math.floor(Math.random() * MAP_SIZE);
+                            newPlayerX = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerX));
+                            newPlayerY = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerY));
+                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) {
+                                newPlayerX = Math.floor(Math.random() * MAP_SIZE);
+                                newPlayerY = Math.floor(Math.random() * MAP_SIZE);
+                            }
+                        }
+
+                        existingPlayers = {
+                            ...existingPlayers,
+                            [currentUserId]: {
+                                x: newPlayerX,
+                                y: newPlayerY,
+                                resources: { ...INITIAL_RESOURCES },
+                                lastActionTime: Date.now(),
+                                name: `Игрок_${currentUserId.substring(currentUserId.length - 8)}`,
+                            }
+                        };
+                        await updateDoc(roomDocRef, { players: existingPlayers });
+                    }
+                    
+                    currentRoomId = idToJoin;
+                    displayMessage(`Вы присоединились к игре "${idToJoin}"!`);
+                    // Подписываемся на игру после присоединения
+                    gameDocRef = roomDocRef;
+                    onSnapshot(gameDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            players = data.players || {};
+                            currentMap = data.map ? JSON.parse(data.map) : [];
+                            survivalDays = data.survivalDays || 0;
+                            renderGame();
+                            showScreen('main-game-screen');
+                        } else {
+                            displayMessage('Игра не найдена или удалена.', true);
+                            showScreen('pre-game-screen');
+                        }
+                    }, (err) => {
+                        console.error("Ошибка подписки:", err);
+                        displayMessage("Ошибка синхронизации игры.", true);
+                    });
+
+                } else {
+                    displayMessage('Игра с таким ID не найдена.', true);
+                }
+            } catch (e) {
+                console.error("Ошибка при присоединении к игре:", e);
+                displayMessage(`Не удалось присоединиться к игре: ${e.message}`, true);
+            } finally {
+                isLoading = false;
+            }
+        });
+
+        // Обработчики движения
+        moveUpBtn.addEventListener('click', () => handleMove(-1, 0));
+        moveLeftBtn.addEventListener('click', () => handleMove(0, -1));
+        moveRightBtn.addEventListener('click', () => handleMove(0, 1));
+        moveDownBtn.addEventListener('click', () => handleMove(1, 0));
+
+        // Запуск инициализации Firebase при загрузке окна
+        window.onload = setupFirebase;
+
+    </script>
+</body>
+</html>
