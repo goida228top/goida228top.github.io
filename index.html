@@ -77,7 +77,7 @@
             pointer-events: none;
         }
         
-        #statsBar {
+        #healthBar {
             position: absolute;
             top: 10px;
             left: 10px;
@@ -85,13 +85,39 @@
             padding: 8px;
             border-radius: 5px;
             font-size: 14px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            pointer-events: auto;
         }
         
-        #timeDisplay {
+        #hungerBar {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        #thirstBar {
+            position: absolute;
+            top: 90px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        #radiationBar {
+            position: absolute;
+            top: 130px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        #goldBar {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -99,12 +125,11 @@
             padding: 8px;
             border-radius: 5px;
             font-size: 14px;
-            pointer-events: auto;
         }
         
         #pauseBtn {
             position: absolute;
-            top: 10px;
+            top: 50px;
             right: 10px;
             width: 40px;
             height: 40px;
@@ -133,8 +158,8 @@
         }
         
         .hotbarSlot {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             margin: 0 3px;
             background-color: rgba(50, 50, 50, 0.8);
             border: 2px solid #444;
@@ -142,7 +167,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 20px;
         }
         
         .hotbarSlot.selected {
@@ -152,17 +177,17 @@
         
         #inventoryBtn {
             position: absolute;
-            bottom: 85px;
+            bottom: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #444;
-            border-radius: 50%;
+            border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 20px;
             color: white;
             cursor: pointer;
             pointer-events: auto;
@@ -171,23 +196,22 @@
         #actionButtons {
             position: absolute;
             bottom: 20px;
-            right: 20px;
+            right: 70px;
             display: flex;
-            flex-direction: column;
             gap: 10px;
             pointer-events: auto;
         }
         
         .actionBtn {
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #444;
-            border-radius: 50%;
+            border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 20px;
             color: white;
             cursor: pointer;
         }
@@ -198,10 +222,10 @@
         
         #joystickArea {
             position: absolute;
-            bottom: 100px;
-            left: 30px;
-            width: 150px;
-            height: 150px;
+            bottom: 80px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
             pointer-events: auto;
         }
         
@@ -214,13 +238,13 @@
         }
         
         #joystickInner {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background-color: rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             position: absolute;
-            top: 45px;
-            left: 45px;
+            top: 35px;
+            left: 35px;
             touch-action: none;
             transition: transform 0.1s;
         }
@@ -278,22 +302,28 @@
         
         #inventoryGrid {
             display: grid;
-            grid-template-columns: repeat(9, 50px);
-            grid-template-rows: repeat(3, 50px);
+            grid-template-columns: repeat(5, 40px);
+            grid-template-rows: repeat(2, 40px);
             gap: 5px;
             margin: 20px 0;
         }
         
         .inventorySlot {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background-color: rgba(50, 50, 50, 0.8);
             border: 2px solid #444;
             border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 20px;
+        }
+        
+        #inventoryDots {
+            margin-top: 10px;
             font-size: 24px;
+            color: white;
         }
         
         #closeInventory {
@@ -314,33 +344,28 @@
         
         @media (min-width: 768px) {
             .hotbarSlot {
-                width: 60px;
-                height: 60px;
-                font-size: 30px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
             }
             
             #inventoryBtn {
-                width: 60px;
-                height: 60px;
-                font-size: 30px;
-                bottom: 100px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
             }
             
             .actionBtn {
-                width: 70px;
-                height: 70px;
-                font-size: 30px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
             }
             
             #joystickArea {
                 display: none;
             }
             
-            #statsBar {
-                font-size: 16px;
-            }
-            
-            #timeDisplay {
+            #healthBar, #hungerBar, #thirstBar, #radiationBar, #goldBar {
                 font-size: 16px;
             }
         }
@@ -354,14 +379,11 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="uiContainer">
-            <div id="statsBar">
-                <span>❤️ 100%</span>
-                <span>🍗 80%</span>
-                <span>🥤 70%</span>
-                <span>💰 10</span>
-                <span>💎 5</span>
-                <span>🟢 50</span>
-            </div>
+            <div id="healthBar">❤️ 100%</div>
+            <div id="hungerBar">🍗 80%</div>
+            <div id="thirstBar">💧 70%</div>
+            <div id="radiationBar">☢️ 0%</div>
+            <div id="goldBar">🟡 10</div>
             <div id="pauseBtn">⏸</div>
             <div id="joystickArea">
                 <div id="joystickOuter">
@@ -374,16 +396,12 @@
                 <div class="hotbarSlot">🔫</div>
                 <div class="hotbarSlot">🏗️</div>
                 <div class="hotbarSlot"></div>
-                <div class="hotbarSlot"></div>
-                <div class="hotbarSlot"></div>
-                <div class="hotbarSlot"></div>
-                <div class="hotbarSlot"></div>
+            </div>
+            <div id="actionButtons">
+                <div class="actionBtn" id="attackBtn">⚔️</div>
+                <div class="actionBtn" id="buildBtn">🏗️</div>
             </div>
             <div id="inventoryBtn">⋯</div>
-            <div id="actionButtons">
-                <div class="actionBtn" id="buildBtn">🏗️</div>
-                <div class="actionBtn" id="attackBtn">⚔️</div>
-            </div>
         </div>
         
         <div id="menuScreen">
@@ -401,31 +419,13 @@
                 <div class="inventorySlot">🔫</div>
                 <div class="inventorySlot">🏗️</div>
                 <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                
                 <div class="inventorySlot">🍖</div>
                 <div class="inventorySlot">🌿</div>
                 <div class="inventorySlot">💧</div>
                 <div class="inventorySlot">🪵</div>
                 <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot"></div>
             </div>
+            <div id="inventoryDots">⋯</div>
             <div id="closeInventory" class="menuBtn">ЗАКРЫТЬ</div>
         </div>
     </div>
@@ -440,15 +440,13 @@
                 health: 100,
                 hunger: 80,
                 thirst: 70,
+                radiation: 0,
                 gold: 10,
-                brill: 5,
-                emeralds: 50,
                 inventory: [
-                    '🪓', '⛏️', '🔫', '🏗️', '', '', '', '', '',
-                    '🍖', '🌿', '💧', '🪵', '', '', '', '', '',
-                    '', '', '', '', '', '', '', '', ''
+                    '🪓', '⛏️', '🔫', '🏗️', '',
+                    '🍖', '🌿', '💧', '🪵', ''
                 ],
-                hotbar: ['🪓', '⛏️', '🔫', '🏗️', '', '', '', '', ''],
+                hotbar: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 selectedSlot: 0,
                 currentAction: 'move'
             },
@@ -504,8 +502,11 @@
         const buildBtn = document.getElementById('buildBtn');
         const joystickInner = document.getElementById('joystickInner');
         const joystickArea = document.getElementById('joystickArea');
-        const statsBar = document.getElementById('statsBar');
-        const timeDisplay = document.getElementById('timeDisplay');
+        const healthBar = document.getElementById('healthBar');
+        const hungerBar = document.getElementById('hungerBar');
+        const thirstBar = document.getElementById('thirstBar');
+        const radiationBar = document.getElementById('radiationBar');
+        const goldBar = document.getElementById('goldBar');
         const hotbarSlots = document.querySelectorAll('.hotbarSlot');
         
         // Check orientation
@@ -584,10 +585,6 @@
                     case '3': selectHotbarSlot(2); break;
                     case '4': selectHotbarSlot(3); break;
                     case '5': selectHotbarSlot(4); break;
-                    case '6': selectHotbarSlot(5); break;
-                    case '7': selectHotbarSlot(6); break;
-                    case '8': selectHotbarSlot(7); break;
-                    case '9': selectHotbarSlot(8); break;
                 }
             });
             
@@ -632,7 +629,7 @@
             
             // Limit joystick movement to the area
             const distance = Math.sqrt(gameState.joystick.x * gameState.joystick.x + gameState.joystick.y * gameState.joystick.y);
-            const maxDistance = 50;
+            const maxDistance = 40;
             
             if (distance > maxDistance) {
                 gameState.joystick.x = (gameState.joystick.x / distance) * maxDistance;
@@ -667,8 +664,8 @@
                 let dx = 0, dy = 0;
                 
                 if (gameState.isMobile && gameState.joystick.active) {
-                    dx = gameState.joystick.x / 20;
-                    dy = gameState.joystick.y / 20;
+                    dx = gameState.joystick.x / 15;
+                    dy = gameState.joystick.y / 15;
                 } else if (!gameState.isMobile) {
                     if (gameState.keys.w) dy = -gameState.player.speed;
                     if (gameState.keys.a) dx = -gameState.player.speed;
@@ -714,24 +711,12 @@
         }
         
         function updateUI() {
-            // Update stats bar
-            statsBar.innerHTML = `
-                <span>❤️ ${gameState.player.health}%</span>
-                <span>🍗 ${gameState.player.hunger}%</span>
-                <span>🥤 ${gameState.player.thirst}%</span>
-                <span>💰 ${gameState.player.gold}</span>
-                <span>💎 ${gameState.player.brill}</span>
-                <span>🟢 ${gameState.player.emeralds}</span>
-            `;
-            
-            // Update time display
-            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
-            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
-            const timeOfDay = gameState.time.dayTime ? 'день' : 'ночь';
-            timeDisplay.innerHTML = `
-                <span>🕒 ${hoursStr}:${minsStr} (${timeOfDay})</span>
-                <span>☢️ 0%</span>
-            `;
+            // Update stats bars
+            healthBar.textContent = `❤️ ${gameState.player.health}%`;
+            hungerBar.textContent = `🍗 ${gameState.player.hunger}%`;
+            thirstBar.textContent = `💧 ${gameState.player.thirst}%`;
+            radiationBar.textContent = `☢️ ${gameState.player.radiation}%`;
+            goldBar.textContent = `🟡 ${gameState.player.gold}`;
         }
         
         function render() {
