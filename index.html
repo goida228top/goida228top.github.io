@@ -2,825 +2,802 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Остров Выживания</title>
-    <!-- Tailwind CSS (встроенный) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Survival City</title>
     <style>
-        /* Встроенные стили Tailwind CSS, сгенерированные для использования в этом приложении */
-        /*! Tailwind CSS v3.4.3 | MIT License | https://tailwindcss.com */
-        *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:transparent}
-        ::before,::after{--tw-content:''}
-        html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal}
-        body{margin:0;line-height:inherit}
-        hr{height:0;color:inherit;border-top-width:1px}
-        abbr:where([title]){text-decoration:underline dotted}
-        code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}
-        small{font-size:80%}
-        b,strong{font-weight:bolder}
-        sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
-        sub{bottom:-0.25em}
-        sup{top:-0.5em}
-        table{text-indent:0;border-color:inherit;border-collapse:collapse}
-        button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
-        button,[type='button'],[type='reset'],[type='submit']{-webkit-appearance:button;background-color:transparent;background-image:none}
-        :-moz-focusring{outline:1px dotted ButtonText}
-        :-moz-ui-invalid{box-shadow:none}
-        progress{vertical-align:baseline}
-        ::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}
-        [type='search']{-webkit-appearance:textfield;outline-offset:-2px}
-        ::-webkit-search-decoration{-webkit-appearance:none}
-        ::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
-        summary{display:list-item}
-        blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}
-        fieldset{margin:0;padding:0}
-        legend{padding:0}
-        ol,ul,menu{list-style:none;margin:0;padding:0}
-        textarea{resize:vertical}
-        input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}
-        [role="button"],button,a,area,input:not([type='file']),label:not(.custom-file-label),select,summary,textarea{touch-action:manipulation}
-        a{color:inherit;text-decoration:inherit}
-        details{display:block}
-        summary{cursor:pointer}
-        blockquote{margin:0}
-        h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
-        img{display:block;vertical-align:middle;max-width:100%;height:auto}
-        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
-        .flex{display:flex}
-        .grid{display:grid}
-        .hidden{display:none}
-        .h-full{height:100%}
-        .min-h-screen{min-height:100vh}
-        .w-full{width:100%}
-        .max-w-lg{max-width:32rem}
-        .max-w-md{max-width:28rem}
-        .flex-1{flex:1 1 0%}
-        .flex-col{flex-direction:column}
-        .flex-row{flex-direction:row}
-        .items-center{align-items:center}
-        .justify-center{justify-content:center}
-        .space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}
-        .space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}
-        .gap-0-5{gap:0.125rem}
-        .gap-2{gap:0.5rem}
-        .gap-6{gap:1.5rem}
-        .grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-        .rounded-sm{border-radius:0.125rem}
-        .rounded-md{border-radius:0.375rem}
-        .rounded-lg{border-radius:0.5rem}
-        .rounded-xl{border-radius:0.75rem}
-        .border{border-width:1px}
-        .border-2{border-width:2px}
-        .border-red-300{border-color:#fca5a5}
-        .border-blue-300{border-color:#93c5fd}
-        .bg-gradient-to-br{background-image:linear-gradient(to bottom right,var(--tw-gradient-stops))}
-        .from-green-500{--tw-gradient-from:#22c55e var(--tw-gradient-from-position);--tw-gradient-to:rgb(34 197 94 / 0) var(--tw-gradient-to-position)}
-        .to-blue-500{--tw-gradient-to:#3b82f6 var(--tw-gradient-to-position)}
-        .to-purple-500{--tw-gradient-to:#a855f7 var(--tw-gradient-to-position)}
-        .to-pink-500{--tw-gradient-to:#ec4899 var(--tw-gradient-to-position)}
-        .bg-gray-600{background-color:#4b5563}
-        .bg-gray-700{background-color:#374151}
-        .bg-gray-800{background-color:#1f2937}
-        .bg-gray-900{background-color:#111827}
-        .bg-green-600{background-color:#16a34a}
-        .bg-green-700{background-color:#047857}
-        .bg-emerald-800{background-color:#065f46}
-        .bg-blue-600{background-color:#2563eb}
-        .bg-blue-700{background-color:#1d4ed8}
-        .bg-blue-800{background-color:#1e40af}
-        .bg-purple-700{background-color:#7e22ce}
-        .bg-red-100{background-color:#fee2e2}
-        .bg-red-400{background-color:#f87171}
-        .bg-red-800{background-color:#991b1b}
-        .p-1{padding:0.25rem}
-        .p-3{padding:0.75rem}
-        .p-4{padding:1rem}
-        .p-6{padding:1.5rem}
-        .py-3{padding-top:0.75rem;padding-bottom:0.75rem}
-        .px-4{padding-left:1rem;padding-right:1rem}
-        .px-6{padding-left:1.5rem;padding-right:1.5rem}
-        .pt-1{padding-top:0.25rem}
-        .pb-1{padding-bottom:0.25rem}
-        .text-center{text-align:center}
-        .text-sm{font-size:0.875rem;line-height:1.25rem}
-        .text-md{font-size:1rem;line-height:1.5rem}
-        .text-lg{font-size:1.125rem;line-height:1.75rem}
-        .text-xl{font-size:1.25rem;line-height:1.75rem}
-        .text-2xl{font-size:1.5rem;line-height:2rem}
-        .text-3xl{font-size:1.875rem;line-height:2.25rem}
-        .text-4xl{font-size:2.25rem;line-height:2.5rem}
-        .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-        .font-bold{font-weight:700}
-        .font-semibold{font-weight:600}
-        .text-blue-100{color:#dbeafe}
-        .text-blue-400{color:#60a5fa}
-        .text-blue-500{color:#3b82f6}
-        .text-gray-300{color:#d1d5db}
-        .text-gray-400{color:#9ca3af}
-        .text-gray-500{color:#6b7280}
-        .text-green-300{color:#86efac}
-        .text-green-400{color:#4ade80}
-        .text-green-700{color:#047857}
-        .text-purple-400{color:#c084fc}
-        .text-orange-400{color:#fb923c}
-        .text-red-300{color:#fca5a5}
-        .text-red-400{color:#f87171}
-        .text-white{color:#fff}
-        .text-yellow-300{color:#fde047}
-        .shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
-        .shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1),0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
-        .shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1),0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-xl:var(--tw-shadow);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
-        .transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(0.4,0,0.2,1);transition-duration:150ms}
-        .duration-200{transition-duration:200ms}
-        .duration-300{transition-duration:300ms}
-        .ease-in-out{transition-timing-function:cubic-bezier(0.4,0,0.2,1)}
-        .hover\:bg-gray-600:hover{background-color:#4b5563}
-        .hover\:bg-gray-700:hover{background-color:#374151}
-        .hover\:bg-green-700:hover{background-color:#047857}
-        .hover\:bg-blue-700:hover{background-color:#2563eb}
-        .hover\:scale-105:hover{transform:scale(1.05)}
-        .focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}
-        .focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}
-        .focus\:ring-blue-500:focus{--tw-ring-color:#3b82f6}
-        .transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}
-        @media (min-width:768px){
-        .md\:flex-row{flex-direction:row}
-        .md\:h-10{height:2.5rem}
-        .md\:w-10{width:2.5rem}
-        .md\:text-base{font-size:1rem;line-height:1.5rem}
-        .md\:text-lg{font-size:1.125rem;line-height:1.75rem}
-        }
-        /* Дополнительные стили, не относящиеся к Tailwind */
-        body {
-            font-family: 'Inter', sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
-        .grid-container {
-            display: grid;
-            gap: 2px; /* Уменьшаем зазор для плотной карты */
-            background-color: #374151; /* bg-gray-700 */
-            padding: 4px; /* p-1 */
-            border-radius: 8px; /* rounded-lg */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+        
+        body {
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background-color: #111;
+            color: white;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
-        .tile {
-            width: 40px; /* Увеличиваем размер тайла для лучшей видимости */
-            height: 40px;
-            border-radius: 4px; /* rounded-sm */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem; /* text-sm -> text-lg для иконок */
-            color: #d1d5db; /* text-gray-300 */
-        }
-        /* Медиа-запросы для адаптивности */
-        @media (min-width: 768px) {
-            .tile {
-                width: 50px; /* md:w-10 */
-                height: 50px; /* md:h-10 */
+        
+        @media (orientation: portrait) {
+            #rotateWarning {
+                display: flex;
             }
         }
-
-        /* Цвета тайлов */
-        .tile-grass { background-color: #16a34a; /* bg-green-700 */ }
-        .tile-forest { background-color: #047857; /* bg-emerald-800 */ color: #86efac; /* text-green-300 */ }
-        .tile-rock { background-color: #4b5563; /* bg-gray-600 */ color: #d1d5db; /* text-gray-300 */ }
-        .tile-water { background-color: #2563eb; /* bg-blue-700 */ }
-        .tile-berry { background-color: #9333ea; /* bg-purple-700 */ color: #fca5a5; /* text-red-300 */ }
-
-        /* Игроки */
-        .tile-player1 { background: linear-gradient(to bottom right, #22c55e, #3b82f6); /* from-green-500 to-blue-500 */ border: 2px solid #93c5fd; /* ring-2 ring-blue-300 */ }
-        .tile-player2 { background: linear-gradient(to bottom right, #a855f7, #ec4899); /* from-purple-500 to-pink-500 */ border: 2px solid #fbcfe8; /* ring-2 ring-pink-300 */ }
-        .tile-players-overlap { background: linear-gradient(to bottom right, #22c55e, #a855f7); /* from-green-500 to-purple-500 */ }
-
-        /* Скрываем нативные стрелки для input type="number" */
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        
+        #rotateWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
         }
-        input[type="number"] {
-            -moz-appearance: textfield;
+        
+        #rotateWarning span {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #222;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a2f1a;
+        }
+        
+        #uiContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        #statsBar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        
+        #timeDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: auto;
+        }
+        
+        #pauseBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        #hotbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 5px;
+            pointer-events: auto;
+        }
+        
+        .hotbarSlot {
+            width: 50px;
+            height: 50px;
+            margin: 0 3px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        
+        .hotbarSlot.selected {
+            border-color: white;
+            background-color: rgba(100, 100, 100, 0.8);
+        }
+        
+        #inventoryBtn {
+            position: absolute;
+            bottom: 85px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        #actionButtons {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        
+        .actionBtn {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .actionBtn:active {
+            background-color: rgba(50, 50, 50, 0.7);
+        }
+        
+        #joystickArea {
+            position: absolute;
+            bottom: 100px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            pointer-events: auto;
+        }
+        
+        #joystickOuter {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        #joystickInner {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            top: 45px;
+            left: 45px;
+            touch-action: none;
+            transition: transform 0.1s;
+        }
+        
+        #menuScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23222"/><rect x="50" y="100" width="300" height="50" fill="%23333" rx="5"/><rect x="50" y="170" width="300" height="50" fill="%23333" rx="5"/><rect x="50" y="240" width="300" height="50" fill="%23333" rx="5"/><rect x="150" y="50" width="100" height="30" fill="%23333" rx="5"/></svg>');
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .menuBtn {
+            width: 80%;
+            max-width: 300px;
+            height: 60px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        .menuBtn:active {
+            background-color: rgba(80, 80, 80, 0.8);
+        }
+        
+        #inventoryScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            pointer-events: auto;
+        }
+        
+        #inventoryGrid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        
+        .inventorySlot {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        
+        #closeInventory {
+            width: 80%;
+            max-width: 300px;
+            height: 60px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        @media (min-width: 768px) {
+            .hotbarSlot {
+                width: 60px;
+                height: 60px;
+                font-size: 30px;
+            }
+            
+            #inventoryBtn {
+                width: 60px;
+                height: 60px;
+                font-size: 30px;
+                bottom: 100px;
+            }
+            
+            .actionBtn {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+            
+            #joystickArea {
+                display: none;
+            }
+            
+            #statsBar {
+                font-size: 16px;
+            }
+            
+            #timeDisplay {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-
-    <div id="game-container" class="flex flex-col items-center w-full max-w-lg">
-        <!-- Загрузочный экран -->
-        <div id="loading-screen" class="text-xl font-bold">Загрузка...</div>
-        <!-- Экран ошибок -->
-        <div id="error-screen" class="hidden bg-red-800 text-red-100 p-4 rounded-lg"></div>
-
-        <!-- Экран создания/присоединения к игре -->
-        <div id="pre-game-screen" class="hidden flex flex-col items-center justify-center w-full">
-            <h1 class="text-4xl font-bold mb-8 text-blue-400">Остров Выживания</h1>
-            <p class="text-lg mb-4 text-gray-300">Ваш ID пользователя: <span id="user-id-display" class="font-mono text-yellow-300 break-all"></span></p>
-
-            <div class="flex flex-col md:flex-row gap-6 mb-8 w-full max-w-md">
-                <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex-1">
-                    <h2 class="text-2xl font-semibold mb-4 text-center">Создать новую игру</h2>
-                    <button id="create-game-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Создать игру
-                    </button>
-                </div>
-
-                <div class="bg-gray-800 p-6 rounded-lg shadow-lg flex-1">
-                    <h2 class="text-2xl font-semibold mb-4 text-center">Присоединиться к игре</h2>
-                    <input type="text" id="game-id-input" placeholder="Введите ID комнаты" class="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                    <button id="join-game-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Присоединиться
-                    </button>
+<body>
+    <div id="rotateWarning">
+        <span>Пожалуйста, поверните устройство в альбомный режим для игры</span>
+    </div>
+    
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="uiContainer">
+            <div id="statsBar">
+                <span>❤️ 100%</span>
+                <span>🍗 80%</span>
+                <span>🥤 70%</span>
+                <span>💰 10</span>
+                <span>💎 5</span>
+                <span>🟢 50</span>
+            </div>
+            <div id="pauseBtn">⏸</div>
+            <div id="joystickArea">
+                <div id="joystickOuter">
+                    <div id="joystickInner"></div>
                 </div>
             </div>
-            <p id="pre-game-message" class="text-green-400 mt-4 text-center"></p>
-            <p id="pre-game-error" class="text-red-400 mt-4 text-center"></p>
+            <div id="hotbar">
+                <div class="hotbarSlot selected">🪓</div>
+                <div class="hotbarSlot">⛏️</div>
+                <div class="hotbarSlot">🔫</div>
+                <div class="hotbarSlot">🏗️</div>
+                <div class="hotbarSlot"></div>
+                <div class="hotbarSlot"></div>
+                <div class="hotbarSlot"></div>
+                <div class="hotbarSlot"></div>
+                <div class="hotbarSlot"></div>
+            </div>
+            <div id="inventoryBtn">⋯</div>
+            <div id="actionButtons">
+                <div class="actionBtn" id="buildBtn">🏗️</div>
+                <div class="actionBtn" id="attackBtn">⚔️</div>
+            </div>
         </div>
-
-        <!-- Основной игровой экран -->
-        <div id="main-game-screen" class="hidden flex flex-col items-center w-full">
-            <h1 class="text-3xl font-bold mb-4 text-blue-400">Остров Выживания</h1>
-            <p class="text-lg mb-2">ID Комнаты: <span id="current-room-id-display" class="font-mono text-yellow-300"></span></p>
-            <p class="text-md mb-2">Вы: <span id="current-player-name" class="font-semibold text-green-400"></span> (ID: <span id="current-player-id" class="font-mono text-gray-400 break-all"></span>)</p>
-            <div id="other-players-display"></div>
-            <p class="text-xl font-semibold mb-4">Дни выживания: <span id="survival-days-display" class="text-orange-400"></span></p>
-
-            <!-- Сообщения -->
-            <div id="game-message-display" class="bg-blue-800 text-blue-100 p-3 rounded-md mb-4 w-full max-w-md text-center hidden"></div>
-            <div id="game-error-display" class="bg-red-800 text-red-100 p-3 rounded-md mb-4 w-full max-w-md text-center hidden"></div>
-
-            <!-- Игровая карта -->
-            <div id="game-map" class="grid-container"></div>
-
-            <!-- Управление -->
-            <div class="flex flex-col items-center mt-8 space-y-4">
-                <h2 class="text-2xl font-bold mb-2">Управление</h2>
-                <div class="grid grid-cols-3 gap-2 w-48">
-                    <button id="move-up-btn" class="col-start-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬆️</button>
-                    <button id="move-left-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬅️</button>
-                    <button id="move-right-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">➡️</button>
-                    <button id="move-down-btn" class="col-start-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">⬇️</button>
-                </div>
+        
+        <div id="menuScreen">
+            <div class="menuBtn" id="playBtn">ИГРАТЬ</div>
+            <div class="menuBtn" id="settingsBtn">НАСТРОЙКИ</div>
+            <div class="menuBtn" id="achievementsBtn">ДОСТИЖЕНИЯ</div>
+            <div class="menuBtn" id="shopBtn">МАГАЗИН</div>
+        </div>
+        
+        <div id="inventoryScreen">
+            <h2>ИНВЕНТАРЬ</h2>
+            <div id="inventoryGrid">
+                <div class="inventorySlot">🪓</div>
+                <div class="inventorySlot">⛏️</div>
+                <div class="inventorySlot">🔫</div>
+                <div class="inventorySlot">🏗️</div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                
+                <div class="inventorySlot">🍖</div>
+                <div class="inventorySlot">🌿</div>
+                <div class="inventorySlot">💧</div>
+                <div class="inventorySlot">🪵</div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
+                <div class="inventorySlot"></div>
             </div>
-
-            <!-- Инвентарь -->
-            <div class="mt-8 bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                <h2 class="text-2xl font-bold mb-4 text-center">Ваш Инвентарь</h2>
-                <div class="flex flex-col space-y-2 text-lg">
-                    <p class="flex justify-between items-center">Дерево: <span id="wood-display" class="font-semibold text-green-300">0 🌳</span></p>
-                    <p class="flex justify-between items-center">Камень: <span id="stone-display" class="font-semibold text-gray-300">0 🪨</span></p>
-                    <p class="flex justify-between items-center">Ягоды: <span id="berry-display" class="font-semibold text-red-300">0 🍓</span></p>
-                </div>
-            </div>
-
-            <div class="mt-8 text-center text-gray-500 text-sm">
-                <p>Ваши действия синхронизируются в реальном времени с вашим другом.</p>
-                <p>Если возникнут проблемы, убедитесь, что ваш друг использует тот же ID комнаты.</p>
-            </div>
+            <div id="closeInventory" class="menuBtn">ЗАКРЫТЬ</div>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Глобальные переменные, предоставляемые Canvas средой
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // Вставьте сюда ВАШУ РЕАЛЬНУЮ КОНФИГУРАЦИЮ FIREBASE, которую вы скопировали
-        // из настроек вашего веб-приложения в консоли Firebase!
-        const firebaseConfig = {
-            apiKey: "AIzaSyACp2E3rZi1It8yWOeFoZnDzNV-pxSFHnc",
-            authDomain: "my-game-2cd1e.firebaseapp.com",
-            projectId: "my-game-2cd1e",
-            storageBucket: "my-game-2cd1e.firebasestorage.app",
-            messagingSenderId: "920986300653",
-            appId: "1:920986300653:web:d0141ebb18839c1de19ce4",
-            measurementId: "G-JC9LMKPSB7"
+    <script>
+        // Game state
+        const gameState = {
+            player: {
+                x: 0,
+                y: 0,
+                speed: 3,
+                health: 100,
+                hunger: 80,
+                thirst: 70,
+                gold: 10,
+                brill: 5,
+                emeralds: 50,
+                inventory: [
+                    '🪓', '⛏️', '🔫', '🏗️', '', '', '', '', '',
+                    '🍖', '🌿', '💧', '🪵', '', '', '', '', '',
+                    '', '', '', '', '', '', '', '', ''
+                ],
+                hotbar: ['🪓', '⛏️', '🔫', '🏗️', '', '', '', '', ''],
+                selectedSlot: 0,
+                currentAction: 'move'
+            },
+            time: {
+                hours: 12,
+                minutes: 45,
+                dayTime: true,
+                lastUpdate: 0
+            },
+            joystick: {
+                active: false,
+                x: 0,
+                y: 0,
+                startX: 0,
+                startY: 0
+            },
+            keys: {
+                w: false,
+                a: false,
+                s: false,
+                d: false
+            },
+            objects: [
+                { type: 'tree', x: 200, y: 150, health: 100 },
+                { type: 'wall', x: 300, y: 200, health: 200 }
+            ],
+            screen: 'menu',
+            isMobile: /Mobi|Android/i.test(navigator.userAgent),
+            paused: false
         };
-
-        let app, db, auth;
-        let currentUserId = null;
-        let currentRoomId = null;
-        let players = {};
-        let currentMap = [];
-        let survivalDays = 0;
-        let gameDocRef = null;
-        let isAuthReady = false;
-        let isLoading = true;
-
-        // Генерация уникального ID для каждой вкладки/экземпляра
-        const tabUniqueId = crypto.randomUUID();
-
-        // DOM элементы
-        const loadingScreen = document.getElementById('loading-screen');
-        const errorScreen = document.getElementById('error-screen');
-        const preGameScreen = document.getElementById('pre-game-screen');
-        const mainGameScreen = document.getElementById('main-game-screen');
-        const userIdDisplay = document.getElementById('user-id-display');
-        const createGameBtn = document.getElementById('create-game-btn');
-        const joinGameBtn = document.getElementById('join-game-btn');
-        const gameIdInput = document.getElementById('game-id-input');
-        const preGameMessage = document.getElementById('pre-game-message');
-        const preGameError = document.getElementById('pre-game-error');
-        const currentRoomIdDisplay = document.getElementById('current-room-id-display');
-        const currentPlayerNameDisplay = document.getElementById('current-player-name');
-        const currentPlayerIdDisplay = document.getElementById('current-player-id');
-        const otherPlayersDisplay = document.getElementById('other-players-display');
-        const survivalDaysDisplay = document.getElementById('survival-days-display');
-        const gameMessageDisplay = document.getElementById('game-message-display');
-        const gameErrorDisplay = document.getElementById('game-error-display');
-        const gameMapElement = document.getElementById('game-map');
-        const moveUpBtn = document.getElementById('move-up-btn');
-        const moveLeftBtn = document.getElementById('move-left-btn');
-        const moveRightBtn = document.getElementById('move-right-btn');
-        const moveDownBtn = document.getElementById('move-down-btn');
-        const woodDisplay = document.getElementById('wood-display');
-        const stoneDisplay = document.getElementById('stone-display');
-        const berryDisplay = document.getElementById('berry-display');
-
-        // Размеры карты и типы клеток
-        const MAP_SIZE = 10;
-        const TILE_TYPES = {
-            GRASS: 'grass',
-            FOREST: 'forest',
-            ROCK: 'rock',
-            WATER: 'water',
-            PLAYER1: 'player1', // Используется для логики, не для отрисовки
-            PLAYER2: 'player2', // Используется для логики, не для отрисовки
-            BERRY: 'berry', // Ягоды для энергии
-        };
-
-        // Начальные ресурсы
-        const INITIAL_RESOURCES = {
-            wood: 0,
-            stone: 0,
-            berry: 0,
-        };
-
-        // Вспомогательная функция для обновления сообщений
-        function displayMessage(msg, isError = false) {
-            // Сбрасываем видимость всех сообщений
-            gameMessageDisplay.classList.add('hidden');
-            gameErrorDisplay.classList.add('hidden');
-            preGameMessage.classList.add('hidden');
-            preGameError.classList.add('hidden');
-
-            if (isError) {
-                gameErrorDisplay.textContent = msg;
-                gameErrorDisplay.classList.remove('hidden');
-                preGameError.textContent = msg;
-                preGameError.classList.remove('hidden');
+        
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // UI Elements
+        const rotateWarning = document.getElementById('rotateWarning');
+        const menuScreen = document.getElementById('menuScreen');
+        const inventoryScreen = document.getElementById('inventoryScreen');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const inventoryBtn = document.getElementById('inventoryBtn');
+        const closeInventory = document.getElementById('closeInventory');
+        const attackBtn = document.getElementById('attackBtn');
+        const buildBtn = document.getElementById('buildBtn');
+        const joystickInner = document.getElementById('joystickInner');
+        const joystickArea = document.getElementById('joystickArea');
+        const statsBar = document.getElementById('statsBar');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const hotbarSlots = document.querySelectorAll('.hotbarSlot');
+        
+        // Check orientation
+        function checkOrientation() {
+            if (window.innerHeight > window.innerWidth) {
+                rotateWarning.style.display = 'flex';
             } else {
-                gameMessageDisplay.textContent = msg;
-                gameMessageDisplay.classList.remove('hidden');
-                preGameMessage.textContent = msg;
-                preGameMessage.classList.remove('hidden');
+                rotateWarning.style.display = 'none';
             }
-            // Скрывать сообщения через некоторое время
-            setTimeout(() => {
-                gameMessageDisplay.classList.add('hidden');
-                gameErrorDisplay.classList.add('hidden');
-                preGameMessage.classList.add('hidden');
-                preGameError.classList.add('hidden');
-            }, 5000);
         }
-
-        // Функция для генерации случайной карты (простая генерация острова)
-        const generateRandomMap = () => {
-            const map = Array(MAP_SIZE).fill(null).map(() => Array(MAP_SIZE).fill(TILE_TYPES.WATER));
-
-            const centerX = Math.floor(MAP_SIZE / 2);
-            const centerY = Math.floor(MAP_SIZE / 2);
-
-            for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) {
-                    const dist = Math.sqrt(Math.pow(i - centerX, 2) + Math.pow(j - centerY, 2));
-                    if (dist < MAP_SIZE / 2 - 1) {
-                        map[i][j] = TILE_TYPES.GRASS;
-                    }
-                }
-            }
-
-            for (let i = 0; i < MAP_SIZE; i++) {
-                for (let j = 0; j < MAP_SIZE; j++) {
-                    if (map[i][j] === TILE_TYPES.GRASS) {
-                        const rand = Math.random();
-                        if (rand < 0.2) map[i][j] = TILE_TYPES.FOREST;
-                        else if (rand < 0.3) map[i][j] = TILE_TYPES.ROCK;
-                        else if (rand < 0.35) map[i][j] = TILE_TYPES.BERRY;
-                    }
-                }
-            }
-            return map;
-        };
-
-        // Функция для отрисовки карты и игроков
-        function renderGame() {
-            gameMapElement.innerHTML = ''; // Очищаем карту перед отрисовкой
-            gameMapElement.style.gridTemplateColumns = `repeat(${MAP_SIZE}, minmax(0, 1fr))`;
-
-            currentMap.forEach((row, rowIndex) => {
-                row.forEach((tile, colIndex) => {
-                    const tileDiv = document.createElement('div');
-                    tileDiv.classList.add('tile');
-                    
-                    let tileClass = '';
-                    let content = '';
-
-                    // Стили для разных типов клеток
-                    if (tile === TILE_TYPES.GRASS) {
-                        tileClass += 'tile-grass';
-                    } else if (tile === TILE_TYPES.FOREST) {
-                        tileClass += 'tile-forest';
-                        content = '🌳'; // Дерево
-                    } else if (tile === TILE_TYPES.ROCK) {
-                        tileClass += 'tile-rock';
-                        content = '🪨'; // Камень
-                    } else if (tile === TILE_TYPES.WATER) {
-                        tileClass += 'tile-water';
-                    } else if (tile === TILE_TYPES.BERRY) {
-                        tileClass += 'tile-berry';
-                        content = '🍓'; // Ягоды
-                    }
-                    tileDiv.classList.add(tileClass);
-
-                    // Проверяем, есть ли игроки на этой клетке
-                    const playersOnTile = Object.entries(players).filter(([id, player]) =>
-                        player.x === rowIndex && player.y === colIndex
-                    );
-
-                    if (playersOnTile.length > 1) {
-                        tileDiv.classList.add('tile-players-overlap');
-                        content = '👫'; // Два игрока на одной клетке
-                    } else if (playersOnTile.length === 1) {
-                        const playerOnTile = playersOnTile[0];
-                        if (playerOnTile[0] === currentUserId) {
-                            tileDiv.classList.add('tile-player1');
-                            content = '👨‍🚀'; // Ваш персонаж
-                        } else {
-                            tileDiv.classList.add('tile-player2');
-                            content = '👩‍🚀'; // Персонаж другого игрока
-                        }
-                    }
-
-                    tileDiv.textContent = content;
-                    gameMapElement.appendChild(tileDiv);
-                });
+        
+        window.addEventListener('resize', checkOrientation);
+        checkOrientation();
+        
+        // Event listeners
+        playBtn.addEventListener('click', () => {
+            menuScreen.style.display = 'none';
+            gameState.screen = 'game';
+            gameState.paused = false;
+        });
+        
+        pauseBtn.addEventListener('click', () => {
+            menuScreen.style.display = 'flex';
+            gameState.screen = 'menu';
+            gameState.paused = true;
+        });
+        
+        inventoryBtn.addEventListener('click', () => {
+            inventoryScreen.style.display = 'flex';
+            gameState.screen = 'inventory';
+        });
+        
+        closeInventory.addEventListener('click', () => {
+            inventoryScreen.style.display = 'none';
+            gameState.screen = 'game';
+        });
+        
+        attackBtn.addEventListener('click', () => {
+            gameState.player.currentAction = 'attack';
+            console.log('Attack with:', gameState.player.hotbar[gameState.player.selectedSlot]);
+        });
+        
+        buildBtn.addEventListener('click', () => {
+            gameState.player.currentAction = 'build';
+            console.log('Build with:', gameState.player.hotbar[gameState.player.selectedSlot]);
+        });
+        
+        // Hotbar selection
+        hotbarSlots.forEach((slot, index) => {
+            slot.addEventListener('click', () => {
+                document.querySelector('.hotbarSlot.selected').classList.remove('selected');
+                slot.classList.add('selected');
+                gameState.player.selectedSlot = index;
             });
-
-            // Обновляем информацию об игроках и инвентаре
-            const currentPlayer = players[currentUserId];
-            if (currentPlayer) {
-                currentPlayerNameDisplay.textContent = currentPlayer.name;
-                currentPlayerIdDisplay.textContent = currentUserId;
-                woodDisplay.textContent = `${currentPlayer.resources.wood} 🌳`;
-                stoneDisplay.textContent = `${currentPlayer.resources.stone} 🪨`;
-                berryDisplay.textContent = `${currentPlayer.resources.berry} 🍓`;
-                survivalDaysDisplay.textContent = survivalDays;
-            }
-
-            // Обновляем список других игроков
-            otherPlayersDisplay.innerHTML = '';
-            Object.entries(players).forEach(([id, player]) => {
-                if (id !== currentUserId) {
-                    const pElement = document.createElement('p');
-                    pElement.classList.add('text-md', 'mb-2');
-                    pElement.innerHTML = `Друг: <span class="font-semibold text-purple-400">${player.name}</span> (ID: <span class="font-mono text-gray-400 break-all">${id}</span>)`;
-                    otherPlayersDisplay.appendChild(pElement);
-                }
-            });
-        }
-
-        // Обновление состояния игры в Firestore
-        async function updateGameState(newPlayerState, newMap, newSurvivalDays) {
-            if (!gameDocRef || !currentUserId) {
-                displayMessage("Ошибка: Документ игры или ID пользователя не определены.", true);
-                return;
-            }
-            try {
-                const updatedPlayers = { ...players, [currentUserId]: { ...newPlayerState, lastActionTime: Date.now() } };
-                await updateDoc(gameDocRef, {
-                    players: updatedPlayers,
-                    map: JSON.stringify(newMap), // Сериализуем карту
-                    survivalDays: newSurvivalDays,
-                    lastActivity: Date.now(),
-                });
-            } catch (e) {
-                console.error("Ошибка обновления состояния игры:", e);
-                displayMessage("Ошибка обновления данных в реальном времени.", true);
-            }
-        }
-
-        // Обработка движения игрока
-        async function handleMove(dx, dy) {
-            if (!currentUserId || !players[currentUserId] || !currentMap.length || !gameDocRef) return;
-
-            const currentPlayer = players[currentUserId];
-            let newX = currentPlayer.x + dx;
-            let newY = currentPlayer.y + dy;
-
-            if (newX < 0 || newX >= MAP_SIZE || newY < 0 || newY >= MAP_SIZE) {
-                displayMessage('Нельзя выйти за пределы карты!');
-                return;
-            }
-
-            if (currentMap[newX][newY] === TILE_TYPES.WATER) {
-                displayMessage('Нельзя ходить по воде!');
-                return;
-            }
-
-            const occupiedByOtherPlayer = Object.entries(players).some(([id, player]) =>
-                id !== currentUserId && player.x === newX && player.y === newY
-            );
-
-            if (occupiedByOtherPlayer) {
-                displayMessage('Клетка занята другим игроком!');
-                return;
-            }
-
-            const newPlayerState = { ...currentPlayer, x: newX, y: newY };
-            const updatedMap = JSON.parse(JSON.stringify(currentMap)); // Глубокое копирование карты
-
-            let updatedSurvivalDays = survivalDays;
-
-            const tileTypeAtNewPos = updatedMap[newX][newY];
-            if (tileTypeAtNewPos === TILE_TYPES.FOREST) {
-                newPlayerState.resources.wood++;
-                updatedMap[newX][newY] = TILE_TYPES.GRASS;
-                displayMessage(`${currentPlayer.name} собрал дерево!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.ROCK) {
-                newPlayerState.resources.stone++;
-                updatedMap[newX][newY] = TILE_TYPES.GRASS;
-                displayMessage(`${currentPlayer.name} собрал камень!`);
-            } else if (tileTypeAtNewPos === TILE_TYPES.BERRY) {
-                newPlayerState.resources.berry++;
-                updatedMap[newX][newY] = TILE_TYPES.GRASS;
-                updatedSurvivalDays++;
-                displayMessage(`${currentPlayer.name} собрал ягоды и набрался сил!`);
-            }
-
-            await updateGameState(newPlayerState, updatedMap, updatedSurvivalDays);
-        }
-
-        // Инициализация Firebase и аутентификация
-        async function setupFirebase() {
-            try {
-                // Если Firebase уже инициализирован (для Cordova/Capacitor), просто используем его
-                if (!app) {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                }
-
-                // Если предоставлен initialAuthToken (для Canvas или других специальных случаев), используем его.
-                // В APK этот токен обычно не используется, аутентификация происходит нативно.
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    currentUserId = auth.currentUser.uid;
-                } else {
-                    // Для анонимных пользователей: всегда выходим из текущей сессии,
-                    // чтобы принудительно получить новый UID в новой инсталляции APK (если это возможно).
-                    // Это особенно важно для локальной отладки или для уникальных сессий.
-                    if (auth.currentUser) {
-                        console.log(`Выходим из текущей анонимной сессии: ${auth.currentUser.uid}`);
-                        await signOut(auth);
-                    }
-                    
-                    // Затем входим анонимно.
-                    const userCredential = await signInAnonymously(auth);
-                    
-                    // Комбинируем Firebase UID и уникальный ID вкладки/экземпляра для гарантированной уникальности
-                    const uniqueGameUserId = `${userCredential.user.uid}-${tabUniqueId}`;
-                    currentUserId = uniqueGameUserId;
-                    console.log(`Новый Firebase UID: ${userCredential.user.uid}`);
-                    console.log(`Уникальный ID экземпляра: ${tabUniqueId}`);
-                    console.log(`Полный игровой ID пользователя: ${uniqueGameUserId}`);
-                }
-                isAuthReady = true;
-                userIdDisplay.textContent = currentUserId; // Обновляем отображение ID пользователя
-                showScreen('pre-game-screen'); // Показываем экран до начала игры
-            } catch (e) {
-                console.error("Ошибка инициализации Firebase или аутентификации:", e);
-                displayMessage(`Ошибка: ${e.message}`, true);
-                showScreen('error-screen');
-            } finally {
-                isLoading = false;
-                loadingScreen.classList.add('hidden');
-            }
-        }
-
-        // Функция для отображения нужного экрана
-        function showScreen(screenId) {
-            loadingScreen.classList.add('hidden');
-            errorScreen.classList.add('hidden');
-            preGameScreen.classList.add('hidden');
-            mainGameScreen.classList.add('hidden');
-
-            document.getElementById(screenId).classList.remove('hidden');
-            if (screenId === 'error-screen') {
-                errorScreen.classList.add('flex'); // Для центрирования текста ошибки
-            } else if (screenId === 'pre-game-screen') {
-                preGameScreen.classList.add('flex');
-            } else if (screenId === 'main-game-screen') {
-                mainGameScreen.classList.add('flex');
-            }
-        }
-
-
-        // Обработчики кнопок
-        createGameBtn.addEventListener('click', async () => {
-            if (!db || !currentUserId) {
-                displayMessage("Firebase не готов или пользователь не авторизован.", true);
-                return;
-            }
-            // Проверяем, что Firebase подключен к реальному проекту, а не к фиктивному
-            if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
-                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Убедитесь, что ваш google-services.json правильно интегрирован в проект Capacitor.", true);
-                return;
-            }
-
-            isLoading = true;
-            displayMessage('', false); // Очищаем сообщения
-            preGameError.textContent = '';
+        });
+        
+        // Joystick controls for mobile
+        if (gameState.isMobile) {
+            joystickArea.addEventListener('touchstart', handleJoystickStart);
+            joystickArea.addEventListener('touchmove', handleJoystickMove);
+            joystickArea.addEventListener('touchend', handleJoystickEnd);
+        } else {
+            joystickArea.style.display = 'none';
             
-            const newGameId = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const initialMap = generateRandomMap();
-            const startX = Math.floor(Math.random() * MAP_SIZE);
-            const startY = Math.floor(Math.random() * MAP_SIZE);
-
-            const newPlayerState = {
-                [currentUserId]: {
-                    x: startX,
-                    y: startY,
-                    resources: { ...INITIAL_RESOURCES },
-                    lastActionTime: Date.now(),
-                    name: `Игрок_${currentUserId.substring(currentUserId.length - 8)}`,
+            // Keyboard controls for PC
+            window.addEventListener('keydown', (e) => {
+                if (gameState.screen !== 'game' || gameState.paused) return;
+                
+                switch(e.key.toLowerCase()) {
+                    case 'w': gameState.keys.w = true; break;
+                    case 'a': gameState.keys.a = true; break;
+                    case 's': gameState.keys.s = true; break;
+                    case 'd': gameState.keys.d = true; break;
+                    case '1': selectHotbarSlot(0); break;
+                    case '2': selectHotbarSlot(1); break;
+                    case '3': selectHotbarSlot(2); break;
+                    case '4': selectHotbarSlot(3); break;
+                    case '5': selectHotbarSlot(4); break;
+                    case '6': selectHotbarSlot(5); break;
+                    case '7': selectHotbarSlot(6); break;
+                    case '8': selectHotbarSlot(7); break;
+                    case '9': selectHotbarSlot(8); break;
                 }
-            };
-
-            const gameData = {
-                map: JSON.stringify(initialMap),
-                players: newPlayerState,
-                survivalDays: 0,
-                createdAt: Date.now(),
-                hostId: currentUserId,
-                turn: currentUserId,
-                lastActivity: Date.now(),
-            };
-
-            try {
-                const gameRef = doc(db, `artifacts/${appId}/public/data/games`, newGameId);
-                await setDoc(gameRef, gameData);
-                currentRoomId = newGameId;
-                displayMessage(`Игра "${newGameId}" создана! Поделитесь этим ID с другом.`);
-                // Подписываемся на игру после создания
-                gameDocRef = gameRef;
-                onSnapshot(gameDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        players = data.players || {};
-                        currentMap = data.map ? JSON.parse(data.map) : [];
-                        survivalDays = data.survivalDays || 0;
-                        renderGame();
-                        showScreen('main-game-screen');
-                    } else {
-                        displayMessage('Игра не найдена или удалена.', true);
-                        showScreen('pre-game-screen');
-                    }
-                }, (err) => {
-                    console.error("Ошибка подписки:", err);
-                    displayMessage("Ошибка синхронизации игры.", true);
-                });
-
-            } catch (e) {
-                console.error("Ошибка при создании игры:", e);
-                displayMessage(`Не удалось создать игру: ${e.message}`, true);
-            } finally {
-                isLoading = false;
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                switch(e.key.toLowerCase()) {
+                    case 'w': gameState.keys.w = false; break;
+                    case 'a': gameState.keys.a = false; break;
+                    case 's': gameState.keys.s = false; break;
+                    case 'd': gameState.keys.d = false; break;
+                }
+            });
+        }
+        
+        function selectHotbarSlot(index) {
+            document.querySelector('.hotbarSlot.selected').classList.remove('selected');
+            hotbarSlots[index].classList.add('selected');
+            gameState.player.selectedSlot = index;
+        }
+        
+        function handleJoystickStart(e) {
+            if (gameState.screen !== 'game' || gameState.paused) return;
+            
+            const touch = e.touches[0];
+            const rect = joystickArea.getBoundingClientRect();
+            
+            gameState.joystick.active = true;
+            gameState.joystick.startX = rect.left + rect.width / 2;
+            gameState.joystick.startY = rect.top + rect.height / 2;
+            gameState.joystick.x = touch.clientX - gameState.joystick.startX;
+            gameState.joystick.y = touch.clientY - gameState.joystick.startY;
+            
+            updateJoystickPosition();
+            e.preventDefault();
+        }
+        
+        function handleJoystickMove(e) {
+            if (!gameState.joystick.active || gameState.screen !== 'game' || gameState.paused) return;
+            
+            const touch = e.touches[0];
+            gameState.joystick.x = touch.clientX - gameState.joystick.startX;
+            gameState.joystick.y = touch.clientY - gameState.joystick.startY;
+            
+            // Limit joystick movement to the area
+            const distance = Math.sqrt(gameState.joystick.x * gameState.joystick.x + gameState.joystick.y * gameState.joystick.y);
+            const maxDistance = 50;
+            
+            if (distance > maxDistance) {
+                gameState.joystick.x = (gameState.joystick.x / distance) * maxDistance;
+                gameState.joystick.y = (gameState.joystick.y / distance) * maxDistance;
             }
-        });
-
-        joinGameBtn.addEventListener('click', async () => {
-            const idToJoin = gameIdInput.value.toUpperCase().trim();
-            if (!db || !currentUserId || !idToJoin) {
-                displayMessage("Введите ID комнаты, и убедитесь, что Firebase готов.", true);
-                return;
+            
+            updateJoystickPosition();
+            e.preventDefault();
+        }
+        
+        function handleJoystickEnd() {
+            gameState.joystick.active = false;
+            gameState.joystick.x = 0;
+            gameState.joystick.y = 0;
+            updateJoystickPosition();
+        }
+        
+        function updateJoystickPosition() {
+            joystickInner.style.transform = `translate(${gameState.joystick.x}px, ${gameState.joystick.y}px)`;
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            update(timestamp);
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update(timestamp) {
+            // Update player position
+            if (gameState.screen === 'game' && !gameState.paused) {
+                let dx = 0, dy = 0;
+                
+                if (gameState.isMobile && gameState.joystick.active) {
+                    dx = gameState.joystick.x / 20;
+                    dy = gameState.joystick.y / 20;
+                } else if (!gameState.isMobile) {
+                    if (gameState.keys.w) dy = -gameState.player.speed;
+                    if (gameState.keys.a) dx = -gameState.player.speed;
+                    if (gameState.keys.s) dy = gameState.player.speed;
+                    if (gameState.keys.d) dx = gameState.player.speed;
+                }
+                
+                // Normalize diagonal movement
+                if (dx !== 0 && dy !== 0) {
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    dx = (dx / len) * gameState.player.speed;
+                    dy = (dy / len) * gameState.player.speed;
+                }
+                
+                gameState.player.x += dx;
+                gameState.player.y += dy;
+                
+                // Keep player within bounds
+                gameState.player.x = Math.max(0, Math.min(canvas.width - 30, gameState.player.x));
+                gameState.player.y = Math.max(0, Math.min(canvas.height - 30, gameState.player.y));
             }
-            // Проверяем, что Firebase подключен к реальному проекту
-            if (firebaseConfig.apiKey === DUMMY_FIREBASE_CONFIG.apiKey) {
-                displayMessage("Игра запущена в режиме демонстрации. Онлайн-функции недоступны без реальной конфигурации Firebase. Убедитесь, что ваш google-services.json правильно интегрирован в проект Capacitor.", true);
-                return;
-            }
-
-            isLoading = true;
-            displayMessage('', false); // Очищаем сообщения
-            preGameError.textContent = '';
-
-            try {
-                const roomDocRef = doc(db, `artifacts/${appId}/public/data/games`, idToJoin);
-                const docSnap = await getDoc(roomDocRef);
-
-                if (docSnap.exists()) {
-                    const gameData = docSnap.data();
-                    let existingPlayers = gameData.players || {};
-
-                    if (Object.keys(existingPlayers).length >= 2 && !existingPlayers[currentUserId]) {
-                        displayMessage('В этой игре уже 2 игрока. Пожалуйста, выберите другую.', true);
-                        isLoading = false;
-                        return;
-                    }
-
-                    if (!existingPlayers[currentUserId]) {
-                        // Размещаем второго игрока на свободной клетке
-                        let newPlayerX, newPlayerY;
-                        let placed = false;
-                        const mapFromFirestore = gameData.map ? JSON.parse(gameData.map) : [];
-
-                        for (let i = 0; i < MAP_SIZE; i++) {
-                            for (let j = 0; j < MAP_SIZE; j++) {
-                                const isOccupied = Object.values(existingPlayers).some(p => p.x === i && p.y === j);
-                                if (mapFromFirestore[i][j] === TILE_TYPES.WATER && !isOccupied) {
-                                    newPlayerX = i;
-                                    newPlayerY = j;
-                                    placed = true;
-                                    break;
-                                }
-                            }
-                            if (placed) break;
-                        }
-
-                        if (!placed) {
-                            // Если нет свободных мест, размещаем рядом с первым игроком (запасной вариант)
-                            const player1Pos = Object.values(existingPlayers)[0];
-                            newPlayerX = player1Pos ? player1Pos.x + 1 : Math.floor(Math.random() * MAP_SIZE);
-                            newPlayerY = player1Pos ? player1Pos.y + 1 : Math.floor(Math.random() * MAP_SIZE);
-                            newPlayerX = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerX));
-                            newPlayerY = Math.min(MAP_SIZE - 1, Math.max(0, newPlayerY));
-                            if (mapFromFirestore[newPlayerX][newPlayerY] === TILE_TYPES.WATER) {
-                                newPlayerX = Math.floor(Math.random() * MAP_SIZE);
-                                newPlayerY = Math.floor(Math.random() * MAP_SIZE);
-                            }
-                        }
-
-                        existingPlayers = {
-                            ...existingPlayers,
-                            [currentUserId]: {
-                                x: newPlayerX,
-                                y: newPlayerY,
-                                resources: { ...INITIAL_RESOURCES },
-                                lastActionTime: Date.now(),
-                                name: `Игрок_${currentUserId.substring(currentUserId.length - 8)}`,
-                            }
-                        };
-                        await updateDoc(roomDocRef, { players: existingPlayers });
-                    }
+            
+            // Update time
+            if (!gameState.paused && timestamp - gameState.time.lastUpdate > 1000) {
+                gameState.time.minutes++;
+                gameState.time.lastUpdate = timestamp;
+                
+                if (gameState.time.minutes >= 60) {
+                    gameState.time.minutes = 0;
+                    gameState.time.hours++;
                     
-                    currentRoomId = idToJoin;
-                    displayMessage(`Вы присоединились к игре "${idToJoin}"!`);
-                    // Подписываемся на игру после присоединения
-                    gameDocRef = roomDocRef;
-                    onSnapshot(gameDocRef, (docSnap) => {
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            players = data.players || {};
-                            currentMap = data.map ? JSON.parse(data.map) : [];
-                            survivalDays = data.survivalDays || 0;
-                            renderGame();
-                            showScreen('main-game-screen');
-                        } else {
-                            displayMessage('Игра не найдена или удалена.', true);
-                            showScreen('pre-game-screen');
-                        }
-                    }, (err) => {
-                        console.error("Ошибка подписки:", err);
-                        displayMessage("Ошибка синхронизации игры.", true);
-                    });
-
-                } else {
-                    displayMessage('Игра с таким ID не найдена.', true);
+                    if (gameState.time.hours >= 24) {
+                        gameState.time.hours = 0;
+                    }
                 }
-            } catch (e) {
-                console.error("Ошибка при присоединении к игре:", e);
-                displayMessage(`Не удалось присоединиться к игре: ${e.message}`, true);
-            } finally {
-                isLoading = false;
+                
+                // Update day/night
+                gameState.time.dayTime = (gameState.time.hours >= 6 && gameState.time.hours < 24);
+                
+                // Update UI
+                updateUI();
             }
-        });
-
-        // Обработчики движения
-        moveUpBtn.addEventListener('click', () => handleMove(-1, 0));
-        moveLeftBtn.addEventListener('click', () => handleMove(0, -1));
-        moveRightBtn.addEventListener('click', () => handleMove(0, 1));
-        moveDownBtn.addEventListener('click', () => handleMove(1, 0));
-
-        // Запуск инициализации Firebase при загрузке окна
-        window.onload = setupFirebase;
-
+        }
+        
+        function updateUI() {
+            // Update stats bar
+            statsBar.innerHTML = `
+                <span>❤️ ${gameState.player.health}%</span>
+                <span>🍗 ${gameState.player.hunger}%</span>
+                <span>🥤 ${gameState.player.thirst}%</span>
+                <span>💰 ${gameState.player.gold}</span>
+                <span>💎 ${gameState.player.brill}</span>
+                <span>🟢 ${gameState.player.emeralds}</span>
+            `;
+            
+            // Update time display
+            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
+            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
+            const timeOfDay = gameState.time.dayTime ? 'день' : 'ночь';
+            timeDisplay.innerHTML = `
+                <span>🕒 ${hoursStr}:${minsStr} (${timeOfDay})</span>
+                <span>☢️ 0%</span>
+            `;
+        }
+        
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (gameState.screen === 'game') {
+                // Draw objects
+                gameState.objects.forEach(obj => {
+                    if (obj.type === 'tree') {
+                        ctx.fillStyle = '#2a5c2a';
+                        ctx.fillRect(obj.x - 15, obj.y - 30, 30, 60);
+                        ctx.fillStyle = '#5c3a1e';
+                        ctx.fillRect(obj.x - 5, obj.y, 10, 30);
+                    } else if (obj.type === 'wall') {
+                        ctx.fillStyle = '#888';
+                        ctx.fillRect(obj.x - 20, obj.y - 10, 40, 20);
+                    }
+                });
+                
+                // Draw player
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(
+                    gameState.player.x - 15, 
+                    gameState.player.y - 15, 
+                    30, 30
+                );
+                
+                // Draw player face to indicate direction
+                ctx.fillStyle = 'white';
+                ctx.fillRect(
+                    gameState.player.x - 5, 
+                    gameState.player.y - 10, 
+                    10, 5
+                );
+                
+                // Draw action indicator
+                if (gameState.player.currentAction === 'attack') {
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(
+                        gameState.player.x, 
+                        gameState.player.y, 
+                        35, 0, Math.PI * 2
+                    );
+                    ctx.stroke();
+                } else if (gameState.player.currentAction === 'build') {
+                    ctx.strokeStyle = 'green';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(
+                        gameState.player.x, 
+                        gameState.player.y, 
+                        35, 0, Math.PI * 2
+                    );
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        // Start the game
+        gameState.player.x = canvas.width / 2;
+        gameState.player.y = canvas.height / 2;
+        gameState.time.lastUpdate = performance.now();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
-
