@@ -61,7 +61,7 @@
         }
 
         /* Общие стили для всех интерактивных кнопок, не входящих в объединенную панель */
-        .menuBtn, .modeBtn, #pauseBtn, .actionBtn {
+        .menuBtn, .modeBtn, #pauseBtn, .actionBtn, .hotbarSlot, #inventoryBtn {
             border: 2px solid #444;
             border-radius: 8px;
             display: flex;
@@ -73,21 +73,36 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: all 0.2s ease;
             outline: none; /* Убираем стандартную синюю обводку при фокусе для всех интерактивных элементов */
+            background-color: rgba(50, 50, 50, 0.8); /* Базовый фон для большинства кнопок */
+        }
+
+        /* Специальный фон для кнопки инвентаря на ПК */
+        #inventoryBtn {
+             background-color: #00008B; /* Темно-синий фон */
         }
 
         /* Эффект наведения (hover) */
-        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover {
+        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover, .hotbarSlot:hover, #inventoryBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
             background-color: rgba(70, 70, 70, 0.9); /* Более светлый фон при наведении */
         }
+        /* Особый эффект наведения для кнопки инвентаря */
+        #inventoryBtn:hover {
+            background-color: #00007A; /* Чуть темнее темно-синий при наведении */
+        }
+
 
         /* Эффект нажатия (active) - ТОЛЬКО ВО ВРЕМЯ НАЖАТИЯ */
-        .menuBtn:active, .modeBtn:active, #pauseBtn:active {
+        .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active {
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
             background-color: rgba(90, 90, 90, 0.9); /* Темнее серый фон при нажатии */
             border-color: #666;
+        }
+        /* Особый эффект нажатия для кнопки инвентаря */
+        #inventoryBtn:active {
+            background-color: #000069; /* Еще темнее темно-синий при нажатии */
         }
 
         /* Специальные стили для actionBtn:active, чтобы они темнели */
@@ -103,6 +118,12 @@
             border-color: #3498db;
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
             background-color: rgba(70, 70, 70, 0.9); /* Можно оставить, если нужно выделить фон */
+        }
+        /* Стиль для ВЫБРАННОЙ кнопки инвентаря */
+        #inventoryBtn.selected {
+            border-color: #3498db; /* Синяя рамка */
+            background-color: #3498db; /* Синяя заливка */
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8); /* Синее свечение */
         }
 
         /* Главное меню */
@@ -123,7 +144,6 @@
         .menuBtn {
             width: 250px;
             height: 70px;
-            background-color: rgba(50, 50, 50, 0.8);
             margin: 15px 0;
             font-size: 24px;
         }
@@ -151,7 +171,6 @@
             max-width: 45%;
             min-width: 280px;
             height: 180px;
-            background-color: rgba(50, 50, 50, 0.8);
             margin: 15px;
             font-size: 32px;
         }
@@ -164,6 +183,51 @@
             text-align: center;
             line-height: 1.2;
         }
+
+        /* Экран "Что нового" */
+        #whatsNewScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 105;
+            padding: 20px;
+            overflow-y: auto; /* Для прокрутки, если контента много */
+        }
+        #whatsNewScreen h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+        #whatsNewScreen ul {
+            list-style: none;
+            padding: 0;
+            max-width: 600px;
+            width: 90%;
+            text-align: left;
+        }
+        #whatsNewScreen li {
+            background-color: rgba(50, 50, 50, 0.7);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        #whatsNewScreen li strong {
+            color: #2ecc71; /* Зеленый для заголовков изменений */
+        }
+        #whatsNewScreen .menuBtn {
+            margin-top: 30px;
+            width: 200px;
+        }
+
 
         /* Статистика */
         #statsContainer {
@@ -250,7 +314,6 @@
             right: 15px;
             width: 50px;
             height: 50px;
-            background-color: rgba(0, 0, 0, 0.7);
             font-size: 28px;
             line-height: 1;
             z-index: 70;
@@ -319,41 +382,12 @@
         .hotbarSlot {
             width: 50px;
             height: 50px;
-            background-color: rgba(50, 50, 50, 0.8); /* Фон отдельной ячейки */
+            font-size: 30px;
             border: none; /* Убрана индивидуальная рамка */
             border-radius: 8px; /* Скругления для индивидуальных слотов */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            cursor: pointer;
-            pointer-events: auto;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Небольшая тень для каждого слота */
-            transition: all 0.2s ease;
-            outline: none;
-        }
-
-        /* Эффект наведения (hover) для слотов хотбара */
-        .hotbarSlot:hover {
-            background-color: rgba(70, 70, 70, 0.9);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         
-        /* Эффект нажатия (active) для слотов хотбара */
-        .hotbarSlot:active {
-            transform: translateY(1px);
-            background-color: rgba(90, 90, 90, 0.9);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Стиль для ВЫБРАННОГО слота хотбара - остается активным */
-        .hotbarSlot.selected {
-            border-color: #3498db;
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
-            background-color: rgba(70, 70, 70, 0.9);
-        }
-
         /* Кнопка инвентаря - теперь часть общего контейнера */
         #inventoryBtn {
             width: 50px;
@@ -361,38 +395,8 @@
             border: none; /* Убрана индивидуальная рамка */
             border-radius: 8px; /* Добавляем скругления для самой кнопки инвентаря */
             font-size: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             margin-left: 8px; /* Отступ между хотбаром и рюкзаком на ПК */
-            color: white;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: all 0.2s ease;
-            outline: none;
-            background-color: #00008B; /* Темно-синий фон */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Эффект наведения (hover) для кнопки инвентаря */
-        #inventoryBtn:hover {
-            background-color: #00007A; /* Чуть темнее темно-синий при наведении */
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Эффект нажатия (active) для кнопки инвентаря */
-        #inventoryBtn:active {
-            transform: translateY(1px);
-            background-color: #000069; /* Еще темнее темно-синий при нажатии */
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Стиль для ВЫБРАННОЙ кнопки инвентаря */
-        #inventoryBtn.selected {
-            border-color: #3498db; /* Синяя рамка */
-            background-color: #3498db; /* Синяя заливка */
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8); /* Синее свечение */
         }
         
         /* Кнопки действий */
@@ -409,7 +413,6 @@
         .actionBtn {
             width: 100px;
             height: 100px;
-            background-color: rgba(0, 0, 0, 0.7); /* Исходный фон */
             font-size: 40px;
         }
 
@@ -452,93 +455,6 @@
             opacity: 1;
             visibility: visible;
         }
-
-        /* ===== Стили ТОЛЬКО для мобильных устройств (при наличии класса .mobile-ui на body) ===== */
-        body.mobile-ui {
-            /* Общие уменьшения для мобильного UI, если нужно */
-        }
-
-        body.mobile-ui #joystickArea {
-            width: 80px; /* Чуть больше джойстик */
-            height: 80px;
-            bottom: 30px; /* Одинаковый отступ от низа */
-            left: 30px;  /* Одинаковый отступ от левого края */
-        }
-        body.mobile-ui #joystickInner {
-            width: 40px;
-            height: 40px;
-        }
-
-        body.mobile-ui #bottomControls {
-            bottom: 15px;
-            padding: 5px;
-        }
-
-        body.mobile-ui #hotbar {
-            gap: 5px; /* Увеличили отступ между слотами хотбара */
-        }
-
-        body.mobile-ui .hotbarSlot {
-            width: 40px; /* Слоты хотбара: чуть меньше рюкзака */
-            height: 40px;
-            font-size: 20px; /* Скорректировали шрифт */
-        }
-
-        body.mobile-ui #inventoryBtn {
-            width: 50px; /* Инвентарь: остался прежнего размера */
-            height: 50px;
-            font-size: 24px;
-            margin-left: 8px; /* Немного увеличили отступ, чтобы выглядело лучше */
-        }
-
-        body.mobile-ui #actionButtons {
-            bottom: 15px;
-            right: 15px;
-            gap: 8px;
-        }
-        body.mobile-ui .actionBtn {
-            width: 60px; /* Кнопки действий: чуть больше рюкзака */
-            height: 60px;
-            font-size: 28px; /* Скорректировали шрифт */
-        }
-
-        body.mobile-ui #pauseBtn {
-            width: 33px;
-            height: 33px;
-            top: 5px; /* Переместили в самый угол */
-            right: 5px; /* Переместили в самый угол */
-            font-size: 18px;
-        }
-
-        body.mobile-ui #statsContainer {
-            top: 8px;
-            left: 8px;
-            gap: 4px;
-        }
-        body.mobile-ui #topStatsRow, body.mobile-ui #bottomStatsRow {
-            gap: 8px;
-        }
-        body.mobile-ui .stat-item {
-            padding: 4px 8px;
-            font-size: 12px;
-            gap: 4px;
-        }
-        body.mobile-ui .stat-label {
-            font-size: 14px;
-        }
-        body.mobile-ui .health-bar-container, body.mobile-ui .hunger-bar-container {
-            width: 50px;
-            height: 8px;
-        }
-
-        body.mobile-ui .modeBtn {
-            max-width: 90%;
-            height: 100px;
-            font-size: 20px;
-        }
-        body.mobile-ui .modeBtn span {
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
@@ -548,6 +464,8 @@
         <!-- Главное меню -->
         <div id="menuScreen">
             <div class="menuBtn" id="playBtn">ИГРАТЬ</div>
+            <div class="menuBtn" id="whatsNewBtn">ЧТО НОВОГО</div>
+            <div class="menuBtn" id="refreshBtn">ОБНОВИТЬ СТРАНИЦУ</div>
             <div class="menuBtn" id="settingsBtn">НАСТРОЙКИ</div>
             <div class="menuBtn" id="exitBtn">ВЫХОД</div>
         </div>
@@ -562,6 +480,34 @@
                 ОФФЛАЙН
                 <span>Одиночная игра</span>
             </div>
+        </div>
+
+        <!-- Экран "Что нового" -->
+        <div id="whatsNewScreen">
+            <h2>Что нового в Survival City?</h2>
+            <ul>
+                <li><strong>Обновление 0.0.3:</strong>
+                    <ul>
+                        <li>Исправлена проблема с некорректным отображением интерфейса на мобильных устройствах. Теперь размеры элементов (джойстик, хотбар, кнопки действий) динамически подстраиваются под мобильный экран.</li>
+                        <li>Кнопка паузы перемещена в угол для более удобного доступа.</li>
+                        <li>Джойстик теперь имеет фиксированный отступ от нижнего и левого края, а не от центра.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.2:</strong>
+                    <ul>
+                        <li>Добавлен джойстик для мобильных устройств.</li>
+                        <li>Добавлены кнопки атаки и строительства.</li>
+                        <li>Реализована базовая система инвентаря и хотбара.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.1:</strong>
+                    <ul>
+                        <li>Первый запуск игры с базовым перемещением игрока.</li>
+                        <li>Интерфейс с показателями здоровья, золота и времени.</li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="menuBtn" id="whatsNewBackBtn">НАЗАД В МЕНЮ</div>
         </div>
         
         <!-- Игровой интерфейс -->
@@ -656,7 +602,7 @@
                 { type: 'tree', x: 200, y: 150 },
                 { type: 'wall', x: 300, y: 200 }
             ],
-            screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'game', 'pause'
+            screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'game', 'pause', 'whatsNew'
             paused: false,
             // Проверка на мобильное устройство (более строгая, чтобы исключить десктоп с сенсорным экраном)
             // Добавлена проверка на touch-события для более надежного определения мобильности
@@ -669,6 +615,8 @@
         const menuScreen = document.getElementById('menuScreen');
         const modeSelectScreen = document.getElementById('modeSelectScreen');
         const playBtn = document.getElementById('playBtn');
+        const whatsNewBtn = document.getElementById('whatsNewBtn'); // Новая кнопка
+        const refreshBtn = document.getElementById('refreshBtn'); // Новая кнопка
         const onlineBtn = document.getElementById('onlineBtn');
         const offlineBtn = document.getElementById('offlineBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -682,6 +630,8 @@
         const messageBox = document.getElementById('messageBox');
         const uiContainer = document.getElementById('uiContainer'); // Получаем ссылку на uiContainer
         const inventoryBtn = document.getElementById('inventoryBtn'); // Получаем ссылку на кнопку инвентаря
+        const whatsNewScreen = document.getElementById('whatsNewScreen'); // Экран "Что нового"
+        const whatsNewBackBtn = document.getElementById('whatsNewBackBtn'); // Кнопка назад для "Что нового"
 
         // Элементы статистики для обновления
         const playerHealthFill = document.getElementById('playerHealthFill');
@@ -722,9 +672,9 @@
 
         // Инициализация игры
         function init() {
-            // Добавляем класс 'mobile-ui' к body, если это мобильное устройство
+            // Применяем мобильные стили, если устройство мобильное
             if (gameState.isMobile) {
-                document.body.classList.add('mobile-ui');
+                applyMobileStyles();
                 joystickArea.style.display = 'block'; // Показываем джойстик на мобильных
                 // Рассчитываем центр джойстика после того, как он станет видимым
                 const rect = joystickArea.getBoundingClientRect();
@@ -744,6 +694,82 @@
             gameCanvas.style.display = 'none';
             uiContainer.style.display = 'none'; // Скрываем UI по умолчанию
             menuScreen.style.display = 'flex'; // Показываем главное меню
+        }
+
+        // Функция для применения мобильных стилей через JS
+        function applyMobileStyles() {
+            // Кнопка паузы
+            pauseBtn.style.width = '33px';
+            pauseBtn.style.height = '33px';
+            pauseBtn.style.top = '5px';
+            pauseBtn.style.right = '5px';
+            pauseBtn.style.fontSize = '18px';
+
+            // Джойстик
+            joystickArea.style.width = '80px';
+            joystickArea.style.height = '80px';
+            joystickArea.style.bottom = '30px';
+            joystickArea.style.left = '30px';
+            joystickInner.style.width = '40px';
+            joystickInner.style.height = '40px';
+
+            // Нижняя панель (хотбар + рюкзак)
+            document.getElementById('bottomControls').style.bottom = '15px';
+            document.getElementById('bottomControls').style.padding = '5px';
+
+            // Слоты хотбара
+            document.getElementById('hotbar').style.gap = '5px'; // Увеличили отступ
+            hotbarSlots.forEach(slot => {
+                slot.style.width = '40px'; // Чуть меньше рюкзака
+                slot.style.height = '40px';
+                slot.style.fontSize = '20px';
+            });
+
+            // Кнопка инвентаря
+            inventoryBtn.style.width = '50px'; // Остался прежний
+            inventoryBtn.style.height = '50px';
+            inventoryBtn.style.fontSize = '24px';
+            inventoryBtn.style.marginLeft = '8px';
+
+            // Кнопки действий
+            document.getElementById('actionButtons').style.bottom = '15px';
+            document.getElementById('actionButtons').style.right = '15px';
+            document.getElementById('actionButtons').style.gap = '8px';
+            attackBtn.style.width = '60px'; // Чуть больше рюкзака
+            attackBtn.style.height = '60px';
+            attackBtn.style.fontSize = '28px';
+            buildBtn.style.width = '60px'; // Чуть больше рюкзака
+            buildBtn.style.height = '60px';
+            buildBtn.style.fontSize = '28px';
+
+            // Статистика
+            document.getElementById('statsContainer').style.top = '8px';
+            document.getElementById('statsContainer').style.left = '8px';
+            document.getElementById('statsContainer').style.gap = '4px';
+            document.getElementById('topStatsRow').style.gap = '8px';
+            document.getElementById('bottomStatsRow').style.gap = '8px';
+            document.querySelectorAll('.stat-item').forEach(item => {
+                item.style.padding = '4px 8px';
+                item.style.fontSize = '12px';
+                item.style.gap = '4px';
+            });
+            document.querySelectorAll('.stat-label').forEach(label => {
+                label.style.fontSize = '14px';
+            });
+            document.querySelector('.health-bar-container').style.width = '50px';
+            document.querySelector('.health-bar-container').style.height = '8px';
+            document.querySelector('.hunger-bar-container').style.width = '50px';
+            document.querySelector('.hunger-bar-container').style.height = '8px';
+
+            // Кнопки режимов (online/offline)
+            document.querySelectorAll('.modeBtn').forEach(btn => {
+                btn.style.maxWidth = '90%';
+                btn.style.height = '100px';
+                btn.style.fontSize = '20px';
+            });
+            document.querySelectorAll('.modeBtn span').forEach(span => {
+                span.style.fontSize = '14px';
+            });
         }
         
         // Изменение размера холста при изменении окна
@@ -769,6 +795,22 @@
             playBtn.addEventListener('click', () => {
                 menuScreen.style.display = 'none';
                 modeSelectScreen.style.display = 'flex';
+            });
+
+            whatsNewBtn.addEventListener('click', () => {
+                menuScreen.style.display = 'none';
+                whatsNewScreen.style.display = 'flex';
+                gameState.screen = 'whatsNew'; // Обновляем состояние экрана
+            });
+
+            whatsNewBackBtn.addEventListener('click', () => {
+                whatsNewScreen.style.display = 'none';
+                menuScreen.style.display = 'flex';
+                gameState.screen = 'menu'; // Обновляем состояние экрана
+            });
+
+            refreshBtn.addEventListener('click', () => {
+                location.reload(); // Перезагружает страницу
             });
             
             onlineBtn.addEventListener('click', () => {
