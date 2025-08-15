@@ -24,28 +24,6 @@
             height: 100%;
         }
         
-        @media (orientation: portrait) {
-            #rotateWarning {
-                display: flex;
-            }
-        }
-        
-        #rotateWarning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            text-align: center;
-            padding: 20px;
-        }
-        
         #gameContainer {
             position: relative;
             width: 100%;
@@ -71,7 +49,77 @@
             height: 100%;
             pointer-events: none;
         }
+
+        /* Меню */
+        #menuScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
         
+        .menuBtn {
+            width: 200px;
+            height: 60px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        /* Выбор режима */
+        #modeSelectScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+        }
+        
+        .modeBtn {
+            width: 300px;
+            height: 120px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 10px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        .modeBtn span {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #aaa;
+        }
+
+        /* Статистика */
         #statsContainer {
             position: absolute;
             top: 10px;
@@ -83,33 +131,16 @@
         
         .stat-row {
             display: flex;
-            gap: 20px;
-            background-color: rgba(0, 0, 0, 0.5);
+            gap: 15px;
+            background-color: rgba(0, 0, 0, 0.6);
             padding: 5px 10px;
             border-radius: 5px;
         }
-        
-        #pauseBtn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            background-color: rgba(0, 0, 0, 0.7);
-            border: 2px solid #444;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            color: white;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-        
+
+        /* Управление */
         #hotbar {
             position: absolute;
-            bottom: 70px;  /* Подняли выше */
+            bottom: 70px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -132,14 +163,9 @@
             font-size: 20px;
         }
         
-        .hotbarSlot.selected {
-            border-color: white;
-            background-color: rgba(100, 100, 100, 0.8);
-        }
-        
         #inventoryBtn {
             position: absolute;
-            bottom: 20px;
+            bottom: 70px;
             right: 20px;
             width: 40px;
             height: 40px;
@@ -158,37 +184,35 @@
         #actionButtons {
             position: absolute;
             bottom: 20px;
-            right: 70px;
+            right: 20px;
             display: flex;
             gap: 10px;
             pointer-events: auto;
         }
         
         .actionBtn {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #444;
             border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: 30px;
             color: white;
             cursor: pointer;
         }
-        
-        .actionBtn:active {
-            background-color: rgba(50, 50, 50, 0.7);
-        }
-        
+
+        /* Джойстик (только для мобильных) */
         #joystickArea {
             position: absolute;
-            bottom: 70px;  /* Подняли выше */
+            bottom: 70px;
             left: 20px;
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             pointer-events: auto;
+            display: none;
         }
         
         #joystickOuter {
@@ -200,31 +224,18 @@
         }
         
         #joystickInner {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background-color: rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             position: absolute;
-            top: 35px;
-            left: 35px;
+            top: 20px;
+            left: 20px;
             touch-action: none;
             transition: transform 0.1s;
         }
-        
-        #menuScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-        
+
+        /* Пауза */
         #pauseScreen {
             position: absolute;
             top: 0;
@@ -238,36 +249,32 @@
             align-items: center;
             z-index: 80;
         }
-        
-        .menuBtn {
-            width: 80%;
-            max-width: 300px;
-            height: 60px;
-            background-color: rgba(50, 50, 50, 0.8);
-            border: 2px solid #444;
-            border-radius: 5px;
-            margin: 10px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            color: white;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-        
-        .menuBtn:active {
-            background-color: rgba(80, 80, 80, 0.8);
-        }
     </style>
 </head>
 <body>
-    <div id="rotateWarning">
-        <span>Пожалуйста, поверните устройство в альбомный режим для игры</span>
-    </div>
-    
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
+        
+        <!-- Главное меню -->
+        <div id="menuScreen">
+            <div class="menuBtn" id="playBtn">ИГРАТЬ</div>
+            <div class="menuBtn" id="settingsBtn">НАСТРОЙКИ</div>
+            <div class="menuBtn" id="exitBtn">ВЫХОД</div>
+        </div>
+        
+        <!-- Выбор режима -->
+        <div id="modeSelectScreen">
+            <div class="modeBtn" id="onlineBtn">
+                ОНЛАЙН
+                <span>Игра с друзьями</span>
+            </div>
+            <div class="modeBtn" id="offlineBtn">
+                ОФФЛАЙН
+                <span>Одиночная игра</span>
+            </div>
+        </div>
+        
+        <!-- Игровой интерфейс -->
         <div id="uiContainer">
             <div id="statsContainer">
                 <div class="stat-row">
@@ -278,14 +285,16 @@
                 <div class="stat-row">
                     <span>🍗 80%</span>
                 </div>
-                <!-- Убрали радиацию -->
             </div>
+            
             <div id="pauseBtn">⏸</div>
+            
             <div id="joystickArea">
                 <div id="joystickOuter">
                     <div id="joystickInner"></div>
                 </div>
             </div>
+            
             <div id="hotbar">
                 <div class="hotbarSlot selected">🪓</div>
                 <div class="hotbarSlot">⛏️</div>
@@ -293,28 +302,28 @@
                 <div class="hotbarSlot">🏗️</div>
                 <div class="hotbarSlot"></div>
             </div>
+            
             <div id="inventoryBtn">⋯</div>
+            
             <div id="actionButtons">
                 <div class="actionBtn" id="attackBtn">⚔️</div>
                 <div class="actionBtn" id="buildBtn">🏗️</div>
             </div>
         </div>
         
-        <div id="menuScreen">
-            <div class="menuBtn" id="playBtn">ИГРАТЬ</div>
-            <div class="menuBtn" id="settingsBtn">НАСТРОЙКИ</div>
-            <div class="menuBtn" id="achievementsBtn">ДОСТИЖЕНИЯ</div>
-            <div class="menuBtn" id="shopBtn">МАГАЗИН</div>
-        </div>
-        
+        <!-- Экран паузы -->
         <div id="pauseScreen">
-            <div class="menuBtn" id="exitBtn" style="position: absolute; top: 20px; left: 20px; width: auto; padding: 0 20px;">ВЫЙТИ</div>
             <div class="menuBtn" id="resumeBtn">ПРОДОЛЖИТЬ</div>
+            <div class="menuBtn" id="menuBtn">В МЕНЮ</div>
         </div>
     </div>
 
     <script>
-        // Game state
+        // Инициализация игры
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Состояние игры
         const gameState = {
             player: {
                 x: 0,
@@ -322,12 +331,8 @@
                 speed: 3,
                 health: 100,
                 hunger: 80,
-                thirst: 70,
                 gold: 10,
-                inventory: [
-                    '🪓', '⛏️', '🔫', '🏗️', '',
-                    '🍖', '🌿', '💧', '🪵', ''
-                ],
+                inventory: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 hotbar: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 selectedSlot: 0,
                 currentAction: 'move'
@@ -335,160 +340,169 @@
             time: {
                 hours: 12,
                 minutes: 45,
-                dayTime: true,
                 lastUpdate: 0
             },
-            settings: {
-                difficulty: 'normal' // 'easy', 'normal', 'hard'
-            },
-            joystick: {
-                active: false,
-                x: 0,
-                y: 0,
-                startX: 0,
-                startY: 0
-            },
-            keys: {
-                w: false,
-                a: false,
-                s: false,
-                d: false
-            },
             objects: [
-                { type: 'tree', x: 200, y: 150, health: 100 },
-                { type: 'wall', x: 300, y: 200, health: 200 }
+                { type: 'tree', x: 200, y: 150 },
+                { type: 'wall', x: 300, y: 200 }
             ],
             screen: 'menu',
-            isMobile: /Mobi|Android/i.test(navigator.userAgent),
-            paused: false
+            paused: false,
+            isMobile: /Mobi|Android/i.test(navigator.userAgent)
         };
         
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        // Элементы интерфейса
+        const menuScreen = document.getElementById('menuScreen');
+        const modeSelectScreen = document.getElementById('modeSelectScreen');
+        const playBtn = document.getElementById('playBtn');
+        const onlineBtn = document.getElementById('onlineBtn');
+        const offlineBtn = document.getElementById('offlineBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const attackBtn = document.getElementById('attackBtn');
+        const buildBtn = document.getElementById('buildBtn');
+        const hotbarSlots = document.querySelectorAll('.hotbarSlot');
+        const joystickArea = document.getElementById('joystickArea');
+        const joystickInner = document.getElementById('joystickInner');
+        
+        // Настройка управления для ПК
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+        
+        // Инициализация
+        function init() {
+            resizeCanvas();
+            setupEventListeners();
+            
+            if (gameState.isMobile) {
+                joystickArea.style.display = 'block';
+                setupJoystick();
+            }
+            
+            gameLoop();
+        }
         
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            gameState.player.x = canvas.width / 2;
+            gameState.player.y = canvas.height / 2;
         }
         
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        
-        // UI Elements
-        const rotateWarning = document.getElementById('rotateWarning');
-        const menuScreen = document.getElementById('menuScreen');
-        const pauseScreen = document.getElementById('pauseScreen');
-        const playBtn = document.getElementById('playBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const resumeBtn = document.getElementById('resumeBtn');
-        const exitBtn = document.getElementById('exitBtn');
-        const inventoryBtn = document.getElementById('inventoryBtn');
-        const attackBtn = document.getElementById('attackBtn');
-        const buildBtn = document.getElementById('buildBtn');
-        const joystickInner = document.getElementById('joystickInner');
-        const joystickArea = document.getElementById('joystickArea');
-        const statsContainer = document.getElementById('statsContainer');
-        const hotbarSlots = document.querySelectorAll('.hotbarSlot');
-        
-        // Check orientation
-        function checkOrientation() {
-            if (window.innerHeight > window.innerWidth) {
-                rotateWarning.style.display = 'flex';
-            } else {
-                rotateWarning.style.display = 'none';
-            }
-        }
-        
-        window.addEventListener('resize', checkOrientation);
-        checkOrientation();
-        
-        // Event listeners
-        playBtn.addEventListener('click', () => {
-            menuScreen.style.display = 'none';
-            gameState.screen = 'game';
-            gameState.paused = false;
-            startGame();
-        });
-        
-        pauseBtn.addEventListener('click', () => {
-            if (gameState.screen === 'game') {
-                gameState.paused = !gameState.paused;
-                pauseScreen.style.display = gameState.paused ? 'flex' : 'none';
-            }
-        });
-        
-        resumeBtn.addEventListener('click', () => {
-            gameState.paused = false;
-            pauseScreen.style.display = 'none';
-        });
-        
-        exitBtn.addEventListener('click', () => {
-            gameState.paused = false;
-            pauseScreen.style.display = 'none';
-            gameState.screen = 'menu';
-            menuScreen.style.display = 'flex';
-        });
-        
-        attackBtn.addEventListener('click', () => {
-            gameState.player.currentAction = 'attack';
-            console.log('Attack with:', gameState.player.hotbar[gameState.player.selectedSlot]);
-        });
-        
-        buildBtn.addEventListener('click', () => {
-            gameState.player.currentAction = 'build';
-            console.log('Build with:', gameState.player.hotbar[gameState.player.selectedSlot]);
-        });
-        
-        // Hotbar selection
-        hotbarSlots.forEach((slot, index) => {
-            slot.addEventListener('click', () => {
-                document.querySelector('.hotbarSlot.selected').classList.remove('selected');
-                slot.classList.add('selected');
-                gameState.player.selectedSlot = index;
+        function setupEventListeners() {
+            // Кнопки меню
+            playBtn.addEventListener('click', () => {
+                menuScreen.style.display = 'none';
+                modeSelectScreen.style.display = 'flex';
             });
-        });
-        
-        // Joystick controls for mobile
-        if (gameState.isMobile) {
-            joystickArea.addEventListener('touchstart', handleJoystickStart);
-            joystickArea.addEventListener('touchmove', handleJoystickMove);
-            joystickArea.addEventListener('touchend', handleJoystickEnd);
-        } else {
-            joystickArea.style.display = 'none';
             
-            // Keyboard controls for PC
-            window.addEventListener('keydown', (e) => {
+            onlineBtn.addEventListener('click', () => {
+                alert('Онлайн режим в разработке');
+            });
+            
+            offlineBtn.addEventListener('click', startGame);
+            
+            // Управление игрой
+            pauseBtn.addEventListener('click', togglePause);
+            resumeBtn.addEventListener('click', togglePause);
+            menuBtn.addEventListener('click', returnToMenu);
+            
+            // Горячие клавиши
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            
+            // Кнопки действий
+            attackBtn.addEventListener('click', () => {
+                gameState.player.currentAction = 'attack';
+            });
+            
+            buildBtn.addEventListener('click', () => {
+                gameState.player.currentAction = 'build';
+            });
+            
+            // Выбор слота
+            hotbarSlots.forEach((slot, index) => {
+                slot.addEventListener('click', () => {
+                    selectHotbarSlot(index);
+                });
+            });
+            
+            // Ресайз
+            window.addEventListener('resize', resizeCanvas);
+        }
+        
+        function setupJoystick() {
+            let joystickActive = false;
+            let startX = 0, startY = 0;
+            
+            joystickArea.addEventListener('touchstart', (e) => {
                 if (gameState.screen !== 'game' || gameState.paused) return;
                 
-                switch(e.key.toLowerCase()) {
-                    case 'w': gameState.keys.w = true; break;
-                    case 'a': gameState.keys.a = true; break;
-                    case 's': gameState.keys.s = true; break;
-                    case 'd': gameState.keys.d = true; break;
-                    case '1': selectHotbarSlot(0); break;
-                    case '2': selectHotbarSlot(1); break;
-                    case '3': selectHotbarSlot(2); break;
-                    case '4': selectHotbarSlot(3); break;
-                    case '5': selectHotbarSlot(4); break;
-                    case ' ': 
-                        if (gameState.player.currentAction === 'attack') {
-                            gameState.player.currentAction = 'move';
-                        } else {
-                            gameState.player.currentAction = 'attack';
-                        }
-                        break;
-                }
+                const touch = e.touches[0];
+                const rect = joystickArea.getBoundingClientRect();
+                
+                joystickActive = true;
+                startX = rect.left + rect.width / 2;
+                startY = rect.top + rect.height / 2;
+                
+                e.preventDefault();
             });
             
-            window.addEventListener('keyup', (e) => {
-                switch(e.key.toLowerCase()) {
-                    case 'w': gameState.keys.w = false; break;
-                    case 'a': gameState.keys.a = false; break;
-                    case 's': gameState.keys.s = false; break;
-                    case 'd': gameState.keys.d = false; break;
+            joystickArea.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
+                
+                const touch = e.touches[0];
+                const x = touch.clientX - startX;
+                const y = touch.clientY - startY;
+                const distance = Math.sqrt(x*x + y*y);
+                const maxDistance = 30;
+                
+                if (distance > maxDistance) {
+                    const angle = Math.atan2(y, x);
+                    joystickInner.style.transform = `translate(${Math.cos(angle) * maxDistance}px, ${Math.sin(angle) * maxDistance}px)`;
+                } else {
+                    joystickInner.style.transform = `translate(${x}px, ${y}px)`;
                 }
+                
+                e.preventDefault();
             });
+            
+            joystickArea.addEventListener('touchend', () => {
+                joystickActive = false;
+                joystickInner.style.transform = 'translate(0, 0)';
+            });
+        }
+        
+        function handleKeyDown(e) {
+            if (gameState.screen !== 'game' || gameState.paused) return;
+            
+            switch(e.key.toLowerCase()) {
+                case 'w': keys.w = true; break;
+                case 'a': keys.a = true; break;
+                case 's': keys.s = true; break;
+                case 'd': keys.d = true; break;
+                case '1': selectHotbarSlot(0); break;
+                case '2': selectHotbarSlot(1); break;
+                case '3': selectHotbarSlot(2); break;
+                case '4': selectHotbarSlot(3); break;
+                case '5': selectHotbarSlot(4); break;
+                case ' ': gameState.player.currentAction = 'attack'; break;
+            }
+        }
+        
+        function handleKeyUp(e) {
+            switch(e.key.toLowerCase()) {
+                case 'w': keys.w = false; break;
+                case 'a': keys.a = false; break;
+                case 's': keys.s = false; break;
+                case 'd': keys.d = false; break;
+                case ' ': gameState.player.currentAction = 'move'; break;
+            }
         }
         
         function selectHotbarSlot(index) {
@@ -497,148 +511,65 @@
             gameState.player.selectedSlot = index;
         }
         
-        function handleJoystickStart(e) {
-            if (gameState.screen !== 'game' || gameState.paused) return;
-            
-            const touch = e.touches[0];
-            const rect = joystickArea.getBoundingClientRect();
-            
-            gameState.joystick.active = true;
-            gameState.joystick.startX = rect.left + rect.width / 2;
-            gameState.joystick.startY = rect.top + rect.height / 2;
-            gameState.joystick.x = touch.clientX - gameState.joystick.startX;
-            gameState.joystick.y = touch.clientY - gameState.joystick.startY;
-            
-            updateJoystickPosition();
-            e.preventDefault();
-        }
-        
-        function handleJoystickMove(e) {
-            if (!gameState.joystick.active || gameState.screen !== 'game' || gameState.paused) return;
-            
-            const touch = e.touches[0];
-            gameState.joystick.x = touch.clientX - gameState.joystick.startX;
-            gameState.joystick.y = touch.clientY - gameState.joystick.startY;
-            
-            // Limit joystick movement to the area
-            const distance = Math.sqrt(gameState.joystick.x * gameState.joystick.x + gameState.joystick.y * gameState.joystick.y);
-            const maxDistance = 40;
-            
-            if (distance > maxDistance) {
-                gameState.joystick.x = (gameState.joystick.x / distance) * maxDistance;
-                gameState.joystick.y = (gameState.joystick.y / distance) * maxDistance;
-            }
-            
-            updateJoystickPosition();
-            e.preventDefault();
-        }
-        
-        function handleJoystickEnd() {
-            gameState.joystick.active = false;
-            gameState.joystick.x = 0;
-            gameState.joystick.y = 0;
-            updateJoystickPosition();
-        }
-        
-        function updateJoystickPosition() {
-            joystickInner.style.transform = `translate(${gameState.joystick.x}px, ${gameState.joystick.y}px)`;
-        }
-        
         function startGame() {
-            gameState.player.x = canvas.width / 2;
-            gameState.player.y = canvas.height / 2;
+            modeSelectScreen.style.display = 'none';
+            gameState.screen = 'game';
+            gameState.paused = false;
             gameState.time.lastUpdate = performance.now();
         }
         
-        function updateStatsUI() {
-            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
-            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
-            
-            statsContainer.innerHTML = `
-                <div class="stat-row">
-                    <span>❤️ ${gameState.player.health}%</span>
-                    <span>🟡 ${gameState.player.gold}</span>
-                    <span>🕒 ${hoursStr}:${minsStr}</span>
-                </div>
-                <div class="stat-row">
-                    <span>🍗 ${gameState.player.hunger}%</span>
-                </div>
-            `;
-            
-            // Добавляем жажду только на сложной сложности
-            if (gameState.settings.difficulty === 'hard') {
-                const thirstRow = document.createElement('div');
-                thirstRow.className = 'stat-row';
-                thirstRow.innerHTML = `<span>💧 ${gameState.player.thirst}%</span>`;
-                statsContainer.appendChild(thirstRow);
-            }
+        function togglePause() {
+            gameState.paused = !gameState.paused;
+            document.getElementById('pauseScreen').style.display = gameState.paused ? 'flex' : 'none';
         }
         
-        // Game loop
-        function gameLoop(timestamp) {
-            update(timestamp);
-            render();
-            requestAnimationFrame(gameLoop);
+        function returnToMenu() {
+            gameState.paused = false;
+            document.getElementById('pauseScreen').style.display = 'none';
+            gameState.screen = 'menu';
+            menuScreen.style.display = 'flex';
         }
         
-        function update(timestamp) {
-            // Update player position
-            if (gameState.screen === 'game' && !gameState.paused) {
-                let dx = 0, dy = 0;
-                
-                if (gameState.isMobile && gameState.joystick.active) {
-                    dx = gameState.joystick.x / 15;
-                    dy = gameState.joystick.y / 15;
-                } else if (!gameState.isMobile) {
-                    if (gameState.keys.w) dy = -gameState.player.speed;
-                    if (gameState.keys.a) dx = -gameState.player.speed;
-                    if (gameState.keys.s) dy = gameState.player.speed;
-                    if (gameState.keys.d) dx = gameState.player.speed;
-                }
-                
-                // Normalize diagonal movement
-                if (dx !== 0 && dy !== 0) {
-                    const len = Math.sqrt(dx * dx + dy * dy);
-                    dx = (dx / len) * gameState.player.speed;
-                    dy = (dy / len) * gameState.player.speed;
-                }
-                
-                gameState.player.x += dx;
-                gameState.player.y += dy;
-                
-                // Keep player within bounds
-                gameState.player.x = Math.max(0, Math.min(canvas.width - 30, gameState.player.x));
-                gameState.player.y = Math.max(0, Math.min(canvas.height - 30, gameState.player.y));
+        function update(deltaTime) {
+            if (gameState.screen !== 'game' || gameState.paused) return;
+            
+            // Движение игрока
+            let dx = 0, dy = 0;
+            
+            if (keys.w) dy = -gameState.player.speed;
+            if (keys.a) dx = -gameState.player.speed;
+            if (keys.s) dy = gameState.player.speed;
+            if (keys.d) dx = gameState.player.speed;
+            
+            // Нормализация диагонального движения
+            if (dx !== 0 && dy !== 0) {
+                const len = Math.sqrt(dx*dx + dy*dy);
+                dx = (dx / len) * gameState.player.speed;
+                dy = (dy / len) * gameState.player.speed;
             }
             
-            // Update time
-            if (gameState.screen === 'game' && !gameState.paused && timestamp - gameState.time.lastUpdate > 1000) {
-                gameState.time.minutes++;
-                gameState.time.lastUpdate = timestamp;
-                
-                if (gameState.time.minutes >= 60) {
-                    gameState.time.minutes = 0;
-                    gameState.time.hours++;
-                    
-                    if (gameState.time.hours >= 24) {
-                        gameState.time.hours = 0;
-                    }
-                }
-                
-                // Update day/night
-                gameState.time.dayTime = (gameState.time.hours >= 6 && gameState.time.hours < 24);
-                
-                // Update UI
-                updateStatsUI();
+            gameState.player.x += dx;
+            gameState.player.y += dy;
+            
+            // Границы экрана
+            gameState.player.x = Math.max(0, Math.min(canvas.width, gameState.player.x));
+            gameState.player.y = Math.max(0, Math.min(canvas.height, gameState.player.y));
+            
+            // Обновление времени
+            gameState.time.minutes += deltaTime / 1000 * 0.1;
+            if (gameState.time.minutes >= 60) {
+                gameState.time.minutes = 0;
+                gameState.time.hours++;
+                if (gameState.time.hours >= 24) gameState.time.hours = 0;
             }
         }
         
         function render() {
-            // Clear canvas
+            // Очистка
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (gameState.screen === 'game') {
-                // Draw objects
+                // Отрисовка объектов
                 gameState.objects.forEach(obj => {
                     if (obj.type === 'tree') {
                         ctx.fillStyle = '#2a5c2a';
@@ -651,50 +582,33 @@
                     }
                 });
                 
-                // Draw player
+                // Отрисовка игрока
                 ctx.fillStyle = '#3498db';
-                ctx.fillRect(
-                    gameState.player.x - 15, 
-                    gameState.player.y - 15, 
-                    30, 30
-                );
+                ctx.fillRect(gameState.player.x - 15, gameState.player.y - 15, 30, 30);
                 
-                // Draw player face to indicate direction
-                ctx.fillStyle = 'white';
-                ctx.fillRect(
-                    gameState.player.x - 5, 
-                    gameState.player.y - 10, 
-                    10, 5
-                );
-                
-                // Draw action indicator
+                // Индикатор действия
                 if (gameState.player.currentAction === 'attack') {
                     ctx.strokeStyle = 'red';
                     ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(
-                        gameState.player.x, 
-                        gameState.player.y, 
-                        35, 0, Math.PI * 2
-                    );
-                    ctx.stroke();
-                } else if (gameState.player.currentAction === 'build') {
-                    ctx.strokeStyle = 'green';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(
-                        gameState.player.x, 
-                        gameState.player.y, 
-                        35, 0, Math.PI * 2
-                    );
+                    ctx.arc(gameState.player.x, gameState.player.y, 35, 0, Math.PI*2);
                     ctx.stroke();
                 }
             }
         }
         
-        // Start the game loop
-        updateStatsUI();
-        requestAnimationFrame(gameLoop);
+        function gameLoop(timestamp = 0) {
+            const deltaTime = timestamp - (gameState.time.lastUpdate || timestamp);
+            gameState.time.lastUpdate = timestamp;
+            
+            update(deltaTime);
+            render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Запуск игры
+        init();
     </script>
 </body>
 </html>
