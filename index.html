@@ -346,9 +346,10 @@
             background-color: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             position: absolute;
-            top: 50%;
+            /* Изменено: теперь top/left всегда 50% для центрирования, а смещение через transform */
+            top: 50%; 
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%); /* Всегда центрируем его относительно его собственных размеров */
             touch-action: none;
             transition: none;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
@@ -486,6 +487,12 @@
         <div id="whatsNewScreen">
             <h2>Что нового в Survival City?</h2>
             <ul>
+                <li><strong>Обновление 0.0.4:</strong>
+                    <ul>
+                        <li>Исправлена ошибка с визуальным смещением джойстика при перетаскивании. Теперь он всегда остается центрированным внутри внешнего круга.</li>
+                        <li>Увеличен отступ джойстика от нижнего и левого края на мобильных устройствах.</li>
+                    </ul>
+                </li>
                 <li><strong>Обновление 0.0.3:</strong>
                     <ul>
                         <li>Исправлена проблема с некорректным отображением интерфейса на мобильных устройствах. Теперь размеры элементов (джойстик, хотбар, кнопки действий) динамически подстраиваются под мобильный экран.</li>
@@ -708,10 +715,11 @@
             // Джойстик
             joystickArea.style.width = '80px';
             joystickArea.style.height = '80px';
-            joystickArea.style.bottom = '30px';
-            joystickArea.style.left = '30px';
+            joystickArea.style.bottom = '50px'; // Увеличили отступ
+            joystickArea.style.left = '50px';  // Увеличили отступ
             joystickInner.style.width = '40px';
             joystickInner.style.height = '40px';
+            joystickInner.style.transform = 'translate(-50%, -50%)'; // Начальное центрирование
 
             // Нижняя панель (хотбар + рюкзак)
             document.getElementById('bottomControls').style.bottom = '15px';
@@ -915,14 +923,16 @@
                 
                 joystickCurrentX = deltaX;
                 joystickCurrentY = deltaY;
-                joystickInner.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                // ИСПРАВЛЕНИЕ: Комбинируем смещение с постоянным центрированием
+                joystickInner.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
             }, { passive: false });
             
             joystickArea.addEventListener('touchend', () => {
                 joystickActive = false;
                 joystickCurrentX = 0;
                 joystickCurrentY = 0;
-                joystickInner.style.transform = 'translate(-50%, -50%)'; // Возвращаем в центр
+                // ИСПРАВЛЕНИЕ: Возвращаем в центр, сохраняя центрирование
+                joystickInner.style.transform = 'translate(-50%, -50%)'; 
             });
         }
         
