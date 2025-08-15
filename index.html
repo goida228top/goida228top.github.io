@@ -92,7 +92,7 @@
         }
 
         /* Специальные стили для actionBtn:active, чтобы они темнели */
-        .actionBtn:active {
+        .actionBtn.active-state { /* Используем класс для JS-управления */
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
             background-color: rgba(90, 90, 90, 0.9); /* Темно-серый при нажатии */
@@ -295,12 +295,12 @@
         /* Контейнер для хотбара и кнопки инвентаря */
         #bottomControls {
             position: absolute;
-            bottom: 25px;
+            bottom: 25px; /* Скорректированное положение */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 15px; /* Увеличен отступ между хотбаром и рюкзаком */
+            gap: 15px; /* Увеличил отступ между хотбаром и рюкзаком */
             pointer-events: auto;
             z-index: 60;
         }
@@ -401,32 +401,32 @@
         /* Медиа-запросы для адаптивности на мобильных (уменьшение в 1.5 раза) */
         @media (max-width: 768px) {
             #joystickArea {
-                width: 43px;
-                height: 43px;
-                bottom: 15px;
-                left: 15px;
+                width: 43px; /* 65 / 1.5 */
+                height: 43px; /* 65 / 1.5 */
+                bottom: 15px; /* Скорректированный отступ */
+                left: 15px; /* Скорректированный отступ */
             }
             #joystickInner {
-                width: 20px;
-                height: 20px;
+                width: 20px; /* 30 / 1.5 */
+                height: 20px; /* 30 / 1.5 */
             }
 
             #bottomControls {
-                bottom: 15px;
-                gap: 5px;
+                bottom: 15px; /* Скорректированный отступ */
+                gap: 5px; /* Меньший отступ между хотбаром и рюкзаком */
             }
             #hotbar {
-                gap: 3px;
+                gap: 3px; /* Меньший отступ между ячейками хотбара */
             }
             .hotbarSlot {
-                width: 33px;
-                height: 33px;
-                font-size: 18px;
+                width: 33px; /* 50 / 1.5 */
+                height: 33px; /* 50 / 1.5 */
+                font-size: 18px; /* Уменьшаем шрифт */
             }
             #inventoryBtn {
-                width: 33px;
-                height: 33px;
-                font-size: 20px;
+                width: 33px; /* 50 / 1.5 */
+                height: 33px; /* 50 / 1.5 */
+                font-size: 20px; /* Уменьшаем шрифт */
             }
 
             #actionButtons {
@@ -721,14 +721,14 @@
             // Кнопки действий - привязываем к ним событие mousedown/mouseup для визуального эффекта
             attackBtn.addEventListener('mousedown', () => toggleActionBtnActive(attackBtn, true));
             attackBtn.addEventListener('mouseup', () => toggleActionBtnActive(attackBtn, false));
-            attackBtn.addEventListener('mouseleave', () => toggleActionBtnActive(attackBtn, false)); // Сброс, если мышь ушла
+            attackBtn.addEventListener('mouseleave', () => toggleActionBtnActive(attackBtn, false)); // Сброс, если мышь ушла с кнопки
             attackBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(attackBtn, true); }, { passive: false });
             attackBtn.addEventListener('touchend', () => toggleActionBtnActive(attackBtn, false));
             attackBtn.addEventListener('click', () => { gameState.player.currentAction = 'attack'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
 
             buildBtn.addEventListener('mousedown', () => toggleActionBtnActive(buildBtn, true));
             buildBtn.addEventListener('mouseup', () => toggleActionBtnActive(buildBtn, false));
-            buildBtn.addEventListener('mouseleave', () => toggleActionBtnActive(buildBtn, false)); // Сброс, если мышь ушла
+            buildBtn.addEventListener('mouseleave', () => toggleActionBtnActive(buildBtn, false)); // Сброс, если мышь ушла с кнопки
             buildBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(buildBtn, true); }, { passive: false });
             buildBtn.addEventListener('touchend', () => toggleActionBtnActive(buildBtn, false));
             buildBtn.addEventListener('click', () => { gameState.player.currentAction = 'build'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
@@ -739,6 +739,7 @@
                     if (!e.repeat) { // Проверяем, чтобы событие не повторялось при удержании
                         toggleActionBtnActive(attackBtn, true);
                         gameState.player.currentAction = 'attack';
+                        // После выполнения действия, сбросим активное состояние через короткое время
                         setTimeout(() => { gameState.player.currentAction = 'move'; }, 200);
                     }
                 }
@@ -763,15 +764,9 @@
         // Новая функция для управления активным состоянием кнопок действий
         function toggleActionBtnActive(button, isActive) {
             if (isActive) {
-                button.style.transform = 'translateY(1px)';
-                button.style.boxShadow = '0 2px 3px rgba(0, 0, 0, 0.2)';
-                button.style.backgroundColor = 'rgba(90, 90, 90, 0.9)';
-                button.style.borderColor = '#666';
+                button.classList.add('active-state');
             } else {
-                button.style.transform = 'translateY(0)'; // Сброс трансформации
-                button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)'; // Возвращаем исходную тень
-                button.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Возвращаем исходный фон
-                button.style.borderColor = '#444'; // Возвращаем исходный цвет рамки
+                button.classList.remove('active-state');
             }
         }
         
