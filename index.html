@@ -542,6 +542,11 @@
         <div id="whatsNewScreen">
             <h2>Что нового в Survival City?</h2>
             <ul>
+                <li><strong>Обновление 0.0.10:</strong>
+                    <ul>
+                        <li>Исправлена ошибка `TypeError: Cannot read properties of null (reading 'color')` в функции `render` путем добавления проверки на существование объекта `otherPlayer` перед доступом к его свойствам.</li>
+                    </ul>
+                </li>
                 <li><strong>Обновление 0.0.9:</strong>
                     <ul>
                         <li>Исправлена ошибка `Invalid glob match expression` в правилах безопасности Firestore. Правило `match` теперь корректно настроено для доступа к комнатам.</li>
@@ -1451,15 +1456,18 @@
                 // Отрисовка других игроков
                 for (const playerId in gameState.otherPlayers) {
                     const otherPlayer = gameState.otherPlayers[playerId];
-                    ctx.fillStyle = otherPlayer.color;
-                    ctx.beginPath();
-                    ctx.arc(otherPlayer.x, otherPlayer.y, 15, 0, Math.PI * 2);
-                    ctx.fill();
-                    // Можно также отрисовать ID игрока над ним для отладки
-                    ctx.fillStyle = 'white';
-                    ctx.font = '12px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(playerId.substring(0, 4), otherPlayer.x, otherPlayer.y - 20);
+                    // Добавлена проверка на null/undefined для otherPlayer
+                    if (otherPlayer) {
+                        ctx.fillStyle = otherPlayer.color;
+                        ctx.beginPath();
+                        ctx.arc(otherPlayer.x, otherPlayer.y, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Можно также отрисовать ID игрока над ним для отладки
+                        ctx.fillStyle = 'white';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(playerId.substring(0, 4), otherPlayer.x, otherPlayer.y - 20);
+                    }
                 }
 
                 // Индикатор действия (только для текущего игрока)
