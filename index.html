@@ -46,11 +46,6 @@
             padding: 20px;
         }
         
-        #rotateWarning span {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        
         #gameContainer {
             position: relative;
             width: 100%;
@@ -77,59 +72,29 @@
             pointer-events: none;
         }
         
-        #healthBar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 14px;
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 5px 10px;
+            background-color: rgba(0, 0, 0, 0.5);
         }
         
-        #hungerBar {
+        #topStats {
             position: absolute;
-            top: 50px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 14px;
+            top: 0;
+            left: 0;
         }
         
-        #thirstBar {
+        #bottomStats {
             position: absolute;
-            top: 90px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        #radiationBar {
-            position: absolute;
-            top: 130px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        
-        #goldBar {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 14px;
+            bottom: 80px;
+            left: 0;
         }
         
         #pauseBtn {
             position: absolute;
-            top: 50px;
+            top: 10px;
             right: 10px;
             width: 40px;
             height: 40px;
@@ -255,13 +220,61 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23222"/><rect x="50" y="100" width="300" height="50" fill="%23333" rx="5"/><rect x="50" y="170" width="300" height="50" fill="%23333" rx="5"/><rect x="50" y="240" width="300" height="50" fill="%23333" rx="5"/><rect x="150" y="50" width="100" height="30" fill="%23333" rx="5"/></svg>');
-            background-size: cover;
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 100;
+        }
+        
+        #modeSelectScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+        }
+        
+        #pauseScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 80;
+        }
+        
+        .modeBtn {
+            width: 45%;
+            height: 200px;
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 2px solid #444;
+            border-radius: 10px;
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        .modeBtn:active {
+            background-color: rgba(80, 80, 80, 0.8);
         }
         
         .menuBtn {
@@ -285,59 +298,28 @@
             background-color: rgba(80, 80, 80, 0.8);
         }
         
-        #inventoryScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+        #errorModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid red;
             display: none;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 50;
+            z-index: 200;
             pointer-events: auto;
         }
         
-        #inventoryGrid {
-            display: grid;
-            grid-template-columns: repeat(5, 40px);
-            grid-template-rows: repeat(2, 40px);
-            gap: 5px;
-            margin: 20px 0;
-        }
-        
-        .inventorySlot {
-            width: 40px;
-            height: 40px;
-            background-color: rgba(50, 50, 50, 0.8);
-            border: 2px solid #444;
+        #errorClose {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background-color: #444;
+            border: none;
             border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-        }
-        
-        #inventoryDots {
-            margin-top: 10px;
-            font-size: 24px;
-            color: white;
-        }
-        
-        #closeInventory {
-            width: 80%;
-            max-width: 300px;
-            height: 60px;
-            background-color: rgba(50, 50, 50, 0.8);
-            border: 2px solid #444;
-            border-radius: 5px;
-            margin: 10px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
             color: white;
             cursor: pointer;
         }
@@ -364,10 +346,6 @@
             #joystickArea {
                 display: none;
             }
-            
-            #healthBar, #hungerBar, #thirstBar, #radiationBar, #goldBar {
-                font-size: 16px;
-            }
         }
     </style>
 </head>
@@ -379,11 +357,16 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="uiContainer">
-            <div id="healthBar">❤️ 100%</div>
-            <div id="hungerBar">🍗 80%</div>
-            <div id="thirstBar">💧 70%</div>
-            <div id="radiationBar">☢️ 0%</div>
-            <div id="goldBar">🟡 10</div>
+            <div id="topStats" class="stat-row">
+                <span>❤️ 100%</span>
+                <span>🟡 10</span>
+                <span>🕒 12:45</span>
+            </div>
+            <div id="bottomStats" class="stat-row">
+                <span>🍗 80%</span>
+                <span>💧 70%</span>
+                <span>☢️ 0%</span>
+            </div>
             <div id="pauseBtn">⏸</div>
             <div id="joystickArea">
                 <div id="joystickOuter">
@@ -411,22 +394,26 @@
             <div class="menuBtn" id="shopBtn">МАГАЗИН</div>
         </div>
         
-        <div id="inventoryScreen">
-            <h2>ИНВЕНТАРЬ</h2>
-            <div id="inventoryGrid">
-                <div class="inventorySlot">🪓</div>
-                <div class="inventorySlot">⛏️</div>
-                <div class="inventorySlot">🔫</div>
-                <div class="inventorySlot">🏗️</div>
-                <div class="inventorySlot"></div>
-                <div class="inventorySlot">🍖</div>
-                <div class="inventorySlot">🌿</div>
-                <div class="inventorySlot">💧</div>
-                <div class="inventorySlot">🪵</div>
-                <div class="inventorySlot"></div>
+        <div id="modeSelectScreen">
+            <div class="modeBtn" id="offlineBtn">
+                <div>ОФФЛАЙН</div>
+                <div style="font-size: 16px; margin-top: 10px;">Игра в одиночку</div>
             </div>
-            <div id="inventoryDots">⋯</div>
-            <div id="closeInventory" class="menuBtn">ЗАКРЫТЬ</div>
+            <div class="modeBtn" id="onlineBtn">
+                <div>ОНЛАЙН</div>
+                <div style="font-size: 16px; margin-top: 10px;">Игра с друзьями</div>
+            </div>
+        </div>
+        
+        <div id="pauseScreen">
+            <div class="menuBtn" id="exitBtn" style="position: absolute; top: 20px; left: 20px; width: auto; padding: 0 20px;">ВЫЙТИ</div>
+            <div class="menuBtn" id="resumeBtn">ПРОДОЛЖИТЬ</div>
+        </div>
+        
+        <div id="errorModal">
+            <div style="text-align: center; margin-bottom: 10px;">ОНЛАЙН РЕЖИМ</div>
+            <div style="text-align: center; color: red;">В РАЗРАБОТКЕ</div>
+            <button id="errorClose">ОК</button>
         </div>
     </div>
 
@@ -493,21 +480,25 @@
         // UI Elements
         const rotateWarning = document.getElementById('rotateWarning');
         const menuScreen = document.getElementById('menuScreen');
-        const inventoryScreen = document.getElementById('inventoryScreen');
+        const modeSelectScreen = document.getElementById('modeSelectScreen');
+        const pauseScreen = document.getElementById('pauseScreen');
         const playBtn = document.getElementById('playBtn');
+        const offlineBtn = document.getElementById('offlineBtn');
+        const onlineBtn = document.getElementById('onlineBtn');
         const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const exitBtn = document.getElementById('exitBtn');
         const inventoryBtn = document.getElementById('inventoryBtn');
         const closeInventory = document.getElementById('closeInventory');
         const attackBtn = document.getElementById('attackBtn');
         const buildBtn = document.getElementById('buildBtn');
         const joystickInner = document.getElementById('joystickInner');
         const joystickArea = document.getElementById('joystickArea');
-        const healthBar = document.getElementById('healthBar');
-        const hungerBar = document.getElementById('hungerBar');
-        const thirstBar = document.getElementById('thirstBar');
-        const radiationBar = document.getElementById('radiationBar');
-        const goldBar = document.getElementById('goldBar');
+        const topStats = document.getElementById('topStats');
+        const bottomStats = document.getElementById('bottomStats');
         const hotbarSlots = document.querySelectorAll('.hotbarSlot');
+        const errorModal = document.getElementById('errorModal');
+        const errorClose = document.getElementById('errorClose');
         
         // Check orientation
         function checkOrientation() {
@@ -524,24 +515,41 @@
         // Event listeners
         playBtn.addEventListener('click', () => {
             menuScreen.style.display = 'none';
+            modeSelectScreen.style.display = 'flex';
+        });
+        
+        offlineBtn.addEventListener('click', () => {
+            modeSelectScreen.style.display = 'none';
             gameState.screen = 'game';
             gameState.paused = false;
+            startGame();
+        });
+        
+        onlineBtn.addEventListener('click', () => {
+            errorModal.style.display = 'flex';
+        });
+        
+        errorClose.addEventListener('click', () => {
+            errorModal.style.display = 'none';
         });
         
         pauseBtn.addEventListener('click', () => {
-            menuScreen.style.display = 'flex';
+            if (gameState.screen === 'game') {
+                gameState.paused = !gameState.paused;
+                pauseScreen.style.display = gameState.paused ? 'flex' : 'none';
+            }
+        });
+        
+        resumeBtn.addEventListener('click', () => {
+            gameState.paused = false;
+            pauseScreen.style.display = 'none';
+        });
+        
+        exitBtn.addEventListener('click', () => {
+            gameState.paused = false;
+            pauseScreen.style.display = 'none';
             gameState.screen = 'menu';
-            gameState.paused = true;
-        });
-        
-        inventoryBtn.addEventListener('click', () => {
-            inventoryScreen.style.display = 'flex';
-            gameState.screen = 'inventory';
-        });
-        
-        closeInventory.addEventListener('click', () => {
-            inventoryScreen.style.display = 'none';
-            gameState.screen = 'game';
+            menuScreen.style.display = 'flex';
         });
         
         attackBtn.addEventListener('click', () => {
@@ -585,6 +593,13 @@
                     case '3': selectHotbarSlot(2); break;
                     case '4': selectHotbarSlot(3); break;
                     case '5': selectHotbarSlot(4); break;
+                    case ' ': 
+                        if (gameState.player.currentAction === 'attack') {
+                            gameState.player.currentAction = 'move';
+                        } else {
+                            gameState.player.currentAction = 'attack';
+                        }
+                        break;
                 }
             });
             
@@ -651,6 +666,12 @@
             joystickInner.style.transform = `translate(${gameState.joystick.x}px, ${gameState.joystick.y}px)`;
         }
         
+        function startGame() {
+            gameState.player.x = canvas.width / 2;
+            gameState.player.y = canvas.height / 2;
+            gameState.time.lastUpdate = performance.now();
+        }
+        
         // Game loop
         function gameLoop(timestamp) {
             update(timestamp);
@@ -689,7 +710,7 @@
             }
             
             // Update time
-            if (!gameState.paused && timestamp - gameState.time.lastUpdate > 1000) {
+            if (gameState.screen === 'game' && !gameState.paused && timestamp - gameState.time.lastUpdate > 1000) {
                 gameState.time.minutes++;
                 gameState.time.lastUpdate = timestamp;
                 
@@ -711,12 +732,21 @@
         }
         
         function updateUI() {
-            // Update stats bars
-            healthBar.textContent = `❤️ ${gameState.player.health}%`;
-            hungerBar.textContent = `🍗 ${gameState.player.hunger}%`;
-            thirstBar.textContent = `💧 ${gameState.player.thirst}%`;
-            radiationBar.textContent = `☢️ ${gameState.player.radiation}%`;
-            goldBar.textContent = `🟡 ${gameState.player.gold}`;
+            // Update stats
+            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
+            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
+            
+            topStats.innerHTML = `
+                <span>❤️ ${gameState.player.health}%</span>
+                <span>🟡 ${gameState.player.gold}</span>
+                <span>🕒 ${hoursStr}:${minsStr}</span>
+            `;
+            
+            bottomStats.innerHTML = `
+                <span>🍗 ${gameState.player.hunger}%</span>
+                <span>💧 ${gameState.player.thirst}%</span>
+                <span>☢️ ${gameState.player.radiation}%</span>
+            `;
         }
         
         function render() {
@@ -778,10 +808,7 @@
             }
         }
         
-        // Start the game
-        gameState.player.x = canvas.width / 2;
-        gameState.player.y = canvas.height / 2;
-        gameState.time.lastUpdate = performance.now();
+        // Start the game loop
         requestAnimationFrame(gameLoop);
     </script>
 </body>
