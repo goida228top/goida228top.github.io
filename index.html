@@ -856,7 +856,7 @@
 
             updateUI();
             gameCanvas.style.display = 'none';
-            uiContainer.style.display = 'none';
+            uiContainer.style.display = 'flex'; /* Сделаем UI-контейнер видимым, но с pointer-events:none */
             menuScreen.style.display = 'flex';
         }
 
@@ -1279,8 +1279,8 @@
                             lastUpdate: Date.now()
                         }
                     });
-                } <<<<<<< HEAD
-                catch (error) {
+                } 
+                catch (error) { // Исправлена синтаксическая ошибка: убран `<<<<<<< HEAD`
                     console.warn("Не удалось обновить состояние игрока в Firestore:", error);
                     // Возможно, комната была удалена
                     if (error.code === 'not-found') {
@@ -1305,7 +1305,7 @@
         
         // Начало игры (обновлена для мультиплеера)
         function startGame() {
-            // Если игра запускается через Offline кнопку, убежимся, что отписки от комнаты нет
+            // Если игра запускается через Offline кнопку, убедимся, что отписки от комнаты нет
             if (unsubscribeFromRoom) {
                 unsubscribeFromRoom();
                 unsubscribeFromRoom = null;
