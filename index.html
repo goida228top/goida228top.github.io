@@ -60,8 +60,8 @@
             pointer-events: none; /* Позволяет кликам проходить сквозь UI, если нет интерактивных элементов */
         }
 
-        /* Общие стили для всех интерактивных кнопок */
-        .menuBtn, .modeBtn, #pauseBtn, .hotbarSlot, #inventoryBtn, .actionBtn {
+        /* Общие стили для всех интерактивных кнопок, не входящих в объединенную панель */
+        .menuBtn, .modeBtn, #pauseBtn, .actionBtn {
             border: 2px solid #444;
             border-radius: 8px;
             display: flex;
@@ -76,15 +76,14 @@
         }
 
         /* Эффект наведения (hover) */
-        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .hotbarSlot:hover, #inventoryBtn:hover, .actionBtn:hover {
+        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
             background-color: rgba(70, 70, 70, 0.9); /* Более светлый фон при наведении */
         }
 
         /* Эффект нажатия (active) - ТОЛЬКО ВО ВРЕМЯ НАЖАТИЯ */
-        /* Эти стили будут применяться только пока кнопка физически нажата/активирована */
-        .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active, #inventoryBtn:active {
+        .menuBtn:active, .modeBtn:active, #pauseBtn:active {
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
             background-color: rgba(90, 90, 90, 0.9); /* Темнее серый фон при нажатии */
@@ -102,8 +101,8 @@
         /* Стиль для ВЫБРАННОГО слота хотбара - остается активным */
         .hotbarSlot.selected {
             border-color: #3498db;
-            background-color: rgba(70, 70, 70, 0.9);
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
+            background-color: rgba(70, 70, 70, 0.9); /* Можно оставить, если нужно выделить фон */
         }
 
         /* Главное меню */
@@ -129,7 +128,7 @@
             font-size: 24px;
         }
 
-        /* Выбор режима - теперь с двумя большими прямоугольниками */
+        /* Выбор режима */
         #modeSelectScreen {
             position: absolute;
             top: 0;
@@ -138,13 +137,13 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             display: none; /* Скрыто по умолчанию */
-            flex-direction: row; /* Располагаем кнопки в ряд */
+            flex-direction: row;
             justify-content: center;
             align-items: center;
-            gap: 40px; /* Отступ между кнопками */
+            gap: 40px;
             z-index: 90;
-            padding: 20px; /* Добавляем отступы, чтобы кнопки не прилипали к краям */
-            flex-wrap: wrap; /* Разрешаем перенос кнопок на новую строку на маленьких экранах */
+            padding: 20px;
+            flex-wrap: wrap;
         }
         
         .modeBtn {
@@ -257,15 +256,16 @@
             z-index: 70;
         }
 
-        /* Джойстик (только для мобильных) */
+        /* Джойстик (только для ПК) - по умолчанию скрыт */
         #joystickArea {
             position: absolute;
+            /* Размеры и позиция по умолчанию для ПК, если isMobile = false */
             bottom: 80px;
             left: 30px;
             width: 65px;
             height: 65px;
             pointer-events: auto;
-            display: none;
+            display: none; /* Скрыт по умолчанию, показывается JS на моб. */
             z-index: 60;
         }
         
@@ -295,49 +295,106 @@
         /* Контейнер для хотбара и кнопки инвентаря */
         #bottomControls {
             position: absolute;
-            bottom: 25px; /* Скорректированное положение */
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 15px; /* Отступ между хотбаром и рюкзаком */
             pointer-events: auto;
             z-index: 60;
+            /* Единый фон, рамка и тень для всей объединенной панели */
+            background-color: rgba(0, 0, 0, 0.6); /* Общий фон */
+            border-radius: 12px; /* Общая округлость */
+            border: 2px solid #444; /* Общая рамка */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            overflow: hidden; /* Важно для корректного отображения border-radius на внутренних элементах */
+            padding: 8px; /* Общий внутренний отступ для всех элементов панели */
         }
 
         /* Панель быстрого доступа (хотбар) */
         #hotbar {
             display: flex;
-            background-color: rgba(0, 0, 0, 0.6); /* Общий фон хотбара */
-            border-radius: 12px;
-            padding: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
             gap: 5px; /* Отступ между ячейками внутри хотбара */
-            border: 2px solid #444; /* Общая рамка хотбара */
+            /* Здесь нет border-right или padding-right, чтобы не было лишних линий */
         }
         
         .hotbarSlot {
             width: 50px;
             height: 50px;
             background-color: rgba(50, 50, 50, 0.8); /* Фон отдельной ячейки */
-            border: 2px solid #555; /* Рамка отдельной ячейки */
-            border-radius: 8px;
+            border: none; /* Убрана индивидуальная рамка */
+            border-radius: 8px; /* Скругления для индивидуальных слотов */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 26px;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Небольшая тень для каждого слота */
             transition: all 0.2s ease;
+            outline: none;
+        }
+
+        /* Эффект наведения (hover) для слотов хотбара */
+        .hotbarSlot:hover {
+            background-color: rgba(70, 70, 70, 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         
-        /* Кнопка инвентаря - теперь часть хотбара визуально */
+        /* Эффект нажатия (active) для слотов хотбара */
+        .hotbarSlot:active {
+            transform: translateY(1px);
+            background-color: rgba(90, 90, 90, 0.9);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Стиль для ВЫБРАННОГО слота хотбара - остается активным */
+        .hotbarSlot.selected {
+            border-color: #3498db;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
+            background-color: rgba(70, 70, 70, 0.9);
+        }
+
+        /* Кнопка инвентаря - теперь часть общего контейнера */
         #inventoryBtn {
             width: 50px;
             height: 50px;
-            background-color: rgba(0, 0, 0, 0.6); /* **Точно такой же фон, как у #hotbar** */
-            border: 2px solid #444; /* **Точно такая же рамка, как у #hotbar** */
+            border: none; /* Убрана индивидуальная рамка */
+            border-radius: 8px; /* Добавляем скругления для самой кнопки инвентаря */
             font-size: 30px;
-            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 8px; /* Отступ между хотбаром и рюкзаком на ПК */
+            color: white;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+            outline: none;
+            background-color: #00008B; /* Темно-синий фон */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Эффект наведения (hover) для кнопки инвентаря */
+        #inventoryBtn:hover {
+            background-color: #00007A; /* Чуть темнее темно-синий при наведении */
+            transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Эффект нажатия (active) для кнопки инвентаря */
+        #inventoryBtn:active {
+            transform: translateY(1px);
+            background-color: #000069; /* Еще темнее темно-синий при нажатии */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Стиль для ВЫБРАННОЙ кнопки инвентаря */
+        #inventoryBtn.selected {
+            border-color: #3498db; /* Синяя рамка */
+            background-color: #3498db; /* Синяя заливка */
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8); /* Синее свечение */
         }
         
         /* Кнопки действий - увеличены в 2 раза от hotbarSlot */
@@ -398,57 +455,62 @@
             visibility: visible;
         }
 
-        /* Медиа-запросы для адаптивности на мобильных (уменьшение в 1.5 раза от базового, но с новыми расчетами) */
+        /* Медиа-запросы для адаптивности на мобильных (max-width: 768px) */
         @media (max-width: 768px) {
-            /* Джойстик: чуть побольше (из 65px до 60px) и одинаковый отступ */
+            /* Джойстик: чуть побольше и одинаковый отступ */
             #joystickArea {
-                width: 60px; /* Было 43px, стало 60px */
-                height: 60px; /* Было 43px, стало 60px */
-                bottom: 20px; /* Новый отступ */
-                left: 20px; /* Новый отступ */
+                width: 75px; /* Увеличили размер */
+                height: 75px; /* Увеличили размер */
+                bottom: 20px; /* Одинаковый отступ снизу */
+                left: 20px; /* Одинаковый отступ слева */
             }
             #joystickInner {
-                width: 28px; /* Было 20px, стало 28px (пропорционально) */
-                height: 28px; /* Было 20px, стало 28px */
+                width: 35px; /* Пропорционально увеличили */
+                height: 35px; /* Пропорционально увеличили */
             }
 
             /* Нижняя панель (хотбар + рюкзак) */
             #bottomControls {
-                bottom: 15px; /* Чуть ниже */
-                gap: 5px; /* Уменьшаем отступ между хотбаром и рюкзаком на мобильных */
+                bottom: 15px;
+                border-radius: 8px; /* Меньший радиус на мобильных */
+                padding: 5px; /* Меньший общий паддинг */
             }
             #hotbar {
-                gap: 3px; /* Отступ между ячейками хотбара */
-                padding: 5px; /* Меньший padding для хотбара */
+                gap: 3px; /* Меньший отступ между слотами */
             }
-            /* Ячейки хотбара: меньше в 2 раза (от ПК размера 50px -> 25px) */
+            /* Ячейки хотбара: меньше в 2 раза от ПК-размера (50px -> 25px). Уже так. */
             .hotbarSlot {
-                width: 25px; /* Было 33px, стало 25px (50 / 2) */
-                height: 25px; /* Было 33px, стало 25px */
-                font-size: 14px; /* Уменьшаем шрифт */
+                width: 25px; /* Уже 2 раза меньше ПК-размера */
+                height: 25px; /* Уже 2 раза меньше ПК-размера */
+                font-size: 14px;
+                border-radius: 4px;
             }
-            /* Кнопка инвентаря: чуть-чуть побольше (от 33px до 40px) */
+            /* Кнопка инвентаря: чуть-чуть побольше */
             #inventoryBtn {
-                width: 40px; /* Было 33px, стало 40px */
-                height: 40px; /* Было 33px, стало 40px */
-                font-size: 24px; /* Скорректируем шрифт для нового размера */
+                width: 45px; /* Увеличили размер */
+                height: 45px; /* Увеличили размер */
+                font-size: 24px; /* Скорректировали шрифт для нового размера */
+                margin-left: 5px; /* Отступ от хотбара */
+                border-radius: 4px;
             }
 
-            /* Кнопки действий: меньше в полтора раза (от 100px до 66px, затем 66/1.5 = 44px) */
+            /* Кнопки действий: меньше в полтора раза от ИСХОДНОГО ПК-размера (100px -> 66px), но
+               так как они уже были 44px, мы сделаем их просто меньше, чтобы было заметно.
+               Был 44px, стал 35px. */
             #actionButtons {
                 bottom: 15px;
                 right: 15px;
-                gap: 8px; /* Немного уменьшен отступ */
+                gap: 8px;
             }
             .actionBtn {
-                width: 44px; /* Было 66px, стало 44px (66 / 1.5) */
-                height: 44px; /* Было 66px, стало 44px */
-                font-size: 20px; /* Скорректируем шрифт для нового размера */
+                width: 35px; /* Уменьшили размер */
+                height: 35px; /* Уменьшили размер */
+                font-size: 16px; /* Скорректировали шрифт */
             }
 
             /* Кнопка паузы */
             #pauseBtn {
-                width: 33px; /* Оставляем как было, это уже ~1.5 раза меньше от 50px */
+                width: 33px;
                 height: 33px;
                 top: 10px;
                 right: 10px;
@@ -457,33 +519,33 @@
 
             /* Статистика */
             #statsContainer {
-                top: 8px; /* Чуть меньше отступ сверху */
-                left: 8px; /* Чуть меньше отступ слева */
-                gap: 4px; /* Меньший отступ между строками */
+                top: 8px;
+                left: 8px;
+                gap: 4px;
             }
             #topStatsRow, #bottomStatsRow {
-                gap: 8px; /* Меньший отступ между элементами */
+                gap: 8px;
             }
             .stat-item {
-                padding: 4px 8px; /* Меньший паддинг */
-                font-size: 12px; /* Меньший шрифт */
-                gap: 4px; /* Меньший отступ внутри элемента */
+                padding: 4px 8px;
+                font-size: 12px;
+                gap: 4px;
             }
             .stat-label {
-                font-size: 14px; /* Меньший шрифт для иконок */
+                font-size: 14px;
             }
             .health-bar-container, .hunger-bar-container {
-                width: 50px; /* 100px / 2 */
-                height: 8px; /* 15px / ~2 */
+                width: 50px;
+                height: 8px;
             }
 
             .modeBtn {
                 max-width: 90%;
-                height: 100px; /* Еще уменьшил высоту */
-                font-size: 20px; /* Уменьшил шрифт */
+                height: 100px;
+                font-size: 20px;
             }
             .modeBtn span {
-                font-size: 14px; /* Уменьшил шрифт описания */
+                font-size: 14px;
             }
         }
     </style>
@@ -625,10 +687,11 @@
         const joystickInner = document.getElementById('joystickInner');
         const messageBox = document.getElementById('messageBox');
         const uiContainer = document.getElementById('uiContainer'); // Получаем ссылку на uiContainer
+        const inventoryBtn = document.getElementById('inventoryBtn'); // Получаем ссылку на кнопку инвентаря
 
         // Элементы статистики для обновления
         const playerHealthFill = document.getElementById('playerHealthFill');
-        const playerHungerFill = document = document.getElementById('playerHungerFill'); // Исправлена опечатка: document = document.getElementById
+        const playerHungerFill = document.getElementById('playerHungerFill'); 
         const playerGoldSpan = document.getElementById('playerGold');
         const gameTimeSpan = document.getElementById('gameTime');
         
@@ -766,6 +829,9 @@
                     selectHotbarSlot(index);
                 });
             });
+
+            // Клик по кнопке инвентаря
+            inventoryBtn.addEventListener('click', selectInventoryButton);
             
             // Ресайз окна
             window.addEventListener('resize', resizeCanvas);
@@ -837,6 +903,7 @@
                 case '3': selectHotbarSlot(2); break;
                 case '4': selectHotbarSlot(3); break;
                 case '5': selectHotbarSlot(4); break;
+                case 'e': selectInventoryButton(); break; // Добавим 'e' для инвентаря
                 /* Пробел теперь обрабатывается в отдельном обработчике document.addEventListener('keydown') */
             }
         }
@@ -854,12 +921,37 @@
         
         // Выбор слота хотбара
         function selectHotbarSlot(index) {
-            const currentSelected = document.querySelector('.hotbarSlot.selected');
-            if (currentSelected) {
-                currentSelected.classList.remove('selected');
+            // Сначала сбрасываем все активные состояния
+            const currentSelectedHotbar = document.querySelector('.hotbarSlot.selected');
+            if (currentSelectedHotbar) {
+                currentSelectedHotbar.classList.remove('selected');
             }
+            inventoryBtn.classList.remove('selected'); // Убираем выделение с кнопки инвентаря
+
+            // Выделяем выбранный слот хотбара
             hotbarSlots[index].classList.add('selected');
             gameState.player.selectedSlot = index;
+        }
+
+        // Выбор кнопки инвентаря
+        function selectInventoryButton() {
+            // Сначала сбрасываем все активные состояния
+            const currentSelectedHotbar = document.querySelector('.hotbarSlot.selected');
+            if (currentSelectedHotbar) {
+                currentSelectedHotbar.classList.remove('selected');
+            }
+            
+            // Переключаем класс 'selected' для кнопки инвентаря
+            inventoryBtn.classList.toggle('selected');
+            // Если инвентарь выбран, сбрасываем выбранный слот хотбара
+            if (inventoryBtn.classList.contains('selected')) {
+                gameState.player.selectedSlot = -1; // -1 означает, что выбран инвентарь, а не слот хотбара
+            } else {
+                // Если инвентарь не выбран, можно по умолчанию выбрать первый слот хотбара
+                selectHotbarSlot(0);
+            }
+            // Здесь можно добавить логику открытия/закрытия окна инвентаря
+            showMessage(inventoryBtn.classList.contains('selected') ? 'Инвентарь открыт (условно)' : 'Инвентарь закрыт (условно)');
         }
         
         // Начало игры
@@ -873,6 +965,7 @@
             gameState.player.x = canvas.width / 2;
             gameState.player.y = canvas.height / 2;
             gameCanvas.style.display = 'block'; // Показать холст игры
+            selectHotbarSlot(0); // Выбрать первый слот хотбара по умолчанию при старте игры
         }
         
         // Переключение паузы
