@@ -72,24 +72,21 @@
             pointer-events: none;
         }
         
+        #statsContainer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
         .stat-row {
             display: flex;
-            justify-content: space-between;
-            width: 100%;
-            padding: 5px 10px;
+            gap: 20px;
             background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        #topStats {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
-        #bottomStats {
-            position: absolute;
-            bottom: 80px;
-            left: 0;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
         
         #pauseBtn {
@@ -112,7 +109,7 @@
         
         #hotbar {
             position: absolute;
-            bottom: 20px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -228,20 +225,6 @@
             z-index: 100;
         }
         
-        #modeSelectScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 90;
-        }
-        
         #pauseScreen {
             position: absolute;
             top: 0;
@@ -254,27 +237,6 @@
             justify-content: center;
             align-items: center;
             z-index: 80;
-        }
-        
-        .modeBtn {
-            width: 45%;
-            height: 200px;
-            background-color: rgba(50, 50, 50, 0.8);
-            border: 2px solid #444;
-            border-radius: 10px;
-            margin: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: white;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-        
-        .modeBtn:active {
-            background-color: rgba(80, 80, 80, 0.8);
         }
         
         .menuBtn {
@@ -297,56 +259,6 @@
         .menuBtn:active {
             background-color: rgba(80, 80, 80, 0.8);
         }
-        
-        #errorModal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid red;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            z-index: 200;
-            pointer-events: auto;
-        }
-        
-        #errorClose {
-            margin-top: 15px;
-            padding: 8px 20px;
-            background-color: #444;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-        }
-        
-        @media (min-width: 768px) {
-            .hotbarSlot {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-            }
-            
-            #inventoryBtn {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-            }
-            
-            .actionBtn {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-            }
-            
-            #joystickArea {
-                display: none;
-            }
-        }
     </style>
 </head>
 <body>
@@ -357,15 +269,16 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="uiContainer">
-            <div id="topStats" class="stat-row">
-                <span>❤️ 100%</span>
-                <span>🟡 10</span>
-                <span>🕒 12:45</span>
-            </div>
-            <div id="bottomStats" class="stat-row">
-                <span>🍗 80%</span>
-                <span>💧 70%</span>
-                <span>☢️ 0%</span>
+            <div id="statsContainer">
+                <div class="stat-row">
+                    <span>❤️ 100%</span>
+                    <span>🟡 10</span>
+                    <span>🕒 12:45</span>
+                </div>
+                <div class="stat-row">
+                    <span>🍗 80%</span>
+                </div>
+                <!-- Жажда и радиация будут добавляться динамически -->
             </div>
             <div id="pauseBtn">⏸</div>
             <div id="joystickArea">
@@ -380,11 +293,11 @@
                 <div class="hotbarSlot">🏗️</div>
                 <div class="hotbarSlot"></div>
             </div>
+            <div id="inventoryBtn">⋯</div>
             <div id="actionButtons">
                 <div class="actionBtn" id="attackBtn">⚔️</div>
                 <div class="actionBtn" id="buildBtn">🏗️</div>
             </div>
-            <div id="inventoryBtn">⋯</div>
         </div>
         
         <div id="menuScreen">
@@ -394,26 +307,9 @@
             <div class="menuBtn" id="shopBtn">МАГАЗИН</div>
         </div>
         
-        <div id="modeSelectScreen">
-            <div class="modeBtn" id="offlineBtn">
-                <div>ОФФЛАЙН</div>
-                <div style="font-size: 16px; margin-top: 10px;">Игра в одиночку</div>
-            </div>
-            <div class="modeBtn" id="onlineBtn">
-                <div>ОНЛАЙН</div>
-                <div style="font-size: 16px; margin-top: 10px;">Игра с друзьями</div>
-            </div>
-        </div>
-        
         <div id="pauseScreen">
             <div class="menuBtn" id="exitBtn" style="position: absolute; top: 20px; left: 20px; width: auto; padding: 0 20px;">ВЫЙТИ</div>
             <div class="menuBtn" id="resumeBtn">ПРОДОЛЖИТЬ</div>
-        </div>
-        
-        <div id="errorModal">
-            <div style="text-align: center; margin-bottom: 10px;">ОНЛАЙН РЕЖИМ</div>
-            <div style="text-align: center; color: red;">В РАЗРАБОТКЕ</div>
-            <button id="errorClose">ОК</button>
         </div>
     </div>
 
@@ -442,6 +338,10 @@
                 minutes: 45,
                 dayTime: true,
                 lastUpdate: 0
+            },
+            settings: {
+                difficulty: 'normal', // 'easy', 'normal', 'hard'
+                nearRadiation: false
             },
             joystick: {
                 active: false,
@@ -480,25 +380,18 @@
         // UI Elements
         const rotateWarning = document.getElementById('rotateWarning');
         const menuScreen = document.getElementById('menuScreen');
-        const modeSelectScreen = document.getElementById('modeSelectScreen');
         const pauseScreen = document.getElementById('pauseScreen');
         const playBtn = document.getElementById('playBtn');
-        const offlineBtn = document.getElementById('offlineBtn');
-        const onlineBtn = document.getElementById('onlineBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const resumeBtn = document.getElementById('resumeBtn');
         const exitBtn = document.getElementById('exitBtn');
         const inventoryBtn = document.getElementById('inventoryBtn');
-        const closeInventory = document.getElementById('closeInventory');
         const attackBtn = document.getElementById('attackBtn');
         const buildBtn = document.getElementById('buildBtn');
         const joystickInner = document.getElementById('joystickInner');
         const joystickArea = document.getElementById('joystickArea');
-        const topStats = document.getElementById('topStats');
-        const bottomStats = document.getElementById('bottomStats');
+        const statsContainer = document.getElementById('statsContainer');
         const hotbarSlots = document.querySelectorAll('.hotbarSlot');
-        const errorModal = document.getElementById('errorModal');
-        const errorClose = document.getElementById('errorClose');
         
         // Check orientation
         function checkOrientation() {
@@ -515,22 +408,9 @@
         // Event listeners
         playBtn.addEventListener('click', () => {
             menuScreen.style.display = 'none';
-            modeSelectScreen.style.display = 'flex';
-        });
-        
-        offlineBtn.addEventListener('click', () => {
-            modeSelectScreen.style.display = 'none';
             gameState.screen = 'game';
             gameState.paused = false;
             startGame();
-        });
-        
-        onlineBtn.addEventListener('click', () => {
-            errorModal.style.display = 'flex';
-        });
-        
-        errorClose.addEventListener('click', () => {
-            errorModal.style.display = 'none';
         });
         
         pauseBtn.addEventListener('click', () => {
@@ -672,6 +552,39 @@
             gameState.time.lastUpdate = performance.now();
         }
         
+        function updateStatsUI() {
+            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
+            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
+            
+            // Основная строка
+            statsContainer.innerHTML = `
+                <div class="stat-row">
+                    <span>❤️ ${gameState.player.health}%</span>
+                    <span>🟡 ${gameState.player.gold}</span>
+                    <span>🕒 ${hoursStr}:${minsStr}</span>
+                </div>
+                <div class="stat-row">
+                    <span>🍗 ${gameState.player.hunger}%</span>
+                </div>
+            `;
+            
+            // Добавляем жажду только на сложной сложности
+            if (gameState.settings.difficulty === 'hard') {
+                const thirstRow = document.createElement('div');
+                thirstRow.className = 'stat-row';
+                thirstRow.innerHTML = `<span>💧 ${gameState.player.thirst}%</span>`;
+                statsContainer.appendChild(thirstRow);
+            }
+            
+            // Добавляем радиацию только если рядом с радиацией
+            if (gameState.settings.nearRadiation) {
+                const radiationRow = document.createElement('div');
+                radiationRow.className = 'stat-row';
+                radiationRow.innerHTML = `<span>☢️ ${gameState.player.radiation}%</span>`;
+                statsContainer.appendChild(radiationRow);
+            }
+        }
+        
         // Game loop
         function gameLoop(timestamp) {
             update(timestamp);
@@ -707,6 +620,9 @@
                 // Keep player within bounds
                 gameState.player.x = Math.max(0, Math.min(canvas.width - 30, gameState.player.x));
                 gameState.player.y = Math.max(0, Math.min(canvas.height - 30, gameState.player.y));
+                
+                // Проверка на радиацию (просто для примера)
+                gameState.settings.nearRadiation = Math.random() > 0.7; // 30% шанс быть рядом с радиацией
             }
             
             // Update time
@@ -727,26 +643,8 @@
                 gameState.time.dayTime = (gameState.time.hours >= 6 && gameState.time.hours < 24);
                 
                 // Update UI
-                updateUI();
+                updateStatsUI();
             }
-        }
-        
-        function updateUI() {
-            // Update stats
-            const hoursStr = gameState.time.hours.toString().padStart(2, '0');
-            const minsStr = gameState.time.minutes.toString().padStart(2, '0');
-            
-            topStats.innerHTML = `
-                <span>❤️ ${gameState.player.health}%</span>
-                <span>🟡 ${gameState.player.gold}</span>
-                <span>🕒 ${hoursStr}:${minsStr}</span>
-            `;
-            
-            bottomStats.innerHTML = `
-                <span>🍗 ${gameState.player.hunger}%</span>
-                <span>💧 ${gameState.player.thirst}%</span>
-                <span>☢️ ${gameState.player.radiation}%</span>
-            `;
         }
         
         function render() {
@@ -809,6 +707,7 @@
         }
         
         // Start the game loop
+        updateStatsUI();
         requestAnimationFrame(gameLoop);
     </script>
 </body>
