@@ -109,7 +109,7 @@
         
         #hotbar {
             position: absolute;
-            bottom: 80px;
+            bottom: 70px;  /* Подняли выше */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -184,7 +184,7 @@
         
         #joystickArea {
             position: absolute;
-            bottom: 80px;
+            bottom: 70px;  /* Подняли выше */
             left: 20px;
             width: 120px;
             height: 120px;
@@ -278,7 +278,7 @@
                 <div class="stat-row">
                     <span>🍗 80%</span>
                 </div>
-                <!-- Жажда и радиация будут добавляться динамически -->
+                <!-- Убрали радиацию -->
             </div>
             <div id="pauseBtn">⏸</div>
             <div id="joystickArea">
@@ -323,7 +323,6 @@
                 health: 100,
                 hunger: 80,
                 thirst: 70,
-                radiation: 0,
                 gold: 10,
                 inventory: [
                     '🪓', '⛏️', '🔫', '🏗️', '',
@@ -340,8 +339,7 @@
                 lastUpdate: 0
             },
             settings: {
-                difficulty: 'normal', // 'easy', 'normal', 'hard'
-                nearRadiation: false
+                difficulty: 'normal' // 'easy', 'normal', 'hard'
             },
             joystick: {
                 active: false,
@@ -556,7 +554,6 @@
             const hoursStr = gameState.time.hours.toString().padStart(2, '0');
             const minsStr = gameState.time.minutes.toString().padStart(2, '0');
             
-            // Основная строка
             statsContainer.innerHTML = `
                 <div class="stat-row">
                     <span>❤️ ${gameState.player.health}%</span>
@@ -574,14 +571,6 @@
                 thirstRow.className = 'stat-row';
                 thirstRow.innerHTML = `<span>💧 ${gameState.player.thirst}%</span>`;
                 statsContainer.appendChild(thirstRow);
-            }
-            
-            // Добавляем радиацию только если рядом с радиацией
-            if (gameState.settings.nearRadiation) {
-                const radiationRow = document.createElement('div');
-                radiationRow.className = 'stat-row';
-                radiationRow.innerHTML = `<span>☢️ ${gameState.player.radiation}%</span>`;
-                statsContainer.appendChild(radiationRow);
             }
         }
         
@@ -620,9 +609,6 @@
                 // Keep player within bounds
                 gameState.player.x = Math.max(0, Math.min(canvas.width - 30, gameState.player.x));
                 gameState.player.y = Math.max(0, Math.min(canvas.height - 30, gameState.player.y));
-                
-                // Проверка на радиацию (просто для примера)
-                gameState.settings.nearRadiation = Math.random() > 0.7; // 30% шанс быть рядом с радиацией
             }
             
             // Update time
