@@ -256,10 +256,9 @@
             z-index: 70;
         }
 
-        /* Джойстик (только для ПК) - по умолчанию скрыт */
+        /* Джойстик (по умолчанию для ПК) */
         #joystickArea {
             position: absolute;
-            /* Размеры и позиция по умолчанию для ПК, если isMobile = false */
             bottom: 80px;
             left: 30px;
             width: 65px;
@@ -396,7 +395,7 @@
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.8); /* Синее свечение */
         }
         
-        /* Кнопки действий - увеличены в 2 раза от hotbarSlot */
+        /* Кнопки действий */
         #actionButtons {
             position: absolute;
             bottom: 25px;
@@ -454,98 +453,87 @@
             visibility: visible;
         }
 
-        /* Медиа-запросы для адаптивности на мобильных (max-width: 991px) */
-        @media (max-width: 991px) { /* Изменено с 768px на 991px */
-            /* Джойстик: чуть побольше и одинаковый отступ */
-            #joystickArea {
-                width: 80px; /* Увеличили размер */
-                height: 80px; /* Увеличили размер */
-                bottom: 30px; /* Одинаковый отступ снизу */
-                left: 30px; /* Одинаковый отступ слева */
-            }
-            #joystickInner {
-                width: 40px; /* Пропорционально увеличили */
-                height: 40px; /* Пропорционально увеличили */
-            }
+        /* ===== Стили ТОЛЬКО для мобильных устройств (при наличии класса .mobile-ui на body) ===== */
+        body.mobile-ui {
+            /* Общие уменьшения для мобильного UI, если нужно */
+        }
 
-            /* Нижняя панель (хотбар + рюкзак) */
-            #bottomControls {
-                bottom: 15px;
-                border-radius: 8px; /* Меньший радиус на мобильных */
-                padding: 5px; /* Меньший общий паддинг */
-            }
-            #hotbar {
-                gap: 3px; /* Меньший отступ между слотами */
-            }
-            /* Ячейки хотбара: меньше в 2 раза от ПК-размера (50px -> 25px). */
-            .hotbarSlot {
-                width: 25px; /* Остается 2 раза меньше ПК-размера */
-                height: 25px; /* Остается 2 раза меньше ПК-размера */
-                font-size: 12px; /* Уменьшили шрифт для соответствия размеру */
-                border-radius: 4px;
-            }
-            /* Кнопка инвентаря: чуть-чуть побольше */
-            #inventoryBtn {
-                width: 50px; /* Увеличили размер */
-                height: 50px; /* Увеличили размер */
-                font-size: 24px; /* Скорректировали шрифт для нового размера */
-                margin-left: 5px; /* Отступ от хотбара */
-                border-radius: 4px;
-            }
+        body.mobile-ui #joystickArea {
+            width: 80px; /* Чуть больше джойстик */
+            height: 80px;
+            bottom: 30px; /* Одинаковый отступ от низа */
+            left: 30px;  /* Одинаковый отступ от левого края */
+        }
+        body.mobile-ui #joystickInner {
+            width: 40px;
+            height: 40px;
+        }
 
-            /* Кнопки действий: меньше в полтора раза от ИСХОДНОГО ПК-размера (100px -> ~67px), но
-               так как они уже были 44px (в предыдущей версии), мы сделаем их просто меньше,
-               чтобы было заметно (30px). */
-            #actionButtons {
-                bottom: 15px;
-                right: 15px;
-                gap: 8px;
-            }
-            .actionBtn {
-                width: 30px; /* Уменьшили размер */
-                height: 30px; /* Уменьшили размер */
-                font-size: 14px; /* Скорректировали шрифт */
-            }
+        body.mobile-ui #bottomControls {
+            bottom: 15px;
+            padding: 5px;
+        }
 
-            /* Кнопка паузы */
-            #pauseBtn {
-                width: 33px;
-                height: 33px;
-                top: 10px;
-                right: 10px;
-                font-size: 18px;
-            }
+        body.mobile-ui .hotbarSlot {
+            width: 25px; /* Хотбар в 2 раза меньше */
+            height: 25px;
+            font-size: 12px;
+        }
 
-            /* Статистика */
-            #statsContainer {
-                top: 8px;
-                left: 8px;
-                gap: 4px;
-            }
-            #topStatsRow, #bottomStatsRow {
-                gap: 8px;
-            }
-            .stat-item {
-                padding: 4px 8px;
-                font-size: 12px;
-                gap: 4px;
-            }
-            .stat-label {
-                font-size: 14px;
-            }
-            .health-bar-container, .hunger-bar-container {
-                width: 50px;
-                height: 8px;
-            }
+        body.mobile-ui #inventoryBtn {
+            width: 50px; /* Инвентарь чуть больше */
+            height: 50px;
+            font-size: 24px;
+            margin-left: 5px;
+        }
 
-            .modeBtn {
-                max-width: 90%;
-                height: 100px;
-                font-size: 20px;
-            }
-            .modeBtn span {
-                font-size: 14px;
-            }
+        body.mobile-ui #actionButtons {
+            bottom: 15px;
+            right: 15px;
+            gap: 8px;
+        }
+        body.mobile-ui .actionBtn {
+            width: 30px; /* Кнопки действий в 1.5 раза меньше (от исходного 100px) */
+            height: 30px;
+            font-size: 14px;
+        }
+
+        body.mobile-ui #pauseBtn {
+            width: 33px;
+            height: 33px;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+        }
+
+        body.mobile-ui #statsContainer {
+            top: 8px;
+            left: 8px;
+            gap: 4px;
+        }
+        body.mobile-ui #topStatsRow, body.mobile-ui #bottomStatsRow {
+            gap: 8px;
+        }
+        body.mobile-ui .stat-item {
+            padding: 4px 8px;
+            font-size: 12px;
+            gap: 4px;
+        }
+        body.mobile-ui .stat-label {
+            font-size: 14px;
+        }
+        body.mobile-ui .health-bar-container, body.mobile-ui .hunger-bar-container {
+            width: 50px;
+            height: 8px;
+        }
+
+        body.mobile-ui .modeBtn {
+            max-width: 90%;
+            height: 100px;
+            font-size: 20px;
+        }
+        body.mobile-ui .modeBtn span {
+            font-size: 14px;
         }
     </style>
 </head>
@@ -667,7 +655,10 @@
             screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'game', 'pause'
             paused: false,
             // Проверка на мобильное устройство (более строгая, чтобы исключить десктоп с сенсорным экраном)
-            isMobile: /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Opera Mini/i.test(navigator.userAgent) && !/Tablet/i.test(navigator.userAgent)
+            // Добавлена проверка на touch-события для более надежного определения мобильности
+            isMobile: ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0) 
+                      && /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Opera Mini/i.test(navigator.userAgent)
+                      && !/Tablet|Windows NT/i.test(navigator.userAgent) // Исключаем планшеты и настольные устройства с сенсорным экраном более точно
         };
         
         // Элементы интерфейса
@@ -727,12 +718,10 @@
 
         // Инициализация игры
         function init() {
-            resizeCanvas();
-            setupEventListeners();
-            
-            // Показать джойстик, если мобильное устройство
+            // Добавляем класс 'mobile-ui' к body, если это мобильное устройство
             if (gameState.isMobile) {
-                joystickArea.style.display = 'block';
+                document.body.classList.add('mobile-ui');
+                joystickArea.style.display = 'block'; // Показываем джойстик на мобильных
                 // Рассчитываем центр джойстика после того, как он станет видимым
                 const rect = joystickArea.getBoundingClientRect();
                 joystickCenterX = rect.left + rect.width / 2;
@@ -741,6 +730,9 @@
             } else {
                 joystickArea.style.display = 'none'; // Скрыть джойстик на ПК
             }
+            
+            resizeCanvas();
+            setupEventListeners();
 
             // Обновляем UI один раз при старте, чтобы отобразить начальные значения
             updateUI();
@@ -759,8 +751,8 @@
                 gameState.player.x = canvas.width / 2;
                 gameState.player.y = canvas.height / 2;
             }
-            // Обновляем центр джойстика при ресайзе
-            if (gameState.isMobile && joystickArea.style.display === 'block') {
+            // Обновляем центр джойстика при ресайзе (только если он виден)
+            if (joystickArea.style.display === 'block') {
                 const rect = joystickArea.getBoundingClientRect();
                 joystickCenterX = rect.left + rect.width / 2;
                 joystickCenterY = rect.top + rect.height / 2;
