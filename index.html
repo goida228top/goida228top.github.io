@@ -61,7 +61,7 @@
         }
 
         /* Общие стили для всех интерактивных кнопок, не входящих в объединенную панель */
-        .menuBtn, .modeBtn, #pauseBtn, .actionBtn, .hotbarSlot, #inventoryBtn {
+        .menuBtn, .modeBtn, #pauseBtn, .actionBtn, .hotbarSlot, #inventoryBtn, #roomSelectScreen button {
             border: 2px solid #444;
             border-radius: 8px;
             display: flex;
@@ -82,7 +82,7 @@
         }
 
         /* Эффект наведения (hover) */
-        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover, .hotbarSlot:hover, #inventoryBtn:hover {
+        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover, #hotbar:hover, #inventoryBtn:hover, #roomSelectScreen button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
             background-color: rgba(70, 70, 70, 0.9); /* Более светлый фон при наведении */
@@ -94,7 +94,7 @@
 
 
         /* Эффект нажатия (active) - ТОЛЬКО ВО ВРЕМЯ НАЖАТИЯ */
-        .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active {
+        .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active, #roomSelectScreen button:active {
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
             background-color: rgba(90, 90, 90, 0.9); /* Темнее серый фон при нажатии */
@@ -182,6 +182,50 @@
             color: #ccc;
             text-align: center;
             line-height: 1.2;
+        }
+
+        /* Экран выбора комнаты для сетевой игры */
+        #roomSelectScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none; /* Скрыто по умолчанию */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 95;
+            padding: 20px;
+        }
+        #roomSelectScreen h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+        #roomSelectScreen input {
+            padding: 10px;
+            font-size: 20px;
+            border: 2px solid #666;
+            border-radius: 8px;
+            background-color: rgba(30, 30, 30, 0.8);
+            color: white;
+            margin-bottom: 15px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+        #roomSelectScreen .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 300px;
+        }
+        #roomSelectScreen button {
+            height: 60px;
+            font-size: 22px;
         }
 
         /* Экран "Что нового" */
@@ -346,7 +390,6 @@
             background-color: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             position: absolute;
-            /* Изменено: теперь top/left всегда 50% для центрирования, а смещение через transform */
             top: 50%; 
             left: 50%;
             transform: translate(-50%, -50%); /* Всегда центрируем его относительно его собственных размеров */
@@ -483,21 +526,62 @@
             </div>
         </div>
 
+        <!-- Экран выбора комнаты для сетевой игры -->
+        <div id="roomSelectScreen">
+            <h2>Сетевая игра</h2>
+            <input type="text" id="roomNameInput" placeholder="Имя комнаты">
+            <div class="button-group">
+                <button id="createRoomBtn">СОЗДАТЬ КОМНАТУ</button>
+                <button id="joinRoomBtn">ПРИСОЕДИНИТЬСЯ</button>
+                <button id="roomBackBtn">НАЗАД</button>
+            </div>
+            <div id="loadingIndicator" style="display:none; color: yellow; margin-top: 20px;">Загрузка...</div>
+        </div>
+
         <!-- Экран "Что нового" -->
         <div id="whatsNewScreen">
             <h2>Что нового в Survival City?</h2>
             <ul>
-                <li><strong>Обновление 0.0.4:</strong>
+                <li><strong>Обновление 0.0.9:</strong>
                     <ul>
+                        <li>Исправлена ошибка `Invalid glob match expression` в правилах безопасности Firestore. Правило `match` теперь корректно настроено для доступа к комнатам.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.8:</strong>
+                    <ul>
+                        <li>Добавлены инструкции по правилам безопасности Firebase Firestore для разрешения создания и присоединения к комнатам.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.7:</strong>
+                    <ul>
+                        <li>Исправлена ошибка `Invalid document reference`. Пути к комнатам в Firestore теперь формируются корректно с использованием `artifacts/APP_ID/public/data/rooms/ИМЯ_КОМНАТЫ`.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.6:</strong>
+                    <ul>
+                        <li>Исправлена ошибка "auth/configuration-not-found". Убедитесь, что метод аутентификации "Anonymous" включен в консоли Firebase.</li>
+                        <li>Добавлены дополнительные сообщения в консоль для отладки инициализации Firebase.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.5:</strong>
+                    <ul>
+                        <li>Добавлена поддержка сетевой игры через Firebase Firestore (требуется подключение к интернету).</li>
+                        <li>Теперь можно создавать игровые комнаты и присоединяться к ним, чтобы играть с друзьями.</li>
                         <li>Исправлена ошибка с визуальным смещением джойстика при перетаскивании. Теперь он всегда остается центрированным внутри внешнего круга.</li>
                         <li>Увеличен отступ джойстика от нижнего и левого края на мобильных устройствах.</li>
                     </ul>
                 </li>
-                <li><strong>Обновление 0.0.3:</strong>
+                <li><strong>Обновление 0.0.4:</strong>
                     <ul>
                         <li>Исправлена проблема с некорректным отображением интерфейса на мобильных устройствах. Теперь размеры элементов (джойстик, хотбар, кнопки действий) динамически подстраиваются под мобильный экран.</li>
                         <li>Кнопка паузы перемещена в угол для более удобного доступа.</li>
                         <li>Джойстик теперь имеет фиксированный отступ от нижнего и левого края, а не от центра.</li>
+                    </ul>
+                </li>
+                <li><strong>Обновление 0.0.3:</strong>
+                    <ul>
+                        <li>Обновление списка "Что нового" и кнопка перезагрузки страницы.</li>
+                        <li>Улучшено определение мобильного устройства.</li>
                     </ul>
                 </li>
                 <li><strong>Обновление 0.0.2:</strong>
@@ -580,15 +664,24 @@
         <div id="messageBox"></div>
     </div>
 
-    <script>
-        // Инициализация игры
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const gameCanvas = document.getElementById('gameCanvas');
-        
-        // Состояние игры
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Глобальные переменные Firebase (будут инициализированы после загрузки)
+        let firebaseApp;
+        let auth;
+        let db;
+        let userId;
+        let currentRoomRef; // Ссылка на текущую комнату в Firestore
+        let unsubscribeFromRoom = null; // Функция для отписки от обновлений комнаты
+
+        // Состояние игры (расширяем для мультиплеера)
         const gameState = {
             player: {
+                id: null, // ID текущего игрока
                 x: 0,
                 y: 0,
                 speed: 3,
@@ -598,8 +691,10 @@
                 inventory: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 hotbar: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 selectedSlot: 0,
-                currentAction: 'move'
+                currentAction: 'move',
+                color: '#3498db' // Цвет игрока
             },
+            otherPlayers: {}, // Объект для хранения данных других игроков { playerId: { x, y, color }, ... }
             time: {
                 hours: 12,
                 minutes: 45,
@@ -609,21 +704,29 @@
                 { type: 'tree', x: 200, y: 150 },
                 { type: 'wall', x: 300, y: 200 }
             ],
-            screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'game', 'pause', 'whatsNew'
+            screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'roomSelect', 'game', 'pause', 'whatsNew'
             paused: false,
-            // Проверка на мобильное устройство (более строгая, чтобы исключить десктоп с сенсорным экраном)
-            // Добавлена проверка на touch-события для более надежного определения мобильности
+            // Проверка на мобильное устройство
             isMobile: ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0) 
                       && /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Opera Mini/i.test(navigator.userAgent)
                       && !/Tablet|Windows NT/i.test(navigator.userAgent) // Исключаем планшеты и настольные устройства с сенсорным экраном более точно
         };
-        
-        // Элементы интерфейса
+
+        // UI Elements (получаем ссылки на новые элементы)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         const menuScreen = document.getElementById('menuScreen');
         const modeSelectScreen = document.getElementById('modeSelectScreen');
+        const roomSelectScreen = document.getElementById('roomSelectScreen'); // Новый экран
+        const roomNameInput = document.getElementById('roomNameInput'); // Поле ввода имени комнаты
+        const createRoomBtn = document.getElementById('createRoomBtn'); // Кнопка создать комнату
+        const joinRoomBtn = document.getElementById('joinRoomBtn'); // Кнопка присоединиться
+        const roomBackBtn = document.getElementById('roomBackBtn'); // Кнопка назад с экрана выбора комнаты
+        const loadingIndicator = document.getElementById('loadingIndicator'); // Индикатор загрузки
+
         const playBtn = document.getElementById('playBtn');
-        const whatsNewBtn = document.getElementById('whatsNewBtn'); // Новая кнопка
-        const refreshBtn = document.getElementById('refreshBtn'); // Новая кнопка
+        const whatsNewBtn = document.getElementById('whatsNewBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
         const onlineBtn = document.getElementById('onlineBtn');
         const offlineBtn = document.getElementById('offlineBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -635,10 +738,10 @@
         const joystickArea = document.getElementById('joystickArea');
         const joystickInner = document.getElementById('joystickInner');
         const messageBox = document.getElementById('messageBox');
-        const uiContainer = document.getElementById('uiContainer'); // Получаем ссылку на uiContainer
-        const inventoryBtn = document.getElementById('inventoryBtn'); // Получаем ссылку на кнопку инвентаря
-        const whatsNewScreen = document.getElementById('whatsNewScreen'); // Экран "Что нового"
-        const whatsNewBackBtn = document.getElementById('whatsNewBackBtn'); // Кнопка назад для "Что нового"
+        const uiContainer = document.getElementById('uiContainer');
+        const inventoryBtn = document.getElementById('inventoryBtn');
+        const whatsNewScreen = document.getElementById('whatsNewScreen');
+        const whatsNewBackBtn = document.getElementById('whatsNewBackBtn');
 
         // Элементы статистики для обновления
         const playerHealthFill = document.getElementById('playerHealthFill');
@@ -655,18 +758,76 @@
         };
 
         // Переменные для джойстика
-        let joystickActive = false; // Флаг, указывающий, что палец на джойстике (touchstart был)
-        let joystickCurrentX = 0, joystickCurrentY = 0; // Текущее смещение джойстика от центра
-        let joystickCenterX = 0, joystickCenterY = 0; // Центр джойстика для расчета движения
+        let joystickActive = false;
+        let joystickCurrentX = 0, joystickCurrentY = 0;
+        let joystickCenterX = 0, joystickCenterY = 0;
 
         // Идентификатор кадра анимации для остановки игры
         let animationFrameId;
 
-        // Инициализация игры при загрузке окна
+        // Firebase Configuration (Теперь используется ваша конфигурация)
+        const firebaseConfig = {
+            apiKey: "AIzaSyACp2E3rZi1It8yWOeFoZnDzNV-pxSFHnc",
+            authDomain: "my-game-2cd1e.firebaseapp.com",
+            projectId: "my-game-2cd1e",
+            appId: "1:920986300653:web:d0141ebb18839c1de19ce4",
+            measurementId: "G-JC9LMKPSB7",
+            storageBucket: "my-game-2cd1e.firebasestorage.app", // Добавлено из вашей конфигурации
+            messagingSenderId: "920986300653" // Добавлено из вашей конфигурации
+        };
+        const appId = "my-game-2cd1e"; // Используем projectId как appId для коллекций public/rooms
+
+        // Инициализация Firebase при загрузке окна
         window.onload = function () {
+            initializeFirebase(); // Инициализация Firebase перед init()
             init();
             gameLoop(); 
         };
+
+        async function initializeFirebase() {
+            try {
+                // Логируем конфигурацию перед инициализацией
+                console.log("Firebase Config:", firebaseConfig);
+
+                firebaseApp = initializeApp(firebaseConfig);
+                auth = getAuth(firebaseApp);
+                db = getFirestore(firebaseApp);
+
+                // Логируем объект аутентификации после его получения
+                console.log("Firebase Auth instance:", auth);
+
+                // Авторизация пользователя (анонимная или с токеном)
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token !== '') {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        console.log("Signed in with custom token.");
+                    } catch (tokenError) {
+                        console.warn("Error signing in with custom token, attempting anonymous sign-in:", tokenError);
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously after token error.");
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously (no custom token).");
+                }
+
+                // Проверяем, доступен ли currentUser после входа
+                if (auth.currentUser) {
+                    userId = auth.currentUser.uid;
+                    gameState.player.id = userId;
+                    console.log("Firebase initialized. User ID:", userId);
+                } else {
+                    // Резервный вариант для userId, если auth.currentUser null (не должно произойти после успешного входа)
+                    userId = crypto.randomUUID();
+                    gameState.player.id = userId;
+                    console.warn("Auth current user is null after sign-in, using random UUID for userId.");
+                }
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                showMessage("Ошибка подключения к серверу. Попробуйте обновить страницу. Убедитесь, что аутентификация Firebase включена для вашего проекта и настройки (apiKey, authDomain) верны.");
+            }
+        }
 
         // Функция для показа модальных сообщений вместо alert
         function showMessage(message, duration = 2000) {
@@ -679,78 +840,67 @@
 
         // Инициализация игры
         function init() {
-            // Применяем мобильные стили, если устройство мобильное
             if (gameState.isMobile) {
                 applyMobileStyles();
-                joystickArea.style.display = 'block'; // Показываем джойстик на мобильных
-                // Рассчитываем центр джойстика после того, как он станет видимым
+                joystickArea.style.display = 'block'; 
                 const rect = joystickArea.getBoundingClientRect();
                 joystickCenterX = rect.left + rect.width / 2;
                 joystickCenterY = rect.top + rect.height / 2;
                 setupJoystick();
             } else {
-                joystickArea.style.display = 'none'; // Скрыть джойстик на ПК
+                joystickArea.style.display = 'none'; 
             }
             
             resizeCanvas();
             setupEventListeners();
 
-            // Обновляем UI один раз при старте, чтобы отобразить начальные значения
             updateUI();
-            // Скрываем canvas и uiContainer по умолчанию, чтобы начать с меню и серого фона
             gameCanvas.style.display = 'none';
-            uiContainer.style.display = 'none'; // Скрываем UI по умолчанию
-            menuScreen.style.display = 'flex'; // Показываем главное меню
+            uiContainer.style.display = 'none';
+            menuScreen.style.display = 'flex';
         }
 
         // Функция для применения мобильных стилей через JS
         function applyMobileStyles() {
-            // Кнопка паузы
             pauseBtn.style.width = '33px';
             pauseBtn.style.height = '33px';
             pauseBtn.style.top = '5px';
             pauseBtn.style.right = '5px';
             pauseBtn.style.fontSize = '18px';
 
-            // Джойстик
             joystickArea.style.width = '80px';
             joystickArea.style.height = '80px';
-            joystickArea.style.bottom = '50px'; // Увеличили отступ
-            joystickArea.style.left = '50px';  // Увеличили отступ
+            joystickArea.style.bottom = '50px'; 
+            joystickArea.style.left = '50px';  
             joystickInner.style.width = '40px';
             joystickInner.style.height = '40px';
-            joystickInner.style.transform = 'translate(-50%, -50%)'; // Начальное центрирование
+            joystickInner.style.transform = 'translate(-50%, -50%)'; 
 
-            // Нижняя панель (хотбар + рюкзак)
             document.getElementById('bottomControls').style.bottom = '15px';
             document.getElementById('bottomControls').style.padding = '5px';
 
-            // Слоты хотбара
-            document.getElementById('hotbar').style.gap = '5px'; // Увеличили отступ
+            document.getElementById('hotbar').style.gap = '5px';
             hotbarSlots.forEach(slot => {
-                slot.style.width = '40px'; // Чуть меньше рюкзака
+                slot.style.width = '40px'; 
                 slot.style.height = '40px';
                 slot.style.fontSize = '20px';
             });
 
-            // Кнопка инвентаря
-            inventoryBtn.style.width = '50px'; // Остался прежний
+            inventoryBtn.style.width = '50px';
             inventoryBtn.style.height = '50px';
             inventoryBtn.style.fontSize = '24px';
             inventoryBtn.style.marginLeft = '8px';
 
-            // Кнопки действий
             document.getElementById('actionButtons').style.bottom = '15px';
             document.getElementById('actionButtons').style.right = '15px';
             document.getElementById('actionButtons').style.gap = '8px';
-            attackBtn.style.width = '60px'; // Чуть больше рюкзака
+            attackBtn.style.width = '60px'; 
             attackBtn.style.height = '60px';
             attackBtn.style.fontSize = '28px';
-            buildBtn.style.width = '60px'; // Чуть больше рюкзака
+            buildBtn.style.width = '60px'; 
             buildBtn.style.height = '60px';
             buildBtn.style.fontSize = '28px';
 
-            // Статистика
             document.getElementById('statsContainer').style.top = '8px';
             document.getElementById('statsContainer').style.left = '8px';
             document.getElementById('statsContainer').style.gap = '4px';
@@ -769,7 +919,6 @@
             document.querySelector('.hunger-bar-container').style.width = '50px';
             document.querySelector('.hunger-bar-container').style.height = '8px';
 
-            // Кнопки режимов (online/offline)
             document.querySelectorAll('.modeBtn').forEach(btn => {
                 btn.style.maxWidth = '90%';
                 btn.style.height = '100px';
@@ -784,12 +933,10 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Игрок центрируется при ресайзе, если он уже на игровом экране
             if (gameState.screen === 'game') {
                 gameState.player.x = canvas.width / 2;
                 gameState.player.y = canvas.height / 2;
             }
-            // Обновляем центр джойстика при ресайзе (только если он виден)
             if (joystickArea.style.display === 'block') {
                 const rect = joystickArea.getBoundingClientRect();
                 joystickCenterX = rect.left + rect.width / 2;
@@ -799,65 +946,75 @@
         
         // Настройка слушателей событий
         function setupEventListeners() {
-            // Кнопки меню
             playBtn.addEventListener('click', () => {
                 menuScreen.style.display = 'none';
                 modeSelectScreen.style.display = 'flex';
             });
 
+            // Новая логика для кнопки "Онлайн"
+            onlineBtn.addEventListener('click', () => {
+                if (!db) { // Проверяем, инициализирован ли Firebase
+                    showMessage("Сервер недоступен. Попробуйте обновить страницу.");
+                    return;
+                }
+                modeSelectScreen.style.display = 'none';
+                roomSelectScreen.style.display = 'flex';
+                gameState.screen = 'roomSelect';
+            });
+
+            // Обработчики кнопок на экране выбора комнаты
+            createRoomBtn.addEventListener('click', createRoom);
+            joinRoomBtn.addEventListener('click', joinRoom);
+            roomBackBtn.addEventListener('click', () => {
+                roomSelectScreen.style.display = 'none';
+                modeSelectScreen.style.display = 'flex';
+                gameState.screen = 'modeSelect';
+            });
+            
+            offlineBtn.addEventListener('click', startGame);
+            
             whatsNewBtn.addEventListener('click', () => {
                 menuScreen.style.display = 'none';
                 whatsNewScreen.style.display = 'flex';
-                gameState.screen = 'whatsNew'; // Обновляем состояние экрана
+                gameState.screen = 'whatsNew';
             });
 
             whatsNewBackBtn.addEventListener('click', () => {
                 whatsNewScreen.style.display = 'none';
                 menuScreen.style.display = 'flex';
-                gameState.screen = 'menu'; // Обновляем состояние экрана
+                gameState.screen = 'menu';
             });
 
             refreshBtn.addEventListener('click', () => {
-                location.reload(); // Перезагружает страницу
+                location.reload();
             });
             
-            onlineBtn.addEventListener('click', () => {
-                showMessage('Онлайн режим в разработке');
-            });
-            
-            offlineBtn.addEventListener('click', startGame);
-            
-            // Управление игрой
             pauseBtn.addEventListener('click', togglePause);
             resumeBtn.addEventListener('click', togglePause);
             menuBackToMainBtn.addEventListener('click', returnToMenu);
             
-            // Горячие клавиши для ПК
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             
-            // Кнопки действий - привязываем к ним событие mousedown/mouseup для визуального эффекта
             attackBtn.addEventListener('mousedown', () => toggleActionBtnActive(attackBtn, true));
             attackBtn.addEventListener('mouseup', () => toggleActionBtnActive(attackBtn, false));
-            attackBtn.addEventListener('mouseleave', () => toggleActionBtnActive(attackBtn, false)); // Сброс, если мышь ушла с кнопки
+            attackBtn.addEventListener('mouseleave', () => toggleActionBtnActive(attackBtn, false));
             attackBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(attackBtn, true); }, { passive: false });
             attackBtn.addEventListener('touchend', () => toggleActionBtnActive(attackBtn, false));
             attackBtn.addEventListener('click', () => { gameState.player.currentAction = 'attack'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
 
             buildBtn.addEventListener('mousedown', () => toggleActionBtnActive(buildBtn, true));
             buildBtn.addEventListener('mouseup', () => toggleActionBtnActive(buildBtn, false));
-            buildBtn.addEventListener('mouseleave', () => toggleActionBtnActive(buildBtn, false)); // Сброс, если мышь ушла с кнопки
+            buildBtn.addEventListener('mouseleave', () => toggleActionBtnActive(buildBtn, false));
             buildBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(buildBtn, true); }, { passive: false });
             buildBtn.addEventListener('touchend', () => toggleActionBtnActive(buildBtn, false));
             buildBtn.addEventListener('click', () => { gameState.player.currentAction = 'build'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
             
-            // Обработка пробела для attackBtn
             document.addEventListener('keydown', (e) => {
                 if (gameState.screen === 'game' && !gameState.paused && e.key === ' ') {
-                    if (!e.repeat) { // Проверяем, чтобы событие не повторялось при удержании
+                    if (!e.repeat) {
                         toggleActionBtnActive(attackBtn, true);
                         gameState.player.currentAction = 'attack';
-                        // После выполнения действия, сбросим активное состояние через короткое время
                         setTimeout(() => { gameState.player.currentAction = 'move'; }, 200);
                     }
                 }
@@ -868,21 +1025,17 @@
                 }
             });
 
-            // Выбор слота хотбара
             hotbarSlots.forEach((slot, index) => {
                 slot.addEventListener('click', () => {
                     selectHotbarSlot(index);
                 });
             });
 
-            // Клик по кнопке инвентаря
             inventoryBtn.addEventListener('click', selectInventoryButton);
             
-            // Ресайз окна
             window.addEventListener('resize', resizeCanvas);
         }
 
-        // Новая функция для управления активным состоянием кнопок действий
         function toggleActionBtnActive(button, isActive) {
             if (isActive) {
                 button.classList.add('active-state');
@@ -891,15 +1044,13 @@
             }
         }
         
-        // Настройка джойстика для мобильных
         function setupJoystick() {
             const maxDistance = joystickArea.offsetWidth / 2 - (joystickInner.offsetWidth / 2);
 
             joystickArea.addEventListener('touchstart', (e) => {
                 if (gameState.screen !== 'game' || gameState.paused) return;
-                e.preventDefault(); // Предотвратить скролл
+                e.preventDefault();
                 joystickActive = true;
-                // Обновляем центр джойстика на случай, если пользователь перетащил страницу
                 const rect = joystickArea.getBoundingClientRect();
                 joystickCenterX = rect.left + rect.width / 2;
                 joystickCenterY = rect.top + rect.height / 2;
@@ -907,7 +1058,7 @@
             
             joystickArea.addEventListener('touchmove', (e) => {
                 if (!joystickActive) return;
-                e.preventDefault(); // Предотвратить скролл
+                e.preventDefault();
                 
                 const touch = e.touches[0];
                 let deltaX = touch.clientX - joystickCenterX;
@@ -923,7 +1074,6 @@
                 
                 joystickCurrentX = deltaX;
                 joystickCurrentY = deltaY;
-                // ИСПРАВЛЕНИЕ: Комбинируем смещение с постоянным центрированием
                 joystickInner.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
             }, { passive: false });
             
@@ -931,12 +1081,10 @@
                 joystickActive = false;
                 joystickCurrentX = 0;
                 joystickCurrentY = 0;
-                // ИСПРАВЛЕНИЕ: Возвращаем в центр, сохраняя центрирование
                 joystickInner.style.transform = 'translate(-50%, -50%)'; 
             });
         }
         
-        // Обработка нажатия клавиш
         function handleKeyDown(e) {
             if (gameState.screen !== 'game' || gameState.paused) return;
             
@@ -950,59 +1098,220 @@
                 case '3': selectHotbarSlot(2); break;
                 case '4': selectHotbarSlot(3); break;
                 case '5': selectHotbarSlot(4); break;
-                case 'e': selectInventoryButton(); break; // Добавим 'e' для инвентаря
-                /* Пробел теперь обрабатывается в отдельном обработчике document.addEventListener('keydown') */
+                case 'e': selectInventoryButton(); break;
             }
         }
         
-        // Обработка отпускания клавиш
         function handleKeyUp(e) {
             switch(e.key.toLowerCase()) {
                 case 'w': keys.w = false; break;
                 case 'a': keys.a = false; break;
                 case 's': keys.s = false; break;
                 case 'd': keys.d = false; break;
-                /* Пробел теперь обрабатывается в отдельном обработчике document.addEventListener('keyup') */
             }
         }
         
-        // Выбор слота хотбара
         function selectHotbarSlot(index) {
-            // Сначала сбрасываем все активные состояния
             const currentSelectedHotbar = document.querySelector('.hotbarSlot.selected');
             if (currentSelectedHotbar) {
                 currentSelectedHotbar.classList.remove('selected');
             }
-            inventoryBtn.classList.remove('selected'); // Убираем выделение с кнопки инвентаря
+            inventoryBtn.classList.remove('selected');
 
-            // Выделяем выбранный слот хотбара
             hotbarSlots[index].classList.add('selected');
             gameState.player.selectedSlot = index;
         }
 
-        // Выбор кнопки инвентаря
         function selectInventoryButton() {
-            // Сначала сбрасываем все активные состояния
             const currentSelectedHotbar = document.querySelector('.hotbarSlot.selected');
             if (currentSelectedHotbar) {
                 currentSelectedHotbar.classList.remove('selected');
             }
             
-            // Переключаем класс 'selected' для кнопки инвентаря
             inventoryBtn.classList.toggle('selected');
-            // Если инвентарь выбран, сбрасываем выбранный слот хотбара
             if (inventoryBtn.classList.contains('selected')) {
-                gameState.player.selectedSlot = -1; // -1 означает, что выбран инвентарь, а не слот хотбара
+                gameState.player.selectedSlot = -1;
             } else {
-                // Если инвентарь не выбран, можно по умолчанию выбрать первый слот хотбара
                 selectHotbarSlot(0);
             }
-            // Здесь можно добавить логику открытия/закрытия окна инвентаря
             showMessage(inventoryBtn.classList.contains('selected') ? 'Инвентарь открыт (условно)' : 'Инвентарь закрыт (условно)');
         }
         
-        // Начало игры
+        // ---- Multiplayer Logic ----
+
+        // Функция для создания новой комнаты
+        async function createRoom() {
+            const roomName = roomNameInput.value.trim();
+            if (!roomName) {
+                showMessage("Введите имя комнаты!");
+                return;
+            }
+            if (!db) { showMessage("Firebase не инициализирован."); return; }
+
+            loadingIndicator.style.display = 'block';
+            // ИСПРАВЛЕНИЕ: Правильный путь для документа Firestore
+            const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName); 
+            
+            try {
+                const roomDoc = await getDoc(roomDocRef);
+                if (roomDoc.exists()) {
+                    showMessage("Комната с таким именем уже существует!");
+                    loadingIndicator.style.display = 'none';
+                } else {
+                    await setDoc(roomDocRef, {
+                        createdAt: Date.now(),
+                        players: {
+                            [userId]: {
+                                x: canvas.width / 2,
+                                y: canvas.height / 2,
+                                color: getRandomColor(),
+                                lastUpdate: Date.now()
+                            }
+                        }
+                    });
+                    showMessage(`Комната '${roomName}' создана!`);
+                    joinGameRoom(roomName);
+                }
+            } catch (error) {
+                console.error("Ошибка при создании комнаты:", error);
+                showMessage("Не удалось создать комнату. Попробуйте снова.");
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // Функция для присоединения к существующей комнате
+        async function joinRoom() {
+            const roomName = roomNameInput.value.trim();
+            if (!roomName) {
+                showMessage("Введите имя комнаты!");
+                return;
+            }
+            if (!db) { showMessage("Firebase не инициализирован."); return; }
+
+            loadingIndicator.style.display = 'block';
+            // ИСПРАВЛЕНИЕ: Правильный путь для документа Firestore
+            const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName);
+            
+            try {
+                const roomDoc = await getDoc(roomDocRef);
+                if (roomDoc.exists()) {
+                    // Добавляем текущего игрока в комнату
+                    await updateDoc(roomDocRef, {
+                        [`players.${userId}`]: {
+                            x: Math.random() * canvas.width, // Случайная позиция для нового игрока
+                            y: Math.random() * canvas.height,
+                            color: getRandomColor(),
+                            lastUpdate: Date.now()
+                        }
+                    });
+                    showMessage(`Вы присоединились к комнате '${roomName}'!`);
+                    joinGameRoom(roomName);
+                } else {
+                    showMessage("Комнаты с таким именем не существует!");
+                }
+            } catch (error) {
+                console.error("Ошибка при присоединении к комнате:", error);
+                showMessage("Не удалось присоединиться к комнате. Попробуйте снова.");
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // Вход в игровую комнату после создания/присоединения
+        function joinGameRoom(roomName) {
+            roomSelectScreen.style.display = 'none';
+            uiContainer.style.display = 'block';
+            uiContainer.style.pointerEvents = 'auto';
+            gameState.screen = 'game';
+            gameState.paused = false;
+            gameState.time.lastUpdate = performance.now();
+            // Сбрасываем позицию игрока для новой комнаты
+            gameState.player.x = canvas.width / 2;
+            gameState.player.y = canvas.height / 2;
+            gameCanvas.style.display = 'block';
+            selectHotbarSlot(0);
+
+            // Настраиваем подписку на изменения в комнате
+            // ИСПРАВЛЕНИЕ: Правильный путь для документа Firestore
+            currentRoomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName);
+            unsubscribeFromRoom = onSnapshot(currentRoomRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const roomData = docSnapshot.data();
+                    gameState.otherPlayers = {}; // Очищаем список других игроков
+                    if (roomData.players) {
+                        Object.keys(roomData.players).forEach(playerId => {
+                            if (playerId !== userId) { // Не добавляем себя в "других игроков"
+                                gameState.otherPlayers[playerId] = roomData.players[playerId];
+                            } else {
+                                // Обновляем данные текущего игрока, если они изменились извне
+                                // Это предотвращает "прыжки" игрока, если его позиция меняется извне (например, по ошибке)
+                                // Но для плавности обычно лучше использовать клиентскую позицию
+                                // Для простоты пока оставим синхронизацию
+                                gameState.player.x = roomData.players[playerId].x;
+                                gameState.player.y = roomData.players[playerId].y;
+                                gameState.player.color = roomData.players[playerId].color; // Цвет тоже можно синхронизировать
+                            }
+                        });
+                    }
+                } else {
+                    // Комната удалена, возвращаемся в меню
+                    showMessage("Комната была закрыта.");
+                    returnToMenu();
+                }
+            }, (error) => {
+                console.error("Ошибка при подписке на комнату:", error);
+                showMessage("Потеряно соединение с комнатой.");
+                returnToMenu();
+            });
+        }
+
+        // Отправка данных игрока в Firestore
+        async function updatePlayerStateInFirestore() {
+            if (currentRoomRef && gameState.player.id) {
+                try {
+                    // Используем appId из вашей конфигурации
+                    await updateDoc(currentRoomRef, {
+                        [`players.${gameState.player.id}`]: {
+                            x: gameState.player.x,
+                            y: gameState.player.y,
+                            color: gameState.player.color,
+                            lastUpdate: Date.now()
+                        }
+                    });
+                } <<<<<<< HEAD
+                catch (error) {
+                    console.warn("Не удалось обновить состояние игрока в Firestore:", error);
+                    // Возможно, комната была удалена
+                    if (error.code === 'not-found') {
+                        showMessage("Комната была закрыта или исчезла.");
+                        returnToMenu();
+                    }
+                }
+            }
+        }
+
+        // Генерировать случайный цвет для игрока
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // ---- End Multiplayer Logic ----
+        
+        // Начало игры (обновлена для мультиплеера)
         function startGame() {
+            // Если игра запускается через Offline кнопку, убежимся, что отписки от комнаты нет
+            if (unsubscribeFromRoom) {
+                unsubscribeFromRoom();
+                unsubscribeFromRoom = null;
+                currentRoomRef = null;
+                gameState.otherPlayers = {};
+            }
             modeSelectScreen.style.display = 'none';
             uiContainer.style.display = 'block'; // Показываем UI при старте игры
             uiContainer.style.pointerEvents = 'auto';
@@ -1019,17 +1328,36 @@
         function togglePause() {
             gameState.paused = !gameState.paused;
             document.getElementById('pauseScreen').style.display = gameState.paused ? 'flex' : 'none';
-            uiContainer.style.pointerEvents = gameState.paused ? 'none' : 'auto'; // Отключить UI взаимодействие на паузе
+            uiContainer.style.pointerEvents = gameState.paused ? 'none' : 'auto';
+            // Если на паузе и в мультиплеере, можно перестать отправлять обновления
+            if (gameState.paused && currentRoomRef) {
+                // В будущем можно добавить логику "отключения" игрока от комнаты при выходе
+            }
         }
         
         // Возврат в главное меню
         function returnToMenu() {
             gameState.paused = false;
             document.getElementById('pauseScreen').style.display = 'none';
-            uiContainer.style.display = 'none'; // Полностью скрыть UI при возврате в меню
-            gameState.screen = 'menu'; // Устанавливаем экран меню
-            menuScreen.style.display = 'flex'; // Показываем главное меню
-            gameCanvas.style.display = 'none'; // Скрываем холст игры, чтобы был виден серый фон контейнера
+            uiContainer.style.display = 'none';
+            gameState.screen = 'menu';
+            menuScreen.style.display = 'flex';
+            gameCanvas.style.display = 'none';
+
+            // Отписка от Firebase Realtime Updates при выходе из комнаты
+            if (unsubscribeFromRoom) {
+                unsubscribeFromRoom();
+                unsubscribeFromRoom = null;
+                // Удаляем игрока из комнаты при выходе
+                if (currentRoomRef && userId) {
+                    // Удаляем только текущего игрока из списка players в комнате
+                    updateDoc(currentRoomRef, {
+                        [`players.${userId}`]: null // Удаляем поле
+                    }).catch(error => console.warn("Не удалось удалить игрока из комнаты:", error));
+                }
+                currentRoomRef = null;
+                gameState.otherPlayers = {}; // Очищаем данные других игроков
+            }
         }
         
         // Обновление состояния игры
@@ -1038,22 +1366,17 @@
             
             let dx = 0, dy = 0;
 
-            // Логика ввода:
-            // Сначала применяем ввод с клавиатуры.
             if (keys.w) dy -= 1;
             if (keys.a) dx -= 1;
             if (keys.s) dy += 1;
             if (keys.d) dx += 1;
 
-            // Если это мобильное устройство И джойстик активен (был тач) И джойстик смещен (движение),
-            // то джойстик переопределяет направление движения.
             if (gameState.isMobile && joystickActive && (joystickCurrentX !== 0 || joystickCurrentY !== 0)) {
                 const angle = Math.atan2(joystickCurrentY, joystickCurrentX);
                 dx = Math.cos(angle);
                 dy = Math.sin(angle);
             }
             
-            // Нормализация диагонального движения
             if (dx !== 0 || dy !== 0) {
                 const len = Math.sqrt(dx*dx + dy*dy);
                 dx = (dx / len) * gameState.player.speed;
@@ -1063,11 +1386,9 @@
             gameState.player.x += dx;
             gameState.player.y += dy;
             
-            // Границы экрана
             gameState.player.x = Math.max(0, Math.min(canvas.width, gameState.player.x));
             gameState.player.y = Math.max(0, Math.min(canvas.height, gameState.player.y));
             
-            // Обновление времени
             gameState.time.minutes += deltaTime / 1000 * 0.1;
             if (gameState.time.minutes >= 60) {
                 gameState.time.minutes -= 60;
@@ -1075,18 +1396,20 @@
                 if (gameState.time.hours >= 24) gameState.time.hours = 0;
             }
 
-            // Обновление статов
             gameState.player.hunger = Math.max(0, gameState.player.hunger - (deltaTime / 1000) * 0.05);
             gameState.player.health = Math.max(0, Math.min(100, gameState.player.health));
             
             updateUI();
+            
+            // Отправляем данные игрока в Firestore, если мы в онлайн-комнате
+            if (currentRoomRef) {
+                updatePlayerStateInFirestore();
+            }
         }
 
         // Функция для обновления элементов UI
         function updateUI() {
-            // Обновление полоски здоровья
             playerHealthFill.style.width = `${gameState.player.health}%`;
-            // Обновление полоски голода
             playerHungerFill.style.width = `${gameState.player.hunger}%`;
             playerGoldSpan.textContent = gameState.player.gold;
             gameTimeSpan.textContent = `${String(Math.floor(gameState.time.hours)).padStart(2, '0')}:${String(Math.floor(gameState.time.minutes)).padStart(2, '0')}`;
@@ -1098,7 +1421,7 @@
         
         // Отрисовка игрового мира
         function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Очистка всего холста
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (gameState.screen === 'game') {
                 // Отрисовка объектов
@@ -1119,13 +1442,27 @@
                     }
                 });
                 
-                // Отрисовка игрока
-                ctx.fillStyle = '#3498db';
+                // Отрисовка текущего игрока
+                ctx.fillStyle = gameState.player.color;
                 ctx.beginPath();
                 ctx.arc(gameState.player.x, gameState.player.y, 15, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Индикатор действия
+                // Отрисовка других игроков
+                for (const playerId in gameState.otherPlayers) {
+                    const otherPlayer = gameState.otherPlayers[playerId];
+                    ctx.fillStyle = otherPlayer.color;
+                    ctx.beginPath();
+                    ctx.arc(otherPlayer.x, otherPlayer.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Можно также отрисовать ID игрока над ним для отладки
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(playerId.substring(0, 4), otherPlayer.x, otherPlayer.y - 20);
+                }
+
+                // Индикатор действия (только для текущего игрока)
                 if (gameState.player.currentAction === 'attack') {
                     ctx.strokeStyle = 'red';
                     ctx.lineWidth = 3;
@@ -1144,22 +1481,19 @@
         
         // Главный игровой цикл
         function gameLoop(timestamp = 0) {
-            // Обновляем время для корректного deltaTime, даже если игра неактивна
             if (!gameState.time.lastUpdate) {
                 gameState.time.lastUpdate = timestamp;
             }
 
-            // Выполняем update и render только если игра активна и не на паузе
             if (gameState.screen === 'game' && !gameState.paused) {
                 const deltaTime = timestamp - gameState.time.lastUpdate;
                 update(deltaTime);
                 render();
             } else if (gameState.screen !== 'game') {
-                // Если не на игровом экране, скрываем UI и очищаем canvas.
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
             
-            gameState.time.lastUpdate = timestamp; // Обновляем timestamp для следующего кадра
+            gameState.time.lastUpdate = timestamp;
 
             animationFrameId = requestAnimationFrame(gameLoop);
         }
