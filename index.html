@@ -60,31 +60,50 @@
             pointer-events: none; /* Позволяет кликам проходить сквозь UI, если нет интерактивных элементов */
         }
 
-        /* Общие стили для кнопок меню/паузы */
-        .menuBtn, .modeBtn, .actionBtn, #inventoryBtn, #pauseBtn {
+        /* Общие стили для всех интерактивных кнопок */
+        .menuBtn, .modeBtn, #pauseBtn, .hotbarSlot, #inventoryBtn, .actionBtn {
             border: 2px solid #444;
-            border-radius: 8px; /* Немного скругляем углы */
+            border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
             cursor: pointer;
-            pointer-events: auto; /* Делает кнопки интерактивными */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Тень для объема */
-            transition: all 0.2s ease; /* Плавные переходы */
+            pointer-events: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            outline: none; /* Убираем стандартную синюю обводку при фокусе для всех интерактивных элементов */
         }
 
-        .menuBtn:hover, .modeBtn:hover, .actionBtn:hover, #inventoryBtn:hover, #pauseBtn:hover, .hotbarSlot:hover {
-            transform: translateY(-2px); /* Небольшой подъем при наведении */
+        /* Эффект наведения (hover) */
+        .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .hotbarSlot:hover, #inventoryBtn:hover, .actionBtn:hover {
+            transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
             background-color: rgba(70, 70, 70, 0.9); /* Более светлый фон при наведении */
         }
 
-        .menuBtn:active, .modeBtn:active, .actionBtn:active, #inventoryBtn:active, #pauseBtn:active, .hotbarSlot.selected {
-            transform: translateY(1px); /* Эффект нажатия */
+        /* Эффект нажатия (active) - ТОЛЬКО ВО ВРЕМЯ НАЖАТИЯ */
+        /* Эти стили будут применяться только пока кнопка физически нажата/активирована */
+        .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active, #inventoryBtn:active {
+            transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
-            background-color: rgba(90, 90, 90, 0.9); /* Еще более темный фон при нажатии */
-            border-color: #666; /* Изменение цвета рамки при нажатии */
+            background-color: rgba(90, 90, 90, 0.9); /* Темнее серый фон при нажатии */
+            border-color: #666;
+        }
+
+        /* Специальные стили для actionBtn:active, чтобы они темнели */
+        .actionBtn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+            background-color: rgba(90, 90, 90, 0.9); /* Темно-серый при нажатии */
+            border-color: #666;
+        }
+
+        /* Стиль для ВЫБРАННОГО слота хотбара - остается активным */
+        .hotbarSlot.selected {
+            border-color: #3498db;
+            background-color: rgba(70, 70, 70, 0.9);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
         }
 
         /* Главное меню */
@@ -129,46 +148,45 @@
         }
         
         .modeBtn {
-            flex: 1; /* Позволяет кнопкам занимать доступное пространство */
-            max-width: 45%; /* Ограничиваем ширину, чтобы было по две кнопки в ряд на больших экранах */
-            min-width: 280px; /* Минимальная ширина, чтобы кнопки не становились слишком маленькими */
-            height: 180px; /* Увеличил высоту для "больших прямоугольников" */
+            flex: 1;
+            max-width: 45%;
+            min-width: 280px;
+            height: 180px;
             background-color: rgba(50, 50, 50, 0.8);
-            margin: 15px; /* Уменьшил margin, так как есть gap */
-            font-size: 32px; /* Увеличил размер шрифта */
+            margin: 15px;
+            font-size: 32px;
         }
         
-        /* Надписи под режимами игры */
         .modeBtn span {
-            display: block; /* Каждая надпись на новой строке */
+            display: block;
             font-size: 20px;
-            margin-top: 10px; /* Отступ сверху от основного текста кнопки */
+            margin-top: 10px;
             color: #ccc;
-            text-align: center; /* Центрируем текст */
-            line-height: 1.2; /* Улучшаем интерлиньяж */
+            text-align: center;
+            line-height: 1.2;
         }
 
-        /* Статистика - отдельные блоки для каждого параметра и две строки */
+        /* Статистика */
         #statsContainer {
             position: absolute;
             top: 10px;
             left: 10px;
             display: flex;
-            flex-direction: column; /* Основной контейнер - столбец */
+            flex-direction: column;
             gap: 8px;
             pointer-events: none;
-            z-index: 70; /* Над игровым полем */
+            z-index: 70;
         }
         
         #topStatsRow {
             display: flex;
-            flex-direction: row; /* Верхняя строка - элементы в ряд */
-            gap: 10px; /* Отступ между элементами здоровья, золота, времени */
+            flex-direction: row;
+            gap: 10px;
         }
 
         #bottomStatsRow {
             display: flex;
-            flex-direction: row; /* Нижняя строка - только голод */
+            flex-direction: row;
             gap: 10px;
         }
 
@@ -179,56 +197,51 @@
             padding: 8px 15px;
             border-radius: 8px;
             font-size: 18px;
-            gap: 10px; /* Отступ между иконкой/меткой и значением */
-            white-space: nowrap; /* Предотвращает перенос текста */
+            gap: 10px;
+            white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            width: auto; /* Размер по содержимому */
+            width: auto;
             height: auto;
         }
 
         .stat-label {
-            font-size: 20px; /* Размер иконки */
+            font-size: 20px;
         }
 
         /* Полоска здоровья */
-        #healthStat .stat-label {
-            line-height: 1; /* Для лучшего выравнивания эмодзи */
-        }
+        #healthStat .stat-label { line-height: 1; }
         .health-bar-container {
-            width: 100px; /* Ширина полоски здоровья */
+            width: 100px;
             height: 15px;
-            background-color: rgba(255, 255, 255, 0.2); /* Задний фон полоски */
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
             overflow: hidden;
             margin-left: 5px;
         }
         #playerHealthFill {
             height: 100%;
-            width: 100%; /* Начальная ширина, будет обновляться JS */
-            background-color: #e74c3c; /* Красный цвет заполнения */
+            width: 100%;
+            background-color: #e74c3c;
             border-radius: 5px;
-            transition: width 0.2s ease-out; /* Плавное изменение ширины */
+            transition: width 0.2s ease-out;
         }
 
         /* Шкала голода */
-        #hungerStat .stat-label {
-             line-height: 1; /* Для лучшего выравнивания эмодзи */
-        }
+        #hungerStat .stat-label { line-height: 1; }
         .hunger-bar-container {
-            width: 100px; /* Ширина шкалы голода, примерно 5-6 символов шириной */
+            width: 100px;
             height: 15px;
-            background-color: rgba(255, 255, 255, 0.2); /* Задний фон шкалы */
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
             overflow: hidden;
-            margin-left: 5px; /* Небольшой отступ от иконки */
+            margin-left: 5px;
         }
-
         #playerHungerFill {
             height: 100%;
-            width: 80%; /* Начальная ширина, будет обновляться JS */
-            background-color: #e67e22; /* Оранжевый цвет заполнения */
+            width: 80%;
+            background-color: #e67e22;
             border-radius: 5px;
-            transition: width 0.2s ease-out; /* Плавное изменение ширины */
+            transition: width 0.2s ease-out;
         }
         
         /* Кнопка паузы */
@@ -244,12 +257,12 @@
             z-index: 70;
         }
 
-        /* Джойстик (только для мобильных) - унижен в 1.5 раза */
+        /* Джойстик (только для мобильных) */
         #joystickArea {
             position: absolute;
             bottom: 80px;
             left: 30px;
-            width: 65px; /* 100px / 1.5 = ~66.67px, используем 65px */
+            width: 65px;
             height: 65px;
             pointer-events: auto;
             display: none;
@@ -266,14 +279,14 @@
         }
         
         #joystickInner {
-            width: 30px; /* 50px / 1.5 = ~33.33px, используем 30px */
+            width: 30px;
             height: 30px;
             background-color: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%); /* Центрируем относительно родителя */
+            transform: translate(-50%, -50%);
             touch-action: none;
             transition: none;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
@@ -282,12 +295,12 @@
         /* Контейнер для хотбара и кнопки инвентаря */
         #bottomControls {
             position: absolute;
-            bottom: 40px; /* Перемещено еще ниже */
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            align-items: center; /* Выравнивание по центру по вертикали */
-            gap: 2px; /* Очень маленький отступ для визуального соединения */
+            align-items: center;
+            gap: 15px; /* Увеличен отступ между хотбаром и рюкзаком */
             pointer-events: auto;
             z-index: 60;
         }
@@ -295,18 +308,19 @@
         /* Панель быстрого доступа (хотбар) */
         #hotbar {
             display: flex;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.6); /* Общий фон хотбара */
             border-radius: 12px;
             padding: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            gap: 5px; /* Отступ между ячейками внутри хотбара */
+            border: 2px solid #444; /* Общая рамка хотбара */
         }
         
         .hotbarSlot {
             width: 50px;
             height: 50px;
-            margin: 0 5px;
-            background-color: rgba(50, 50, 50, 0.8);
-            border: 2px solid #555;
+            background-color: rgba(50, 50, 50, 0.8); /* Фон отдельной ячейки */
+            border: 2px solid #555; /* Рамка отдельной ячейки */
             border-radius: 8px;
             display: flex;
             justify-content: center;
@@ -315,23 +329,15 @@
             transition: all 0.2s ease;
         }
         
-        .hotbarSlot.selected {
-            border-color: #3498db;
-            background-color: rgba(70, 70, 70, 0.9);
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
-        }
-        
-        /* Кнопка инвентаря - теперь такого же размера как hotbarSlot и притык к нему */
+        /* Кнопка инвентаря - теперь часть хотбара визуально */
         #inventoryBtn {
             width: 50px;
-            height: 50px; /* Теперь такого же размера */
-            background-color: rgba(50, 50, 50, 0.8); /* Цвет как у хотбара */
-            border: 2px solid #555; /* Рамка как у хотбара */
-            font-size: 30px; /* Для эмодзи */
-            border-radius: 8px; /* Восстанавливаем скругление */
-            position: relative; 
-            margin-left: 5px; /* Небольшой отступ, чтобы выглядело "притык" */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Добавляем тень */
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.6); /* **Точно такой же фон, как у #hotbar** */
+            border: 2px solid #444; /* **Точно такая же рамка, как у #hotbar** */
+            font-size: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         
         /* Кнопки действий - увеличены в 2 раза от hotbarSlot */
@@ -346,10 +352,10 @@
         }
         
         .actionBtn {
-            width: 100px; /* 50px (hotbarSlot) * 2 = 100px */
-            height: 100px; /* 50px (hotbarSlot) * 2 = 100px */
-            background-color: rgba(0, 0, 0, 0.7);
-            font-size: 40px; /* Уменьшил размер эмодзи пропорционально новому размеру кнопки */
+            width: 100px;
+            height: 100px;
+            background-color: rgba(0, 0, 0, 0.7); /* Исходный фон */
+            font-size: 40px;
         }
 
         /* Экран паузы */
@@ -392,32 +398,82 @@
             visibility: visible;
         }
 
-        /* Медиа-запросы для адаптивности */
+        /* Медиа-запросы для адаптивности на мобильных (уменьшение в 1.5 раза) */
         @media (max-width: 768px) {
-            .modeBtn {
-                max-width: 90%;
-            }
-
             #joystickArea {
-                bottom: 20px;
-                left: 20px;
+                width: 43px;
+                height: 43px;
+                bottom: 15px;
+                left: 15px;
+            }
+            #joystickInner {
+                width: 20px;
+                height: 20px;
             }
 
             #bottomControls {
-                bottom: 20px;
+                bottom: 15px;
+                gap: 5px;
+            }
+            #hotbar {
+                gap: 3px;
+            }
+            .hotbarSlot {
+                width: 33px;
+                height: 33px;
+                font-size: 18px;
+            }
+            #inventoryBtn {
+                width: 33px;
+                height: 33px;
+                font-size: 20px;
             }
 
             #actionButtons {
-                bottom: 20px;
-                right: 20px;
-                flex-direction: column;
+                bottom: 15px;
+                right: 15px;
                 gap: 10px;
+                flex-direction: column;
+            }
+            .actionBtn {
+                width: 66px;
+                height: 66px;
+                font-size: 28px;
             }
 
-            .actionBtn {
-                width: 80px; /* Уменьшил размер для мобильных, чтобы не занимали весь экран */
-                height: 80px;
-                font-size: 32px;
+            #pauseBtn {
+                width: 33px;
+                height: 33px;
+                top: 10px;
+                right: 10px;
+                font-size: 18px;
+            }
+
+            #statsContainer {
+                top: 10px;
+                left: 10px;
+                gap: 5px;
+            }
+            .stat-item {
+                padding: 5px 10px;
+                font-size: 14px;
+                gap: 5px;
+            }
+            .stat-label {
+                font-size: 16px;
+            }
+            .health-bar-container, .hunger-bar-container {
+                width: 66px;
+                height: 10px;
+            }
+
+            .modeBtn {
+                max-width: 90%;
+                height: 120px;
+                font-size: 24px;
+            }
+            .modeBtn span {
+                font-size: 16px;
             }
         }
     </style>
@@ -539,7 +595,8 @@
             ],
             screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'game', 'pause'
             paused: false,
-            isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+            // Проверка на мобильное устройство (более строгая, чтобы исключить десктоп с сенсорным экраном)
+            isMobile: /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Opera Mini/i.test(navigator.userAgent) && !/Tablet/i.test(navigator.userAgent)
         };
         
         // Элементы интерфейса
@@ -574,8 +631,8 @@
         };
 
         // Переменные для джойстика
-        let joystickActive = false;
-        let joystickCurrentX = 0, joystickCurrentY = 0;
+        let joystickActive = false; // Флаг, указывающий, что палец на джойстике (touchstart был)
+        let joystickCurrentX = 0, joystickCurrentY = 0; // Текущее смещение джойстика от центра
         let joystickCenterX = 0, joystickCenterY = 0; // Центр джойстика для расчета движения
 
         // Идентификатор кадра анимации для остановки игры
@@ -584,7 +641,6 @@
         // Инициализация игры при загрузке окна
         window.onload = function () {
             init();
-            // Запускаем игровой цикл, который теперь условно отрисовывает фон или игру
             gameLoop(); 
         };
 
@@ -662,17 +718,37 @@
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
             
-            // Кнопки действий
-            attackBtn.addEventListener('click', () => {
-                gameState.player.currentAction = 'attack';
-                setTimeout(() => { gameState.player.currentAction = 'move'; }, 200);
-            });
+            // Кнопки действий - привязываем к ним событие mousedown/mouseup для визуального эффекта
+            attackBtn.addEventListener('mousedown', () => toggleActionBtnActive(attackBtn, true));
+            attackBtn.addEventListener('mouseup', () => toggleActionBtnActive(attackBtn, false));
+            attackBtn.addEventListener('mouseleave', () => toggleActionBtnActive(attackBtn, false)); // Сброс, если мышь ушла
+            attackBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(attackBtn, true); }, { passive: false });
+            attackBtn.addEventListener('touchend', () => toggleActionBtnActive(attackBtn, false));
+            attackBtn.addEventListener('click', () => { gameState.player.currentAction = 'attack'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
+
+            buildBtn.addEventListener('mousedown', () => toggleActionBtnActive(buildBtn, true));
+            buildBtn.addEventListener('mouseup', () => toggleActionBtnActive(buildBtn, false));
+            buildBtn.addEventListener('mouseleave', () => toggleActionBtnActive(buildBtn, false)); // Сброс, если мышь ушла
+            buildBtn.addEventListener('touchstart', (e) => { e.preventDefault(); toggleActionBtnActive(buildBtn, true); }, { passive: false });
+            buildBtn.addEventListener('touchend', () => toggleActionBtnActive(buildBtn, false));
+            buildBtn.addEventListener('click', () => { gameState.player.currentAction = 'build'; setTimeout(() => { gameState.player.currentAction = 'move'; }, 200); });
             
-            buildBtn.addEventListener('click', () => {
-                gameState.player.currentAction = 'build';
-                setTimeout(() => { gameState.player.currentAction = 'move'; }, 200);
+            // Обработка пробела для attackBtn
+            document.addEventListener('keydown', (e) => {
+                if (gameState.screen === 'game' && !gameState.paused && e.key === ' ') {
+                    if (!e.repeat) { // Проверяем, чтобы событие не повторялось при удержании
+                        toggleActionBtnActive(attackBtn, true);
+                        gameState.player.currentAction = 'attack';
+                        setTimeout(() => { gameState.player.currentAction = 'move'; }, 200);
+                    }
+                }
             });
-            
+            document.addEventListener('keyup', (e) => {
+                if (e.key === ' ') {
+                    toggleActionBtnActive(attackBtn, false);
+                }
+            });
+
             // Выбор слота хотбара
             hotbarSlots.forEach((slot, index) => {
                 slot.addEventListener('click', () => {
@@ -683,6 +759,21 @@
             // Ресайз окна
             window.addEventListener('resize', resizeCanvas);
         }
+
+        // Новая функция для управления активным состоянием кнопок действий
+        function toggleActionBtnActive(button, isActive) {
+            if (isActive) {
+                button.style.transform = 'translateY(1px)';
+                button.style.boxShadow = '0 2px 3px rgba(0, 0, 0, 0.2)';
+                button.style.backgroundColor = 'rgba(90, 90, 90, 0.9)';
+                button.style.borderColor = '#666';
+            } else {
+                button.style.transform = 'translateY(0)'; // Сброс трансформации
+                button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)'; // Возвращаем исходную тень
+                button.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Возвращаем исходный фон
+                button.style.borderColor = '#444'; // Возвращаем исходный цвет рамки
+            }
+        }
         
         // Настройка джойстика для мобильных
         function setupJoystick() {
@@ -690,13 +781,17 @@
 
             joystickArea.addEventListener('touchstart', (e) => {
                 if (gameState.screen !== 'game' || gameState.paused) return;
-                e.preventDefault();
+                e.preventDefault(); // Предотвратить скролл
                 joystickActive = true;
+                // Обновляем центр джойстика на случай, если пользователь перетащил страницу
+                const rect = joystickArea.getBoundingClientRect();
+                joystickCenterX = rect.left + rect.width / 2;
+                joystickCenterY = rect.top + rect.height / 2;
             }, { passive: false });
             
             joystickArea.addEventListener('touchmove', (e) => {
                 if (!joystickActive) return;
-                e.preventDefault();
+                e.preventDefault(); // Предотвратить скролл
                 
                 const touch = e.touches[0];
                 let deltaX = touch.clientX - joystickCenterX;
@@ -705,9 +800,9 @@
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 
                 if (distance > maxDistance) {
-                    const angle = Math.atan2(deltaX, deltaY); // Corrected angle calculation for Y-axis up
-                    deltaX = Math.sin(angle) * maxDistance;
-                    deltaY = Math.cos(angle) * maxDistance;
+                    const angle = Math.atan2(deltaY, deltaX);
+                    deltaX = Math.cos(angle) * maxDistance;
+                    deltaY = Math.sin(angle) * maxDistance;
                 }
                 
                 joystickCurrentX = deltaX;
@@ -737,7 +832,7 @@
                 case '3': selectHotbarSlot(2); break;
                 case '4': selectHotbarSlot(3); break;
                 case '5': selectHotbarSlot(4); break;
-                case ' ': gameState.player.currentAction = 'attack'; break;
+                /* Пробел теперь обрабатывается в отдельном обработчике document.addEventListener('keydown') */
             }
         }
         
@@ -748,7 +843,7 @@
                 case 'a': keys.a = false; break;
                 case 's': keys.s = false; break;
                 case 'd': keys.d = false; break;
-                case ' ': gameState.player.currentAction = 'move'; break;
+                /* Пробел теперь обрабатывается в отдельном обработчике document.addEventListener('keyup') */
             }
         }
         
@@ -798,24 +893,19 @@
             
             let dx = 0, dy = 0;
 
-            // Логика ввода: если джойстик активен (на мобильных), он управляет движением.
-            // В противном случае (ПК или мобильные без активного джойстика), управляет клавиатура.
-            if (gameState.isMobile && joystickActive) {
+            // Логика ввода:
+            // Сначала применяем ввод с клавиатуры.
+            if (keys.w) dy -= 1;
+            if (keys.a) dx -= 1;
+            if (keys.s) dy += 1;
+            if (keys.d) dx += 1;
+
+            // Если это мобильное устройство И джойстик активен (был тач) И джойстик смещен (движение),
+            // то джойстик переопределяет направление движения.
+            if (gameState.isMobile && joystickActive && (joystickCurrentX !== 0 || joystickCurrentY !== 0)) {
                 const angle = Math.atan2(joystickCurrentY, joystickCurrentX);
-                const distance = Math.sqrt(joystickCurrentX * joystickCurrentX + joystickCurrentY * joystickCurrentY);
-                if (distance > 0) {
-                    dx = Math.cos(angle);
-                    dy = Math.sin(angle);
-                } else {
-                    dx = 0; // Джойстик активен, но не смещен, поэтому нет движения
-                    dy = 0;
-                }
-            } else {
-                // Ввод с клавиатуры для ПК или мобильных, если джойстик неактивен
-                if (keys.w) dy -= 1;
-                if (keys.a) dx -= 1;
-                if (keys.s) dy += 1;
-                if (keys.d) dx += 1;
+                dx = Math.cos(angle);
+                dy = Math.sin(angle);
             }
             
             // Нормализация диагонального движения
@@ -905,7 +995,6 @@
                     ctx.stroke();
                 }
             }
-            // Если не 'game' экран, то canvas будет скрыт CSS
         }
         
         // Главный игровой цикл
@@ -922,8 +1011,6 @@
                 render();
             } else if (gameState.screen !== 'game') {
                 // Если не на игровом экране, скрываем UI и очищаем canvas.
-                // Фон gameContainer будет серым, а gameCanvas скрыт.
-                // uiContainer.style.display = 'none'; // Это теперь делается в returnToMenu() и init()
                 ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
             }
             
