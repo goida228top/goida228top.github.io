@@ -474,17 +474,21 @@
             padding: 5px;
         }
 
+        body.mobile-ui #hotbar {
+            gap: 5px; /* Увеличили отступ между слотами хотбара */
+        }
+
         body.mobile-ui .hotbarSlot {
-            width: 25px; /* Хотбар в 2 раза меньше */
-            height: 25px;
-            font-size: 12px;
+            width: 40px; /* Слоты хотбара: чуть меньше рюкзака */
+            height: 40px;
+            font-size: 20px; /* Скорректировали шрифт */
         }
 
         body.mobile-ui #inventoryBtn {
-            width: 50px; /* Инвентарь чуть больше */
+            width: 50px; /* Инвентарь: остался прежнего размера */
             height: 50px;
             font-size: 24px;
-            margin-left: 5px;
+            margin-left: 8px; /* Немного увеличили отступ, чтобы выглядело лучше */
         }
 
         body.mobile-ui #actionButtons {
@@ -493,16 +497,16 @@
             gap: 8px;
         }
         body.mobile-ui .actionBtn {
-            width: 30px; /* Кнопки действий в 1.5 раза меньше (от исходного 100px) */
-            height: 30px;
-            font-size: 14px;
+            width: 60px; /* Кнопки действий: чуть больше рюкзака */
+            height: 60px;
+            font-size: 28px; /* Скорректировали шрифт */
         }
 
         body.mobile-ui #pauseBtn {
             width: 33px;
             height: 33px;
-            top: 10px;
-            right: 10px;
+            top: 5px; /* Переместили в самый угол */
+            right: 5px; /* Переместили в самый угол */
             font-size: 18px;
         }
 
