@@ -12,55 +12,52 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* Предотвращает стандартное поведение браузера при касании */
+            touch-action: manipulation;
         }
         
         body {
-            overflow: hidden; /* Предотвращает прокрутку */
+            overflow: hidden;
             font-family: 'Arial', sans-serif;
-            background-color: #111; /* Базовый темный фон для всего */
+            background-color: #111;
             color: white;
-            position: fixed; /* Занимает весь экран */
+            position: fixed;
             width: 100%;
             height: 100%;
-            display: flex; /* Используем flexbox для центрирования gameContainer */
+            display: flex;
             justify-content: center;
             align-items: center;
         }
         
-        /* Контейнер игры - теперь центрируется по экрану */
         #gameContainer {
             position: relative;
             width: 100%;
             height: 100%;
-            max-width: 100vw; /* Максимальная ширина viewport */
-            max-height: 100vh; /* Максимальная высота viewport */
-            background-color: #444; /* Серый фон, когда игра не активна */
+            max-width: 100vw;
+            max-height: 100vh;
+            background-color: #444;
             overflow: hidden;
         }
         
-        /* Холст игры */
         #gameCanvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #1a2f1a; /* Цвет фона игрового мира */
-            display: block; /* По умолчанию виден, скрывается в меню */
+            background-color: #1a2f1a;
+            display: block;
         }
         
-        /* Контейнер пользовательского интерфейса */
         #uiContainer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Позволяет кликам проходить сквозь UI, если нет интерактивных элементов */
+            pointer-events: none;
+            z-index: 70;
         }
 
-        /* Общие стили для всех интерактивных кнопок, не входящих в объединенную панель */
         .menuBtn, .modeBtn, #pauseBtn, .actionBtn, .hotbarSlot, #inventoryBtn, #roomSelectScreen button {
             border: 2px solid #444;
             border-radius: 8px;
@@ -72,61 +69,54 @@
             pointer-events: auto;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: all 0.2s ease;
-            outline: none; /* Убираем стандартную синюю обводку при фокусе для всех интерактивных элементов */
-            background-color: rgba(50, 50, 50, 0.8); /* Базовый фон для большинства кнопок */
+            outline: none;
+            background-color: rgba(50, 50, 50, 0.8);
         }
 
-        /* Специальный фон для кнопки инвентаря на ПК */
         #inventoryBtn {
-             background-color: #00008B; /* Темно-синий фон */
+             background-color: #00008B;
         }
 
-        /* Эффект наведения (hover) */
         .menuBtn:hover, .modeBtn:hover, #pauseBtn:hover, .actionBtn:hover, #hotbar:hover, #inventoryBtn:hover, #roomSelectScreen button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
-            background-color: rgba(70, 70, 70, 0.9); /* Более светлый фон при наведении */
+            background-color: rgba(70, 70, 70, 0.9);
         }
-        /* Особый эффект наведения для кнопки инвентаря */
+        
         #inventoryBtn:hover {
-            background-color: #00007A; /* Чуть темнее темно-синий при наведении */
+            background-color: #00007A;
         }
 
-
-        /* Эффект нажатия (active) - ТОЛЬКО ВО ВРЕМЯ НАЖАТИЯ */
         .menuBtn:active, .modeBtn:active, #pauseBtn:active, .hotbarSlot:active, #roomSelectScreen button:active {
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
-            background-color: rgba(90, 90, 90, 0.9); /* Темнее серый фон при нажатии */
+            background-color: rgba(90, 90, 90, 0.9);
             border-color: #666;
         }
-        /* Особый эффект нажатия для кнопки инвентаря */
+        
         #inventoryBtn:active {
-            background-color: #000069; /* Еще темнее темно-синий при нажатии */
+            background-color: #000069;
         }
 
-        /* Специальные стили для actionBtn:active, чтобы они темнели */
-        .actionBtn.active-state { /* Используем класс для JS-управления */
+        .actionBtn.active-state {
             transform: translateY(1px);
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
-            background-color: rgba(90, 90, 90, 0.9); /* Темно-серый при нажатии */
+            background-color: rgba(90, 90, 90, 0.9);
             border-color: #666;
         }
 
-        /* Стиль для ВЫБРАННОГО слота хотбара - остается активным */
         .hotbarSlot.selected {
             border-color: #3498db;
             box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
-            background-color: rgba(70, 70, 70, 0.9); /* Можно оставить, если нужно выделить фон */
+            background-color: rgba(70, 70, 70, 0.9);
         }
-        /* Стиль для ВЫБРАННОЙ кнопки инвентаря */
+        
         #inventoryBtn.selected {
-            border-color: #3498db; /* Синяя рамка */
-            background-color: #3498db; /* Синяя заливка */
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8); /* Синее свечение */
+            border-color: #3498db;
+            background-color: #3498db;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
         }
 
-        /* Главное меню */
         #menuScreen {
             position: absolute;
             top: 0;
@@ -148,7 +138,6 @@
             font-size: 24px;
         }
 
-        /* Выбор режима */
         #modeSelectScreen {
             position: absolute;
             top: 0;
@@ -156,7 +145,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
-            display: none; /* Скрыто по умолчанию */
+            display: none;
             flex-direction: row;
             justify-content: center;
             align-items: center;
@@ -175,7 +164,7 @@
             font-size: 32px;
         }
         
-    .modeBtn span {
+        .modeBtn span {
             display: block;
             font-size: 20px;
             margin-top: 10px;
@@ -184,7 +173,6 @@
             line-height: 1.2;
         }
 
-        /* Экран выбора комнаты для сетевой игры */
         #roomSelectScreen {
             position: absolute;
             top: 0;
@@ -192,18 +180,20 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
-            display: none; /* Скрыто по умолчанию */
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 95;
             padding: 20px;
         }
+        
         #roomSelectScreen h2 {
             font-size: 32px;
             margin-bottom: 20px;
             color: #3498db;
         }
+        
         #roomSelectScreen input {
             padding: 10px;
             font-size: 20px;
@@ -216,6 +206,7 @@
             max-width: 300px;
             text-align: center;
         }
+        
         #roomSelectScreen .button-group {
             display: flex;
             flex-direction: column;
@@ -223,12 +214,12 @@
             width: 80%;
             max-width: 300px;
         }
+        
         #roomSelectScreen button {
             height: 60px;
             font-size: 22px;
         }
 
-        /* Экран "Что нового" */
         #whatsNewScreen {
             position: absolute;
             top: 0;
@@ -242,13 +233,15 @@
             align-items: center;
             z-index: 105;
             padding: 20px;
-            overflow-y: auto; /* Для прокрутки, если контента много */
+            overflow-y: auto;
         }
+        
         #whatsNewScreen h2 {
             font-size: 32px;
             margin-bottom: 20px;
             color: #3498db;
         }
+        
         #whatsNewScreen ul {
             list-style: none;
             padding: 0;
@@ -256,6 +249,7 @@
             width: 90%;
             text-align: left;
         }
+        
         #whatsNewScreen li {
             background-color: rgba(50, 50, 50, 0.7);
             padding: 15px;
@@ -264,16 +258,16 @@
             font-size: 18px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
+        
         #whatsNewScreen li strong {
-            color: #2ecc71; /* Зеленый для заголовков изменений */
+            color: #2ecc71;
         }
+        
         #whatsNewScreen .menuBtn {
             margin-top: 30px;
             width: 200px;
         }
 
-
-        /* Статистика */
         #statsContainer {
             position: absolute;
             top: 10px;
@@ -315,7 +309,6 @@
             font-size: 20px;
         }
 
-        /* Полоска здоровья */
         #healthStat .stat-label { line-height: 1; }
         .health-bar-container {
             width: 100px;
@@ -325,6 +318,7 @@
             overflow: hidden;
             margin-left: 5px;
         }
+        
         #playerHealthFill {
             height: 100%;
             width: 100%;
@@ -333,7 +327,6 @@
             transition: width 0.2s ease-out;
         }
 
-        /* Шкала голода */
         #hungerStat .stat-label { line-height: 1; }
         .hunger-bar-container {
             width: 100px;
@@ -343,6 +336,7 @@
             overflow: hidden;
             margin-left: 5px;
         }
+        
         #playerHungerFill {
             height: 100%;
             width: 80%;
@@ -351,7 +345,6 @@
             transition: width 0.2s ease-out;
         }
         
-        /* Кнопка паузы */
         #pauseBtn {
             position: absolute;
             top: 15px;
@@ -363,7 +356,6 @@
             z-index: 70;
         }
 
-        /* Джойстик (по умолчанию для ПК) */
         #joystickArea {
             position: absolute;
             bottom: 80px;
@@ -371,7 +363,7 @@
             width: 65px;
             height: 65px;
             pointer-events: auto;
-            display: none; /* Скрыт по умолчанию, показывается JS на моб. */
+            display: none;
             z-index: 60;
         }
         
@@ -392,13 +384,12 @@
             position: absolute;
             top: 50%; 
             left: 50%;
-            transform: translate(-50%, -50%); /* Всегда центрируем его относительно его собственных размеров */
+            transform: translate(-50%, -50%);
             touch-action: none;
             transition: none;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
 
-        /* Контейнер для хотбара и кнопки инвентаря */
         #bottomControls {
             position: absolute;
             bottom: 25px;
@@ -408,42 +399,38 @@
             align-items: center;
             pointer-events: auto;
             z-index: 60;
-            /* Единый фон, рамка и тень для всей объединенной панели */
-            background-color: rgba(0, 0, 0, 0.6); /* Общий фон */
-            border-radius: 12px; /* Общая округлость */
-            border: 2px solid #444; /* Общая рамка */
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            border: 2px solid #444;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-            overflow: hidden; /* Важно для корректного отображения border-radius на внутренних элементах */
-            padding: 8px; /* Общий внутренний отступ для всех элементов панели */
+            overflow: hidden;
+            padding: 8px;
         }
 
-        /* Панель быстрого доступа (хотбар) */
         #hotbar {
             display: flex;
-            gap: 5px; /* Отступ между ячейками внутри хотбара */
+            gap: 5px;
         }
         
         .hotbarSlot {
             width: 50px;
             height: 50px;
             font-size: 30px;
-            border: none; /* Убрана индивидуальная рамка */
-            border-radius: 8px; /* Скругления для индивидуальных слотов */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Небольшая тень для каждого слота */
-        }
-        
-        /* Кнопка инвентаря - теперь часть общего контейнера */
-        #inventoryBtn {
-            width: 50px;
-            height: 50px;
-            border: none; /* Убрана индивидуальная рамка */
-            border-radius: 8px; /* Добавляем скругления для самой кнопки инвентаря */
-            font-size: 30px;
-            margin-left: 8px; /* Отступ между хотбаром и рюкзаком на ПК */
+            border: none;
+            border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
-        /* Кнопки действий */
+        #inventoryBtn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            font-size: 30px;
+            margin-left: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
         #actionButtons {
             position: absolute;
             bottom: 25px;
@@ -460,7 +447,6 @@
             font-size: 40px;
         }
 
-        /* Экран паузы */
         #pauseScreen {
             position: absolute;
             top: 0;
@@ -475,7 +461,6 @@
             z-index: 80;
         }
 
-        /* Модальное сообщение */
         #messageBox {
             position: absolute;
             top: 50%;
@@ -542,77 +527,11 @@
         <div id="whatsNewScreen">
             <h2>Что нового в Survival City?</h2>
             <ul>
-                <li><strong>Обновление 0.0.12:</strong>
+                <li><strong>Обновление 1.0.0:</strong>
                     <ul>
-                        <li>Исправлена ошибка `TypeError: Cannot read properties of undefined (reading 'toLowerCase')` в `handleKeyUp`, добавлена проверка на `e.key`.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.11 (P2P WebRTC):</strong>
-                    <ul>
-                        <li>Переход на P2P-соединения с использованием WebRTC для синхронизации игрового процесса между игроками.</li>
-                        <li>Firebase теперь используется только как **сигнальный сервер** для установления начального соединения.</li>
-                        <li>Значительное потенциальное **снижение пинга** за счет прямого обмена данными между игроками.</li>
-                        <li>**Важно:** Защита от читерства на данном этапе минимизирована, так как нет центрального сервера-авторитета.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.10:</strong>
-                    <ul>
-                        <li>Исправлена ошибка `TypeError: Cannot read properties of null (reading 'color')` в функции `render` путем добавления проверки на существование объекта `otherPlayer` перед доступом к его свойствам.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.9:</strong>
-                    <ul>
-                        <li>Исправлена ошибка `Invalid glob match expression` в правилах безопасности Firestore. Правило `match` теперь корректно настроено для доступа к комнатам.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.8:</strong>
-                    <ul>
-                        <li>Добавлены инструкции по правилам безопасности Firebase Firestore для разрешения создания и присоединения к комнатам.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.7:</strong>
-                    <ul>
-                        <li>Исправлена ошибка `Invalid document reference`. Пути к комнатам в Firestore теперь формируются корректно с использованием `artifacts/APP_ID/public/data/rooms/ИМЯ_КОМНАТЫ`.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.6:</strong>
-                    <ul>
-                        <li>Исправлена ошибка "auth/configuration-not-found". Убедитесь, что метод аутентификации "Anonymous" включен в консоли Firebase.</li>
-                        <li>Добавлены дополнительные сообщения в консоль для отладки инициализации Firebase.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.5:</strong>
-                    <ul>
-                        <li>Добавлена поддержка сетевой игры через Firebase Firestore (требуется подключение к интернету).</li>
-                        <li>Теперь можно создавать игровые комнаты и присоединяться к ним, чтобы играть с друзьями.</li>
-                        <li>Исправлена ошибка с визуальным смещением джойстика при перетаскивании. Теперь он всегда остается центрированным внутри внешнего круга.</li>
-                        <li>Увеличен отступ джойстика от нижнего и левого края на мобильных устройствах.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.4:</strong>
-                    <ul>
-                        <li>Исправлена проблема с некорректным отображением интерфейса на мобильных устройствах. Теперь размеры элементов (джойстик, хотбар, кнопки действий) динамически подстраиваются под мобильный экран.</li>
-                        <li>Кнопка паузы перемещена в угол для более удобного доступа.</li>
-                        <li>Джойстик теперь имеет фиксированный отступ от нижнего и левого края, а не от центра.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.3:</strong>
-                    <ul>
-                        <li>Обновление списка "Что нового" и кнопка перезагрузки страницы.</li>
-                        <li>Улучшено определение мобильного устройства.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.2:</strong>
-                    <ul>
-                        <li>Добавлен джойстик для мобильных устройств.</li>
-                        <li>Добавлены кнопки атаки и строительства.</li>
-                        <li>Реализована базовая система инвентаря и хотбара.</li>
-                    </ul>
-                </li>
-                <li><strong>Обновление 0.0.1:</strong>
-                    <ul>
-                        <li>Первый запуск игры с базовым перемещением игрока.</li>
-                        <li>Интерфейс с показателями здоровья, золота и времени.</li>
+                        <li>Переход на WebSocket сервер для мультиплеера</li>
+                        <li>Улучшена синхронизация игроков</li>
+                        <li>Добавлена защита от спама</li>
                     </ul>
                 </li>
             </ul>
@@ -654,7 +573,6 @@
                 </div>
             </div>
             
-            <!-- Новый контейнер для хотбара и кнопки инвентаря -->
             <div id="bottomControls">
                 <div id="hotbar">
                     <div class="hotbarSlot selected">🪓</div>
@@ -663,7 +581,7 @@
                     <div class="hotbarSlot">🏗️</div>
                     <div class="hotbarSlot"></div>
                 </div>
-                <div id="inventoryBtn">🎒</div> <!-- Иконка рюкзака -->
+                <div id="inventoryBtn">🎒</div>
             </div>
             
             <div id="actionButtons">
@@ -682,30 +600,18 @@
         <div id="messageBox"></div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteField, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // Глобальные переменные Firebase (будут инициализированы после загрузки)
-        let firebaseApp;
-        let auth;
-        let db;
-        let userId;
-        let currentRoomRef; // Ссылка на текущую комнату в Firestore
-        let unsubscribeFromRoom = null; // Функция для отписки от обновлений комнаты
-
-        // WebRTC Variables
-        let peerConnection;
-        let dataChannel;
-        let isInitiator = false; // Флаг, указывающий, является ли этот клиент инициатором P2P соединения
-        let remotePlayerId = null; // ID другого игрока в P2P соединении
-
-        // Состояние игры (расширяем для мультиплеера)
+    <script>
+        // Глобальные переменные
+        let socket = null;
+        let userId = null;
+        let currentRoom = null;
+        let lastUpdateTime = 0;
+        let lastMessageTime = 0;
+        
+        // Состояние игры
         const gameState = {
             player: {
-                id: null, // ID текущего игрока
+                id: null,
                 x: 0,
                 y: 0,
                 speed: 3,
@@ -716,9 +622,9 @@
                 hotbar: ['🪓', '⛏️', '🔫', '🏗️', ''],
                 selectedSlot: 0,
                 currentAction: 'move',
-                color: '#3498db' // Цвет игрока
+                color: '#3498db'
             },
-            otherPlayers: {}, // Объект для хранения данных других игроков { playerId: { x, y, color }, ... }
+            otherPlayers: {},
             time: {
                 hours: 12,
                 minutes: 45,
@@ -728,26 +634,24 @@
                 { type: 'tree', x: 200, y: 150 },
                 { type: 'wall', x: 300, y: 200 }
             ],
-            screen: 'menu', // Текущий экран: 'menu', 'modeSelect', 'roomSelect', 'game', 'pause', 'whatsNew'
+            screen: 'menu',
             paused: false,
-            // Проверка на мобильное устройство
             isMobile: ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0) 
                       && /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Opera Mini/i.test(navigator.userAgent)
-                      && !/Tablet|Windows NT/i.test(navigator.userAgent) // Исключаем планшеты и настольные устройства с сенсорным экраном более точно
+                      && !/Tablet|Windows NT/i.test(navigator.userAgent)
         };
 
-        // UI Elements (получаем ссылки на новые элементы)
+        // UI Elements
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const menuScreen = document.getElementById('menuScreen');
         const modeSelectScreen = document.getElementById('modeSelectScreen');
-        const roomSelectScreen = document.getElementById('roomSelectScreen'); // Новый экран
-        const roomNameInput = document.getElementById('roomNameInput'); // Поле ввода имени комнаты
-        const createRoomBtn = document.getElementById('createRoomBtn'); // Кнопка создать комнату
-        const joinRoomBtn = document.getElementById('joinRoomBtn'); // Кнопка присоединиться
-        const roomBackBtn = document.getElementById('roomBackBtn'); // Кнопка назад с экрана выбора комнаты
-        const loadingIndicator = document.getElementById('loadingIndicator'); // Индикатор загрузки
-
+        const roomSelectScreen = document.getElementById('roomSelectScreen');
+        const roomNameInput = document.getElementById('roomNameInput');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const roomBackBtn = document.getElementById('roomBackBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
         const playBtn = document.getElementById('playBtn');
         const whatsNewBtn = document.getElementById('whatsNewBtn');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -766,8 +670,6 @@
         const inventoryBtn = document.getElementById('inventoryBtn');
         const whatsNewScreen = document.getElementById('whatsNewScreen');
         const whatsNewBackBtn = document.getElementById('whatsNewBackBtn');
-
-        // Элементы статистики для обновления
         const playerHealthFill = document.getElementById('playerHealthFill');
         const playerHungerFill = document.getElementById('playerHungerFill'); 
         const playerGoldSpan = document.getElementById('playerGold');
@@ -789,18 +691,6 @@
         // Идентификатор кадра анимации для остановки игры
         let animationFrameId;
 
-        // Firebase Configuration (Теперь используется ваша конфигурация)
-        const firebaseConfig = {
-            apiKey: "AIzaSyACp2E3rZi1It8yWOeFoZnDzNV-pxSFHnc",
-            authDomain: "my-game-2cd1e.firebaseapp.com",
-            projectId: "my-game-2cd1e",
-            appId: "1:920986300653:web:d0141ebb18839c1de19ce4",
-            measurementId: "G-JC9LMKPSB7",
-            storageBucket: "my-game-2cd1e.firebasestorage.app", 
-            messagingSenderId: "920986300653" 
-        };
-        const appId = "my-game-2cd1e"; // Используем projectId как appId для коллекций public/rooms
-
         // Генерировать случайный цвет для игрока
         function getRandomColor() {
             const letters = '0123456789ABCDEF';
@@ -811,82 +701,221 @@
             return color;
         }
 
-        // Инициализация Firebase при загрузке окна
-        window.onload = function () {
-            initializeFirebase(); // Инициализация Firebase перед init()
+        // Инициализация при загрузке окна
+        window.onload = function() {
+            userId = generateId();
+            gameState.player.id = userId;
+            gameState.player.color = getRandomColor();
+            
             init();
-            gameLoop(); 
+            gameLoop();
         };
 
-        async function initializeFirebase() {
-            try {
-                console.log("Firebase Config:", firebaseConfig);
+        // Генерация ID игрока
+        function generateId() {
+            return 'player-' + Math.random().toString(36).substr(2, 9);
+        }
 
-                firebaseApp = initializeApp(firebaseConfig);
-                auth = getAuth(firebaseApp);
-                db = getFirestore(firebaseApp);
+        // Подключение к WebSocket серверу
+        function connectToServer() {
+            // Замените на ваш адрес сервера
+            const serverUrl = 'ws://a36a0b8297c9.sn.mynetname.net:3000';
+            socket = new WebSocket(serverUrl);
+            
+            socket.onopen = () => {
+                console.log('WebSocket соединение установлено');
+                showMessage('Подключено к серверу', 2000);
+            };
+            
+            socket.onclose = () => {
+                console.log('WebSocket соединение закрыто');
+                showMessage('Соединение с сервером потеряно', 3000);
+            };
+            
+            socket.onerror = (error) => {
+                console.error('WebSocket ошибка:', error);
+                showMessage('Ошибка соединения с сервером', 3000);
+            };
+            
+            socket.onmessage = (event) => {
+                const now = Date.now();
+                if (now - lastMessageTime < 50) return; // Защита от спама
+                lastMessageTime = now;
+                
+                try {
+                    const message = JSON.parse(event.data);
+                    handleServerMessage(message);
+                } catch (e) {
+                    console.error('Ошибка обработки сообщения:', e);
+                }
+            };
+        }
 
-                console.log("Firebase Auth instance:", auth);
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token !== '') {
-                    try {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("Signed in with custom token.");
-                    } catch (tokenError) {
-                        console.warn("Error signing in with custom token, attempting anonymous sign-in:", tokenError);
-                        await signInAnonymously(auth);
-                        console.log("Signed in anonymously after token error.");
+        // Обработка сообщений от сервера
+        function handleServerMessage(message) {
+            switch(message.type) {
+                case 'roomCreated':
+                    showMessage(`Комната ${message.room} создана!`, 2000);
+                    joinGameRoom(message.room, true);
+                    break;
+                    
+                case 'roomJoined':
+                    showMessage(`Вы присоединились к комнате ${message.room}!`, 2000);
+                    joinGameRoom(message.room, false);
+                    break;
+                    
+                case 'roomFull':
+                    showMessage('Комната заполнена!', 2000);
+                    loadingIndicator.style.display = 'none';
+                    break;
+                    
+                case 'roomNotFound':
+                    showMessage('Комната не найдена!', 2000);
+                    loadingIndicator.style.display = 'none';
+                    break;
+                    
+                case 'playerUpdate':
+                    // Обновляем данные других игроков
+                    if (message.playerId !== userId) {
+                        gameState.otherPlayers[message.playerId] = message.playerState;
                     }
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously (no custom token).");
-                }
-
-                if (auth.currentUser) {
-                    userId = auth.currentUser.uid;
-                    gameState.player.id = userId;
-                    console.log("Firebase initialized. User ID:", userId);
-                } else {
-                    userId = crypto.randomUUID();
-                    gameState.player.id = userId;
-                    console.warn("Auth current user is null after sign-in, using random UUID for userId.");
-                }
-
-            } catch (error) {
-                console.error("Error initializing Firebase or signing in:", error);
-                showMessage("Ошибка подключения к серверу. Попробуйте обновить страницу. Убедитесь, что аутентификация Firebase включена для вашего проекта и настройки (apiKey, authDomain) верны.");
+                    break;
+                    
+                case 'playerLeft':
+                    // Удаляем игрока, который вышел
+                    delete gameState.otherPlayers[message.playerId];
+                    showMessage(`Игрок ${message.playerId.substring(0,4)} покинул игру`, 2000);
+                    break;
+                    
+                case 'error':
+                    showMessage(message.text, 2000);
+                    loadingIndicator.style.display = 'none';
+                    break;
             }
         }
 
-        // Функция для показа модальных сообщений вместо alert
-        function showMessage(message, duration = 2000) {
-            messageBox.textContent = message;
-            messageBox.classList.add('show');
-            setTimeout(() => {
-                messageBox.classList.remove('show');
-            }, duration);
+        // Отправка сообщения на сервер
+        function sendToServer(message) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
+            }
         }
 
-        // Начало игры (обновлена для мультиплеера)
-        // Перемещена выше для корректного вызова в setupEventListeners
-        function startGame() {
-            // Если игра запускается через Offline кнопку, убедимся, что отписки от комнаты нет
-            if (unsubscribeFromRoom) {
-                unsubscribeFromRoom();
-                unsubscribeFromRoom = null;
-                currentRoomRef = null;
-                gameState.otherPlayers = {};
+        // Создание комнаты
+        async function createRoom() {
+            const roomName = roomNameInput.value.trim();
+            if (!roomName) {
+                showMessage("Введите имя комнаты!");
+                return;
             }
-            modeSelectScreen.style.display = 'none';
-            uiContainer.style.display = 'block'; // Показываем UI при старте игры
+            
+            loadingIndicator.style.display = 'block';
+            
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                connectToServer();
+                
+                // Ждем подключения
+                const checkConnection = setInterval(() => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        clearInterval(checkConnection);
+                        sendToServer({
+                            type: 'createRoom',
+                            room: roomName,
+                            playerId: userId,
+                            maxPlayers: 8
+                        });
+                    }
+                }, 100);
+            } else {
+                sendToServer({
+                    type: 'createRoom',
+                    room: roomName,
+                    playerId: userId,
+                    maxPlayers: 8
+                });
+            }
+        }
+
+        // Присоединение к комнате
+        async function joinRoom() {
+            const roomName = roomNameInput.value.trim();
+            if (!roomName) {
+                showMessage("Введите имя комнаты!");
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                connectToServer();
+                
+                // Ждем подключения
+                const checkConnection = setInterval(() => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        clearInterval(checkConnection);
+                        sendToServer({
+                            type: 'joinRoom',
+                            room: roomName,
+                            playerId: userId
+                        });
+                    }
+                }, 100);
+            } else {
+                sendToServer({
+                    type: 'joinRoom',
+                    room: roomName,
+                    playerId: userId
+                });
+            }
+        }
+
+        // Вход в игровую комнату
+        function joinGameRoom(roomName, isRoomOwner) {
+            currentRoom = roomName;
+            roomSelectScreen.style.display = 'none';
+            uiContainer.style.display = 'block';
             uiContainer.style.pointerEvents = 'auto';
             gameState.screen = 'game';
             gameState.paused = false;
             gameState.time.lastUpdate = performance.now();
             gameState.player.x = canvas.width / 2;
             gameState.player.y = canvas.height / 2;
-            gameCanvas.style.display = 'block'; // Показать холст игры
-            selectHotbarSlot(0); // Выбрать первый слот хотбара по умолчанию при старте игры
+            gameCanvas.style.display = 'block';
+            selectHotbarSlot(0);
+            
+            // Отправляем обновления своего состояния каждые 50мс
+            setInterval(() => {
+                if (gameState.screen === 'game' && !gameState.paused && currentRoom) {
+                    sendToServer({
+                        type: 'playerUpdate',
+                        room: currentRoom,
+                        playerId: userId,
+                        playerState: {
+                            x: gameState.player.x,
+                            y: gameState.player.y,
+                            color: gameState.player.color,
+                            health: gameState.player.health,
+                            hunger: gameState.player.hunger,
+                            gold: gameState.player.gold,
+                            currentAction: gameState.player.currentAction
+                        }
+                    });
+                }
+            }, 50);
+        }
+
+        // Начало одиночной игры
+        function startGame() {
+            modeSelectScreen.style.display = 'none';
+            uiContainer.style.display = 'block';
+            uiContainer.style.pointerEvents = 'auto';
+            gameState.screen = 'game';
+            gameState.paused = false;
+            gameState.time.lastUpdate = performance.now();
+            gameState.player.x = canvas.width / 2;
+            gameState.player.y = canvas.height / 2;
+            gameCanvas.style.display = 'block';
+            selectHotbarSlot(0);
         }
 
         // Инициализация игры
@@ -904,14 +933,13 @@
             
             resizeCanvas();
             setupEventListeners();
-
             updateUI();
             gameCanvas.style.display = 'none';
-            uiContainer.style.display = 'flex'; /* Сделаем UI-контейнер видимым, но с pointer-events:none */
+            uiContainer.style.display = 'flex';
             menuScreen.style.display = 'flex';
         }
 
-        // Функция для применения мобильных стилей через JS
+        // Применение мобильных стилей
         function applyMobileStyles() {
             pauseBtn.style.width = '33px';
             pauseBtn.style.height = '33px';
@@ -980,7 +1008,7 @@
             });
         }
         
-        // Изменение размера холста при изменении окна
+        // Изменение размера холста
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -1002,18 +1030,12 @@
                 modeSelectScreen.style.display = 'flex';
             });
 
-            // Новая логика для кнопки "Онлайн"
             onlineBtn.addEventListener('click', () => {
-                if (!db) { 
-                    showMessage("Сервер недоступен. Попробуйте обновить страницу.");
-                    return;
-                }
                 modeSelectScreen.style.display = 'none';
                 roomSelectScreen.style.display = 'flex';
                 gameState.screen = 'roomSelect';
             });
-
-            // Обработчики кнопок на экране выбора комнаты
+            
             createRoomBtn.addEventListener('click', createRoom);
             joinRoomBtn.addEventListener('click', joinRoom);
             roomBackBtn.addEventListener('click', () => {
@@ -1022,7 +1044,7 @@
                 gameState.screen = 'modeSelect';
             });
             
-            offlineBtn.addEventListener('click', startGame); // startGame теперь определена выше
+            offlineBtn.addEventListener('click', startGame);
             
             whatsNewBtn.addEventListener('click', () => {
                 menuScreen.style.display = 'none';
@@ -1154,7 +1176,7 @@
         }
         
         function handleKeyUp(e) {
-            if (!e.key) return; // Добавлена проверка на наличие e.key
+            if (!e.key) return;
             switch(e.key.toLowerCase()) {
                 case 'w': keys.w = false; break;
                 case 'a': keys.a = false; break;
@@ -1189,440 +1211,20 @@
             showMessage(inventoryBtn.classList.contains('selected') ? 'Инвентарь открыт (условно)' : 'Инвентарь закрыт (условно)');
         }
         
-        // ---- WebRTC Signaling and P2P Logic ----
-
-        // STUN servers configuration for ICE candidates
-        const peerConnectionConfig = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                // You can add more STUN/TURN servers here if needed for better connectivity
-                // For TURN servers, you usually need to pay or host your own.
-            ]
-        };
-
-        // Function to set up WebRTC peer connection
-        async function setupPeerConnection(initiator) {
-            isInitiator = initiator;
-            peerConnection = new RTCPeerConnection(peerConnectionConfig);
-
-            // Event handler for ICE candidates
-            // These are network configuration messages exchanged via signaling server
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log('WebRTC: Sending ICE candidate:', event.candidate);
-                    // Send ICE candidate to the other peer via Firebase
-                    // ICE candidates go to a subcollection, not the main signaling_exchange doc
-                    sendSignalingCandidate(event.candidate);
-                }
-            };
-
-            // Event handler when data channel is opened by the remote peer
-            peerConnection.ondatachannel = (event) => {
-                dataChannel = event.channel;
-                setupDataChannel(dataChannel);
-                console.log('WebRTC: Data channel received:', dataChannel);
-                showMessage('P2P соединение установлено!', 3000);
-            };
-
-            // Create data channel for sending game data if this peer is the initiator
-            if (isInitiator) {
-                dataChannel = peerConnection.createDataChannel('gameDataChannel');
-                setupDataChannel(dataChannel);
-                console.log('WebRTC: Data channel created:', dataChannel);
-            }
-
-            // Event handler when connection state changes
-            peerConnection.oniceconnectionstatechange = () => {
-                console.log('WebRTC: ICE connection state:', peerConnection.iceConnectionState);
-                if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
-                    showMessage('P2P соединение разорвано.', 3000);
-                    handlePeerDisconnection();
-                } else if (peerConnection.iceConnectionState === 'connected') {
-                    showMessage('P2P соединение установлено и активно!', 3000);
-                }
-            };
-
-            peerConnection.onconnectionstatechange = () => {
-                console.log('WebRTC: RTCPeerConnection state:', peerConnection.connectionState);
-            };
+        // Показать сообщение
+        function showMessage(message, duration = 2000) {
+            messageBox.textContent = message;
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, duration);
         }
 
-        // Function to handle data channel events
-        function setupDataChannel(channel) {
-            channel.onopen = () => {
-                console.log('WebRTC: Data channel is open!');
-                showMessage('Канал данных P2P открыт!', 2000);
-                // Start sending player updates once data channel is open
-                // For now, we'll send it from update() loop
-            };
-            channel.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'playerUpdate') {
-                        // Update other player's state
-                        gameState.otherPlayers[data.playerId] = data.playerState;
-                    } else if (data.type === 'chatMessage') {
-                        console.log('Chat:', data.message);
-                        showMessage(`Чат (${data.playerId.substring(0,4)}): ${data.message}`);
-                    }
-                } catch (e) {
-                    console.error('WebRTC: Failed to parse P2P message:', e);
-                }
-            };
-            channel.onclose = () => {
-                console.log('WebRTC: Data channel closed!');
-                showMessage('Канал данных P2P закрыт!', 3000);
-                handlePeerDisconnection();
-            };
-            channel.onerror = (error) => {
-                console.error('WebRTC: Data channel error:', error);
-                showMessage('Ошибка канала данных P2P!', 3000);
-            };
-        }
-
-        // Function to send signaling messages (offer/answer) via Firebase
-        async function sendSignalingMessage(message) {
-            if (currentRoomRef && userId) {
-                try {
-                    const signalingExchangeDocRef = doc(currentRoomRef, 'signaling_exchange');
-                    const updateData = {
-                        [`${message.type}`]: message, // Store offer or answer directly
-                        [`${message.type}SenderId`]: userId, // Track who sent it
-                        [`${message.type}Timestamp`]: Date.now()
-                    };
-                    await setDoc(signalingExchangeDocRef, updateData, { merge: true });
-                    console.log(`Firebase Signaling: Sent ${message.type} from ${userId}.`);
-                } catch (error) {
-                    console.error("Firebase Signaling: Error sending signaling message (offer/answer):", error);
-                }
-            }
-        }
-
-        // Function to send ICE candidate messages via Firebase (separate for candidates)
-        async function sendSignalingCandidate(candidate) {
-            if (currentRoomRef && userId) {
-                try {
-                    const candidatesCollectionRef = collection(currentRoomRef, 'signaling_exchange', 'candidates');
-                    await addDoc(candidatesCollectionRef, {
-                        senderId: userId,
-                        candidate: candidate.toJSON(), // Convert RTCIceCandidate to JSON
-                        timestamp: Date.now()
-                    });
-                    console.log(`Firebase Signaling: Sent ICE candidate from ${userId}.`);
-                } catch (error) {
-                    console.error("Firebase Signaling: Error sending ICE candidate:", error);
-                }
-            }
-        }
-
-
-        // Listener for incoming signaling messages via Firebase
-        function listenForSignalingMessages(roomName) {
-            if (unsubscribeFromRoom) {
-                unsubscribeFromRoom(); // Отписываемся от предыдущих обновлений комнаты
-                unsubscribeFromCandidates = null; // Отписываемся от кандидатов тоже
-            }
-            currentRoomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName);
-            const signalingExchangeDocRef = doc(currentRoomRef, 'signaling_exchange');
-            const candidatesCollectionRef = collection(currentRoomRef, 'signaling_exchange', 'candidates');
-
-            console.log(`Firebase Signaling: Listening to signaling_exchange document for room: ${roomName}`);
-
-            // Listener for offers/answers
-            unsubscribeFromRoom = onSnapshot(signalingExchangeDocRef, async (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const data = docSnapshot.data();
-                    console.log('Firebase Signaling: Received signaling_exchange document update:', data);
-
-                    // Process offer
-                    if (data.offer && data.offerSenderId !== userId) {
-                        const offer = data.offer;
-                        console.log('Firebase Signaling: Received offer from:', data.offerSenderId, 'SDP:', offer.sdp);
-                        if (!peerConnection || peerConnection.signalingState === 'closed' || peerConnection.connectionState === 'closed') {
-                            await setupPeerConnection(false); // Not initiator, will create connection
-                        }
-                        remotePlayerId = data.offerSenderId; // Устанавливаем remotePlayerId
-                        try {
-                            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-                            const answer = await peerConnection.createAnswer();
-                            await peerConnection.setLocalDescription(answer);
-                            console.log('WebRTC: Sending answer:', answer);
-                            await sendSignalingMessage(answer); // Отправляем ответ
-                            showMessage('Получено предложение. Отправлен ответ.', 2000);
-                            // Clean up the offer from Firestore after processing it
-                            await updateDoc(signalingExchangeDocRef, {
-                                offer: deleteField(),
-                                offerSenderId: deleteField(),
-                                offerTimestamp: deleteField()
-                            });
-                        } catch (e) {
-                            console.error('WebRTC: Error processing offer:', e);
-                            showMessage('Ошибка при обработке предложения WebRTC.', 3000);
-                        }
-                    }
-
-                    // Process answer
-                    if (data.answer && data.answerSenderId !== userId) {
-                        const answer = data.answer;
-                        console.log('Firebase Signaling: Received answer from:', data.answerSenderId, 'SDP:', answer.sdp);
-                        try {
-                            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-                            showMessage('Получен ответ. Соединение устанавливается.', 2000);
-                            // Clean up the answer from Firestore after processing it
-                            await updateDoc(signalingExchangeDocRef, {
-                                answer: deleteField(),
-                                answerSenderId: deleteField(),
-                                answerTimestamp: deleteField()
-                            });
-                        } catch (e) {
-                            console.error('WebRTC: Error processing answer:', e);
-                            showMessage('Ошибка при обработке ответа WebRTC.', 3000);
-                        }
-                    }
-                } else {
-                    console.log('Firebase Signaling: Signaling exchange document does not exist.');
-                }
-            }, (error) => {
-                console.error("Firebase Signaling: Error listening for offer/answer messages:", error);
-                showMessage("Ошибка сигнального сервера. P2P соединение может не установиться.");
-            });
-
-            // Listener for ICE candidates (separate listener for subcollection)
-            const unsubscribeFromCandidates = onSnapshot(candidatesCollectionRef, async (querySnapshot) => {
-                querySnapshot.docChanges().forEach(async (change) => {
-                    if (change.type === "added") {
-                        const candidateData = change.doc.data();
-                        const candidateSenderId = candidateData.senderId;
-                        const candidate = candidateData.candidate; // Raw candidate data
-
-                        if (candidateSenderId === userId) {
-                            console.log(`Firebase Signaling: Processed own sent ICE candidate with ID ${change.doc.id}.`);
-                            await deleteDoc(change.doc.ref); // Delete own sent candidate immediately
-                            return;
-                        }
-
-                        console.log(`WebRTC: Received ICE candidate from ${candidateSenderId}.`);
-                        try {
-                            if (peerConnection) {
-                                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-                                await deleteDoc(change.doc.ref); // Delete processed candidate
-                            } else {
-                                console.warn('WebRTC: PeerConnection not yet initialized when receiving ICE candidate.');
-                                // Keep candidate in Firestore if peerConnection isn't ready, retry later or handle
-                            }
-                        } catch (e) {
-                            console.error('WebRTC: Error adding received ICE candidate:', e, candidate);
-                        }
-                    }
-                });
-            }, (error) => {
-                console.error("Firebase Signaling: Error listening for ICE candidates:", error);
-            });
-        }
-
-        // Function to start a P2P connection as initiator
-        async function createP2POffer() {
-            await setupPeerConnection(true);
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            console.log('WebRTC: Sending offer:', offer);
-            sendSignalingMessage(offer); // Отправляем предложение через Firebase
-            showMessage('Отправлено P2P предложение. Ожидаем ответа.', 2000);
-        }
-
-        // Function to handle peer disconnection cleanup
-        function handlePeerDisconnection() {
-            if (dataChannel) {
-                dataChannel.close();
-                dataChannel = null;
-            }
-            if (peerConnection) {
-                peerConnection.close();
-                peerConnection = null;
-            }
-            // Clear other players from UI if connection lost
-            gameState.otherPlayers = {}; 
-            // Possibly try to re-establish or prompt user
-            // For now, if P2P disconnects, we just clear other players
-        }
-
-        // ---- Multiplayer Logic (adapted for P2P) ----
-
-        async function createRoom() {
-            const roomName = roomNameInput.value.trim();
-            if (!roomName) {
-                showMessage("Введите имя комнаты!");
-                return;
-            }
-            if (!db) { showMessage("Firebase не инициализирован."); return; }
-
-            loadingIndicator.style.display = 'block';
-            const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName); 
-            
-            try {
-                const roomDoc = await getDoc(roomDocRef);
-                if (roomDoc.exists()) {
-                    const roomData = roomDoc.data();
-                    const playersInRoom = Object.keys(roomData.players || {});
-                    if (playersInRoom.length >= 2) {
-                        showMessage("Комната уже заполнена!");
-                        loadingIndicator.style.display = 'none';
-                        return;
-                    }
-                    // Если комната существует, но в ней меньше 2 игроков, присоединяемся
-                    showMessage(`Комната '${roomName}' существует. Попытка присоединиться...`);
-                    // Вызываем joinGameRoom как не-инициатор, так как комната уже существует
-                    // и ожидаем, что инициатор уже там и отправит предложение.
-                    await updateDoc(roomDocRef, {
-                        [`players.${userId}`]: {
-                            status: 'connecting',
-                            color: getRandomColor(),
-                            remoteId: null
-                        }
-                    });
-                    joinGameRoom(roomName, false); 
-
-                } else {
-                    await setDoc(roomDocRef, {
-                        createdAt: Date.now(),
-                        players: {
-                            [userId]: {
-                                status: 'waiting', // Player is waiting for another peer
-                                color: getRandomColor(),
-                                remoteId: null // To store the ID of the peer they connect to
-                            }
-                        }
-                    });
-                    showMessage(`Комната '${roomName}' создана! Ожидание других игроков...`);
-                    joinGameRoom(roomName, true); // This player is the initiator
-                }
-            } catch (error) {
-                console.error("Ошибка при создании/поиске комнаты:", error);
-                showMessage("Не удалось создать/найти комнату. Попробуйте снова.");
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        async function joinRoom() {
-            const roomName = roomNameInput.value.trim();
-            if (!roomName) {
-                showMessage("Введите имя комнаты!");
-                return;
-            }
-            if (!db) { showMessage("Firebase не инициализирован."); return; }
-
-            loadingIndicator.style.display = 'block';
-            const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName);
-            
-            try {
-                const roomDoc = await getDoc(roomDocRef);
-                if (roomDoc.exists()) {
-                    const roomData = roomDoc.data();
-                    const playersInRoom = Object.keys(roomData.players || {});
-
-                    if (playersInRoom.length >= 2) { // Limit to 2 players for simple P2P
-                        showMessage("Комната уже заполнена!");
-                        loadingIndicator.style.display = 'none';
-                        return;
-                    }
-
-                    // Add current player to the room
-                    await updateDoc(roomDocRef, {
-                        [`players.${userId}`]: {
-                            status: 'connecting', // Player is trying to connect
-                            color: getRandomColor(),
-                            remoteId: null
-                        }
-                    });
-                    showMessage(`Вы присоединились к комнате '${roomName}'!`);
-                    joinGameRoom(roomName, false); // This player is not the initiator
-                } else {
-                    showMessage("Комнаты с таким именем не существует!");
-                }
-            } catch (error) {
-                console.error("Ошибка при присоединении к комнате:", error);
-                showMessage("Не удалось присоединиться к комнату. Попробуйте снова.");
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        // Вход в игровую комнату после создания/присоединения
-        function joinGameRoom(roomName, initiator) {
-            roomSelectScreen.style.display = 'none';
-            uiContainer.style.display = 'block';
-            uiContainer.style.pointerEvents = 'auto';
-            gameState.screen = 'game';
-            gameState.paused = false;
-            gameState.time.lastUpdate = performance.now();
-            gameState.player.x = canvas.width / 2;
-            gameState.player.y = canvas.height / 2;
-            gameCanvas.style.display = 'block';
-            selectHotbarSlot(0);
-
-            // Start listening for signaling messages
-            listenForSignalingMessages(roomName);
-
-            // Monitor player presence in the room document
-            const roomPlayersRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomName);
-            onSnapshot(roomPlayersRef, async (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const roomData = docSnapshot.data();
-                    const playersInRoom = Object.keys(roomData.players || {});
-
-                    // For simplicity, we'll connect only to the first other player found
-                    const otherPlayerIDs = playersInRoom.filter(id => id !== userId);
-
-                    if (initiator && otherPlayerIDs.length > 0) {
-                        // Если это инициатор и найден другой игрок, но соединение еще не установлено
-                        if (!peerConnection || peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-                            remotePlayerId = otherPlayerIDs[0];
-                            showMessage(`Найден другой игрок (${remotePlayerId.substring(0,4)}). Установка P2P соединения...`, 3000);
-                            await createP2POffer();
-                            // Обновляем статус в Firebase, чтобы другой игрок знал, кто является его пиром
-                            await updateDoc(roomPlayersRef, {
-                                [`players.${userId}.remoteId`]: remotePlayerId,
-                                [`players.${remotePlayerId}.remoteId`]: userId,
-                                [`players.${userId}.status`]: 'connected',
-                                [`players.${remotePlayerId}.status`]: 'connected',
-                            });
-                        }
-
-                    } else if (!initiator && otherPlayerIDs.length > 0) {
-                        // Если это присоединяющийся игрок, и инициатор уже там, просто ждем предложения.
-                        // Если уже есть peerConnection и он не в состоянии 'closed', значит инициатор уже отправил offer.
-                        if (!peerConnection || peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-                            remotePlayerId = otherPlayerIDs[0]; // Устанавливаем remotePlayerId
-                            showMessage(`Ожидание P2P предложения от ${remotePlayerId.substring(0,4)}...`, 3000);
-                        }
-                    } else if (otherPlayerIDs.length === 0 && remotePlayerId && !initiator) {
-                        // Если другой игрок, к которому мы были подключены, вышел из комнаты
-                        showMessage('Другой игрок покинул комнату.', 3000);
-                        handlePeerDisconnection();
-                        returnToMenu(); // Возвращаемся в меню, если единственный другой игрок уходит
-                    } else if (playersInRoom.length === 1 && initiator) {
-                        // Если инициатор, и никого нет в комнате, продолжаем ждать
-                        showMessage('Вы создали комнату. Ожидание второго игрока...', 3000);
-                    }
-                } else {
-                    showMessage("Комната была закрыта.");
-                    returnToMenu();
-                }
-            }, (error) => {
-                console.error("Error monitoring room players:", error);
-                showMessage("Потеряно соединение с комнатой.");
-                returnToMenu();
-            });
-        }
-        
         // Переключение паузы
         function togglePause() {
             gameState.paused = !gameState.paused;
             document.getElementById('pauseScreen').style.display = gameState.paused ? 'flex' : 'none';
             uiContainer.style.pointerEvents = gameState.paused ? 'none' : 'auto';
-            // В P2P при паузе мы не прерываем соединение, просто останавливаем обновление игры
         }
         
         // Возврат в главное меню
@@ -1634,26 +1236,23 @@
             menuScreen.style.display = 'flex';
             gameCanvas.style.display = 'none';
 
-            // Отписка от Firebase Realtime Updates при выходе из комнаты
-            if (unsubscribeFromRoom) {
-                unsubscribeFromRoom();
-                unsubscribeFromRoom = null;
+            // Отправляем сообщение о выходе из комнаты
+            if (currentRoom) {
+                sendToServer({
+                    type: 'leaveRoom',
+                    room: currentRoom,
+                    playerId: userId
+                });
+                currentRoom = null;
             }
-            // Close P2P connection
-            handlePeerDisconnection(); 
-
-            // Удаляем себя из комнаты в Firebase
-            if (currentRoomRef && userId) {
-                updateDoc(currentRoomRef, {
-                    [`players.${userId}`]: deleteField() // Удаляем поле с нашим ID
-                }).then(() => {
-                    console.log("Player removed from Firebase room.");
-                }).catch(error => console.warn("Не удалось удалить игрока из комнаты Firebase:", error));
+            
+            // Закрываем соединение
+            if (socket) {
+                socket.close();
+                socket = null;
             }
-            currentRoomRef = null;
-            gameState.otherPlayers = {}; // Очищаем данные других игроков
-            remotePlayerId = null;
-            isInitiator = false;
+            
+            gameState.otherPlayers = {};
         }
         
         // Обновление состояния игры
@@ -1696,28 +1295,9 @@
             gameState.player.health = Math.max(0, Math.min(100, gameState.player.health));
             
             updateUI();
-            
-            // Send player state update via P2P data channel
-            if (dataChannel && dataChannel.readyState === 'open') {
-                const playerState = {
-                    x: gameState.player.x,
-                    y: gameState.player.y,
-                    color: gameState.player.color,
-                    health: gameState.player.health,
-                    hunger: gameState.player.hunger,
-                    gold: gameState.player.gold,
-                    currentAction: gameState.player.currentAction,
-                    // Добавьте другие важные для синхронизации данные игрока
-                };
-                dataChannel.send(JSON.stringify({
-                    type: 'playerUpdate',
-                    playerId: userId,
-                    playerState: playerState
-                }));
-            }
         }
 
-        // Функция для обновления элементов UI
+        // Обновление UI
         function updateUI() {
             playerHealthFill.style.width = `${gameState.player.health}%`;
             playerHungerFill.style.width = `${gameState.player.hunger}%`;
@@ -1773,7 +1353,7 @@
                     }
                 }
 
-                // Индикатор действия (только для текущего игрока)
+                // Индикатор действия
                 if (gameState.player.currentAction === 'attack') {
                     ctx.strokeStyle = 'red';
                     ctx.lineWidth = 3;
@@ -1805,7 +1385,6 @@
             }
             
             gameState.time.lastUpdate = timestamp;
-
             animationFrameId = requestAnimationFrame(gameLoop);
         }
     </script>
