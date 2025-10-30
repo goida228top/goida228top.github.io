@@ -10,7 +10,13 @@ const maxScale = 5.0;
 let isPanning = false;
 let panStart = { x: 0, y: 0 };
 
+// Для сенсорного управления
+let isPinching = false;
+let lastPinchDistance = 0;
+
+
 export function initializeCamera(render) {
+    // Мышь
     Dom.container.addEventListener('wheel', handleWheel, { passive: false });
     Dom.container.addEventListener('mousedown', handleMouseDown);
     Dom.container.addEventListener('mousemove', handleMouseMove);
@@ -22,9 +28,17 @@ export function initializeCamera(render) {
         }
     });
     
+    // Сенсорное управление
+    Dom.container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+
+    
     // Привязываем мышь Matter.js к рендереру
     const mouse = Mouse.create(render.canvas);
 
+    // --- Обработчики мыши ---
     function handleMouseDown(e) {
         if (e.button === 1) { // Средняя кнопка мыши
             isPanning = true;
@@ -76,6 +90,74 @@ export function initializeCamera(render) {
             updateView();
         }
     }
+
+    // --- Обработчики сенсорного ввода ---
+    
+    function getPinchDistance(e) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        return Math.sqrt(Math.pow(t1.clientX - t2.clientX, 2) + Math.pow(t1.clientY - t2.clientY, 2));
+    }
+    
+    function getPinchMidpoint(e) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        return { clientX: (t1.clientX + t2.clientX) / 2, clientY: (t1.clientY + t2.clientY) / 2 };
+    }
+
+    function handleTouchStart(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            isPinching = true;
+            isPanning = true;
+            lastPinchDistance = getPinchDistance(e);
+            const midpoint = getPinchMidpoint(e);
+            panStart = { x: midpoint.clientX, y: midpoint.clientY };
+        }
+    }
+
+    function handleTouchMove(e) {
+        if (e.touches.length === 2 && isPinching) {
+            e.preventDefault();
+            
+            const midpoint = getPinchMidpoint(e);
+            
+            // --- Панорамирование (2 пальца) ---
+            const dx = midpoint.clientX - panStart.x;
+            const dy = midpoint.clientY - panStart.y;
+            viewOffset.x -= dx * scale;
+            viewOffset.y -= dy * scale;
+            panStart = { x: midpoint.clientX, y: midpoint.clientY };
+
+            // --- Масштабирование ---
+            const pinchDistance = getPinchDistance(e);
+            const worldPosBeforeZoom = getMousePos(midpoint);
+            
+            const scaleFactor = pinchDistance / lastPinchDistance;
+            let newScale = scale * scaleFactor;
+            newScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+            if (newScale.toFixed(4) !== scale.toFixed(4)) {
+                scale = newScale;
+                const rect = render.canvas.getBoundingClientRect();
+                const mouseScreenX = midpoint.clientX - rect.left;
+                const mouseScreenY = midpoint.clientY - rect.top;
+                viewOffset.x = worldPosBeforeZoom.x - mouseScreenX * scale;
+                viewOffset.y = worldPosBeforeZoom.y - mouseScreenY * scale;
+            }
+
+            lastPinchDistance = pinchDistance;
+            updateView();
+        }
+    }
+
+    function handleTouchEnd(e) {
+        if (e.touches.length < 2 && isPinching) {
+            isPinching = false;
+            isPanning = false;
+        }
+    }
+    
 
     function updateView() {
         // Обновляем видимую область рендера

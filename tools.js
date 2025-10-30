@@ -29,6 +29,12 @@ const BRUSH_RADIUS = 8;
 let waterSpawnInterval = null;
 let lastMousePos = { x: 0, y: 0 };
 
+// Для долгого нажатия
+let longPressTimer = null;
+const LONG_PRESS_DURATION = 500;
+let touchStartPos = { x: 0, y: 0 };
+const TOUCH_MOVE_THRESHOLD = 10; // pixels
+
 
 function spawnWaterCluster(engine, world, x, y) {
     const count = 3; 
@@ -68,19 +74,83 @@ export function initializeTools(engineData, cameraData, worldData) {
     });
 
 
-    // --- Обработчики событий мыши ---
-    Dom.container.addEventListener('mousedown', handleMouseDown);
-    Dom.container.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    Dom.container.addEventListener('contextmenu', handleContextMenu);
+    // --- Обработчики событий (унифицированные для мыши и касаний) ---
+    Dom.container.addEventListener('mousedown', onPointerDown);
+    Dom.container.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    
+    Dom.container.addEventListener('touchstart', onPointerDown, { passive: false });
+    Dom.container.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+    window.addEventListener('touchcancel', onPointerUp);
+
+    Dom.container.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        triggerContextMenu(e.clientX, e.clientY);
+    });
     Dom.container.addEventListener('dblclick', handleDoubleClick);
     Dom.container.addEventListener('mouseleave', stopAllActions);
 
 
-    function handleMouseDown(e) {
-        if (isPanning() || e.target !== render.canvas) return;
+    function onPointerDown(e) {
+        if (e.touches && e.touches.length > 1) return; // Камера обработает
+        if (e.type === 'touchstart') e.preventDefault();
 
-        startPoint = getMousePos(e);
+        const pointer = e.touches ? e.touches[0] : e;
+        const target = e.touches ? document.elementFromPoint(pointer.clientX, pointer.clientY) : e.target;
+        
+        if (isPanning() || target !== render.canvas) return;
+        
+        // Логика долгого нажатия
+        clearTimeout(longPressTimer);
+        touchStartPos = { x: pointer.clientX, y: pointer.clientY };
+        longPressTimer = setTimeout(() => {
+            stopAllActions();
+            triggerContextMenu(pointer.clientX, pointer.clientY);
+            longPressTimer = null; // Помечаем, что таймер сработал
+        }, LONG_PRESS_DURATION);
+
+        handleToolStart(pointer);
+    }
+
+    function onPointerMove(e) {
+        if (e.touches && e.touches.length > 1) return;
+        if (e.type === 'touchmove') e.preventDefault();
+        
+        const pointer = e.touches ? e.touches[0] : e;
+        
+        // Отменяем долгое нажатие, если палец сдвинулся
+        if (longPressTimer) {
+            const dx = pointer.clientX - touchStartPos.x;
+            const dy = pointer.clientY - touchStartPos.y;
+            if (Math.sqrt(dx * dx + dy * dy) > TOUCH_MOVE_THRESHOLD) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+        
+        handleToolMove(pointer);
+    }
+
+    function onPointerUp(e) {
+        // Если таймер был, но не сработал - отменяем его
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        } else if (longPressTimer === null && e.type.startsWith('touch')) {
+            // Если таймер сработал (null), и это событие касания, то ничего не делаем,
+            // чтобы не создавать объект после вызова меню.
+            return;
+        }
+
+        const pointer = e.changedTouches ? e.changedTouches[0] : e;
+        if (!pointer) return;
+        
+        handleToolEnd(pointer);
+    }
+
+    function handleToolStart(pointer) {
+        startPoint = getMousePos(pointer);
         lastMousePos = startPoint;
         isDrawing = true;
 
@@ -114,10 +184,8 @@ export function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleMouseMove(e) {
-        if (isPanning()) return;
-
-        const currentPos = getMousePos(e);
+    function handleToolMove(pointer) {
+        const currentPos = getMousePos(pointer);
         lastMousePos = currentPos;
 
         if (!isDrawing) return;
@@ -129,7 +197,7 @@ export function initializeTools(engineData, cameraData, worldData) {
                 }
                 break;
             case 'water':
-                // Интервал уже обрабатывает это, но можно добавить и сюда для большей плотности
+                // Интервал уже обрабатывает это
                 break;
             case 'eraser':
                 eraseAt(world, currentPos);
@@ -143,15 +211,15 @@ export function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleMouseUp(e) {
+    function handleToolEnd(pointer) {
         if (waterSpawnInterval) {
             clearInterval(waterSpawnInterval);
             waterSpawnInterval = null;
         }
 
-        if (isPanning() || !isDrawing) return;
+        if (!isDrawing) return;
         
-        const endPoint = getMousePos(e);
+        const endPoint = getMousePos(pointer);
 
         switch (toolState.currentTool) {
             case 'move':
@@ -203,15 +271,14 @@ export function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleContextMenu(e) {
-        e.preventDefault();
-        const worldPos = getMousePos(e);
+    function triggerContextMenu(clientX, clientY) {
+        const worldPos = getMousePos({ clientX, clientY });
         const bodies = Query.point(Composite.allBodies(world), worldPos);
         const clickedBody = bodies.find(b => b.label !== 'boundary' && b.label !== 'water');
 
         if (clickedBody) {
             selectBody(clickedBody);
-            showObjectPropertiesPanel(clickedBody, e.clientX, e.clientY);
+            showObjectPropertiesPanel(clickedBody, clientX, clientY);
         } else {
             deselectBody();
             hideObjectPropertiesPanel();
