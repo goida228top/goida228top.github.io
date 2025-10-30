@@ -1,11 +1,11 @@
 // @ts-nocheck
-import { initializeEngine } from './engine';
-import { initializeCamera, resizeCamera } from './camera';
-import { setupWorld } from './world';
-import { initializeWater } from './water';
-import { initializeTools } from './tools';
-import { initializeUI } from './ui';
-import { initializeSelection } from './selection';
+import { initializeEngine } from './engine.js';
+import { initializeCamera, resizeCamera } from './camera.js';
+import { setupWorld } from './world.js';
+import { initializeWater } from './water.js';
+import { initializeTools } from './tools.js';
+import { initializeUI } from './ui.js';
+import { initializeSelection } from './selection.js';
 
 // 1. Инициализируем базовые системы
 const engineData = initializeEngine();
