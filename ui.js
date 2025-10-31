@@ -2,6 +2,8 @@ import Matter from 'matter-js';
 import * as Dom from './dom.js';
 import { toolState, getSelectedBody, deselectBody, deleteSelectedBody } from './selection.js';
 import { setWaterColor } from './water.js';
+import { showRewardedVideo, showFullscreenAdv } from './yandex.js';
+import { makeItRain } from './tools.js';
 
 const { Body, World, Composite, Sleeping } = Matter;
 
@@ -51,14 +53,28 @@ export function initializeUI(engineData, cameraData, worldData) {
 
     // --- Панель управления симуляцией ---
     Dom.playPauseButton.addEventListener('click', () => {
-        runner.enabled = !runner.enabled;
-        Dom.playIcon.style.display = runner.enabled ? 'none' : 'block';
-        Dom.pauseIcon.style.display = runner.enabled ? 'block' : 'none';
-        Dom.playPauseButton.title = runner.enabled ? 'Пауза' : 'Воспроизвести';
+        if (runner.enabled) {
+            // Если игра запущена, просто ставим на паузу
+            runner.enabled = false;
+            updatePlayPauseIcons(runner.enabled);
+        } else {
+            // Если игра на паузе, показываем рекламу, а затем запускаем игру
+            showFullscreenAdv(engineData, () => {
+                runner.enabled = true;
+                updatePlayPauseIcons(runner.enabled);
+            });
+        }
     });
 
     // --- Панель свойств объекта ---
     initializeObjectPropertiesPanel(world, render);
+    
+    // --- Кнопка "Награда" (Реклама) ---
+    Dom.rewardButton.addEventListener('click', () => {
+        showRewardedVideo(engineData, () => {
+            makeItRain(world, render);
+        });
+    });
 
     // --- Глобальные клики для закрытия панелей ---
     document.addEventListener('mousedown', (e) => {
@@ -71,6 +87,12 @@ export function initializeUI(engineData, cameraData, worldData) {
              togglePanel(Dom.settingsPanel, 'isSettingsOpen');
         }
     }, true);
+}
+
+function updatePlayPauseIcons(isRunning) {
+    Dom.playIcon.style.display = isRunning ? 'none' : 'block';
+    Dom.pauseIcon.style.display = isRunning ? 'block' : 'none';
+    Dom.playPauseButton.title = isRunning ? 'Пауза' : 'Воспроизвести';
 }
 
 

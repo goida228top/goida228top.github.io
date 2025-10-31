@@ -75,31 +75,30 @@ export function initializeTools(engineData, cameraData, worldData) {
 
 
     // --- Обработчики событий (унифицированные для мыши и касаний) ---
-    Dom.container.addEventListener('mousedown', onPointerDown);
-    Dom.container.addEventListener('mousemove', onPointerMove);
+    render.canvas.addEventListener('mousedown', onPointerDown);
+    render.canvas.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
     
-    Dom.container.addEventListener('touchstart', onPointerDown, { passive: false });
-    Dom.container.addEventListener('touchmove', onPointerMove, { passive: false });
+    render.canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+    render.canvas.addEventListener('touchmove', onPointerMove, { passive: false });
     window.addEventListener('touchend', onPointerUp);
     window.addEventListener('touchcancel', onPointerUp);
 
-    Dom.container.addEventListener('contextmenu', (e) => {
+    render.canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         triggerContextMenu(e.clientX, e.clientY);
     });
-    Dom.container.addEventListener('dblclick', handleDoubleClick);
-    Dom.container.addEventListener('mouseleave', stopAllActions);
+    render.canvas.addEventListener('dblclick', handleDoubleClick);
+    render.canvas.addEventListener('mouseleave', stopAllActions);
 
 
     function onPointerDown(e) {
         if (e.touches && e.touches.length > 1) return; // Камера обработает
         if (e.type === 'touchstart') e.preventDefault();
 
+        if (isPanning()) return;
+
         const pointer = e.touches ? e.touches[0] : e;
-        const target = e.touches ? document.elementFromPoint(pointer.clientX, pointer.clientY) : e.target;
-        
-        if (isPanning() || target !== render.canvas) return;
         
         // Логика долгого нажатия
         clearTimeout(longPressTimer);
@@ -140,6 +139,7 @@ export function initializeTools(engineData, cameraData, worldData) {
         } else if (longPressTimer === null && e.type.startsWith('touch')) {
             // Если таймер сработал (null), и это событие касания, то ничего не делаем,
             // чтобы не создавать объект после вызова меню.
+            isDrawing = false; // Предотвращаем создание объекта
             return;
         }
 
@@ -360,8 +360,9 @@ function drawPolygonPreview(context, cameraData) {
 }
 
 function startFingerDrag(world, position) {
-    const body = Query.point(Composite.allBodies(world), position)[0];
-    if (body && !body.isStatic) {
+    const bodies = Query.point(Composite.allBodies(world), position);
+    const body = bodies.find(b => !b.isStatic);
+    if (body) {
         selectBody(body);
         fingerConstraint = Constraint.create({
             pointA: position,
@@ -558,4 +559,23 @@ function eraseAt(world, position) {
             Composite.remove(world, body);
         }
     });
+}
+
+export function makeItRain(world, render) {
+    const viewWidth = render.bounds.max.x - render.bounds.min.x;
+    const viewCenterX = render.bounds.min.x + viewWidth / 2;
+
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            const x = viewCenterX + (Math.random() - 0.5) * viewWidth;
+            const y = render.bounds.min.y - 100 - Math.random() * 200; // Порождаем над видимой областью
+            const radius = 10 + Math.random() * 20;
+            const body = Bodies.circle(x, y, radius, {
+                friction: 0.1,
+                restitution: 0.5,
+                density: 0.001,
+            });
+            Composite.add(world, body);
+        }, i * 50);
+    }
 }

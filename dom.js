@@ -22,6 +22,7 @@ export const brushButton = document.getElementById('brush-btn');
 export const waterButton = document.getElementById('water-btn');
 export const eraserButton = document.getElementById('eraser-btn');
 export const settingsButton = document.getElementById('settings-btn');
+export const rewardButton = document.getElementById('reward-btn');
 
 export const toolButtons = [moveButton, fingerButton, boxButton, polygonButton, lineButton, brushButton, waterButton, eraserButton];
 

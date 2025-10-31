@@ -6,39 +6,49 @@ import { initializeWater } from './water';
 import { initializeTools } from './tools';
 import { initializeUI } from './ui';
 import { initializeSelection } from './selection';
+import { initYandexSDK } from './yandex';
 
-// 1. Инициализируем базовые системы
-const engineData = initializeEngine();
-const cameraData = initializeCamera(engineData.render);
+async function main() {
+    const ysdk = await initYandexSDK();
+    if (!ysdk) {
+        console.warn('Yandex SDK failed to initialize, ads will not be available.');
+    }
 
-// 2. Настраиваем зависимости между модулями
-initializeSelection(engineData.render, cameraData);
+    // 1. Инициализируем базовые системы
+    const engineData = initializeEngine();
+    const cameraData = initializeCamera(engineData.render);
 
-// 3. Создаем мир и воду
-const worldData = setupWorld(engineData.world, engineData.render.options.height);
-initializeWater(engineData, cameraData);
+    // 2. Настраиваем зависимости между модулями
+    initializeSelection(engineData.render, cameraData);
 
-// 4. Подключаем UI и инструменты, передавая им нужные зависимости
-initializeUI(engineData, cameraData, worldData);
-initializeTools(engineData, cameraData, worldData);
+    // 3. Создаем мир и воду
+    const worldData = setupWorld(engineData.world, engineData.render.options.height);
+    initializeWater(engineData, cameraData);
+
+    // 4. Подключаем UI и инструменты, передавая им нужные зависимости
+    initializeUI(engineData, cameraData, worldData);
+    initializeTools(engineData, cameraData, worldData);
 
 
-// 5. Обработка изменения размера окна
-function onResize() {
-    const { world, render } = engineData;
-    const newHeight = render.canvas.parentElement.clientHeight;
-    
-    // Обновляем камеру
-    resizeCamera(render);
-    
-    // Пересоздаем мир с учетом новых размеров
-    setupWorld(world, newHeight);
-    
-    // Обновляем вид
-    cameraData.updateView();
+    // 5. Обработка изменения размера окна
+    function onResize() {
+        const { world, render } = engineData;
+        const newHeight = render.canvas.parentElement.clientHeight;
+        
+        // Обновляем камеру
+        resizeCamera(render);
+        
+        // Пересоздаем мир с учетом новых размеров
+        setupWorld(world, newHeight);
+        
+        // Обновляем вид
+        cameraData.updateView();
+    }
+
+    window.addEventListener('resize', onResize);
+
+    // Первоначальная настройка после загрузки DOM
+    onResize();
 }
 
-window.addEventListener('resize', onResize);
-
-// Первоначальная настройка после загрузки DOM
-onResize();
+main();

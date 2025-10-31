@@ -22,6 +22,7 @@ export const brushButton = document.getElementById('brush-btn') as HTMLButtonEle
 export const waterButton = document.getElementById('water-btn') as HTMLButtonElement;
 export const eraserButton = document.getElementById('eraser-btn') as HTMLButtonElement;
 export const settingsButton = document.getElementById('settings-btn') as HTMLButtonElement;
+export const rewardButton = document.getElementById('reward-btn') as HTMLButtonElement;
 
 export const toolButtons = [moveButton, fingerButton, boxButton, polygonButton, lineButton, brushButton, waterButton, eraserButton];
 

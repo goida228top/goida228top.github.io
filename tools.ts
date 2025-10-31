@@ -492,3 +492,22 @@ function eraseAt(world, position) {
         }
     });
 }
+
+export function makeItRain(world, render) {
+    const viewWidth = render.bounds.max.x - render.bounds.min.x;
+    const viewCenterX = render.bounds.min.x + viewWidth / 2;
+
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            const x = viewCenterX + (Math.random() - 0.5) * viewWidth;
+            const y = render.bounds.min.y - 100 - Math.random() * 200; // Порождаем над видимой областью
+            const radius = 10 + Math.random() * 20;
+            const body = Bodies.circle(x, y, radius, {
+                friction: 0.1,
+                restitution: 0.5,
+                density: 0.001,
+            });
+            Composite.add(world, body);
+        }, i * 50);
+    }
+}

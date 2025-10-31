@@ -17,11 +17,11 @@ let lastPinchDistance = 0;
 
 export function initializeCamera(render) {
     // Мышь
-    Dom.container.addEventListener('wheel', handleWheel, { passive: false });
-    Dom.container.addEventListener('mousedown', handleMouseDown);
-    Dom.container.addEventListener('mousemove', handleMouseMove);
+    render.canvas.addEventListener('wheel', handleWheel, { passive: false });
+    render.canvas.addEventListener('mousedown', handleMouseDown);
+    render.canvas.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    Dom.container.addEventListener('mouseleave', () => {
+    render.canvas.addEventListener('mouseleave', () => {
         if (isPanning) {
             isPanning = false;
             Dom.container.style.cursor = 'default';
@@ -29,8 +29,8 @@ export function initializeCamera(render) {
     });
     
     // Сенсорное управление
-    Dom.container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    render.canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    render.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
 
@@ -125,8 +125,8 @@ export function initializeCamera(render) {
             // --- Панорамирование (2 пальца) ---
             const dx = midpoint.clientX - panStart.x;
             const dy = midpoint.clientY - panStart.y;
-            viewOffset.x -= dx * scale;
-            viewOffset.y -= dy * scale;
+            viewOffset.x -= dx / scale; // Делим на scale для корректного панорамирования при разном зуме
+            viewOffset.y -= dy / scale;
             panStart = { x: midpoint.clientX, y: midpoint.clientY };
 
             // --- Масштабирование ---
@@ -134,7 +134,7 @@ export function initializeCamera(render) {
             const worldPosBeforeZoom = getMousePos(midpoint);
             
             const scaleFactor = pinchDistance / lastPinchDistance;
-            let newScale = scale * scaleFactor;
+            let newScale = scale / scaleFactor; // Делим, а не умножаем, т.к. работаем с bounds
             newScale = Math.max(minScale, Math.min(maxScale, newScale));
 
             if (newScale.toFixed(4) !== scale.toFixed(4)) {
@@ -142,8 +142,12 @@ export function initializeCamera(render) {
                 const rect = render.canvas.getBoundingClientRect();
                 const mouseScreenX = midpoint.clientX - rect.left;
                 const mouseScreenY = midpoint.clientY - rect.top;
-                viewOffset.x = worldPosBeforeZoom.x - mouseScreenX * scale;
-                viewOffset.y = worldPosBeforeZoom.y - mouseScreenY * scale;
+                
+                // Пересчитываем смещение, чтобы зум был от центра между пальцами
+                const newWorldX = viewOffset.x + mouseScreenX * scale;
+                const newWorldY = viewOffset.y + mouseScreenY * scale;
+                viewOffset.x -= (newWorldX - worldPosBeforeZoom.x);
+                viewOffset.y -= (newWorldY - worldPosBeforeZoom.y);
             }
 
             lastPinchDistance = pinchDistance;
@@ -160,27 +164,26 @@ export function initializeCamera(render) {
     
 
     function updateView() {
-        // Обновляем видимую область рендера
         render.bounds.min.x = viewOffset.x;
         render.bounds.min.y = viewOffset.y;
         render.bounds.max.x = viewOffset.x + render.canvas.width * scale;
         render.bounds.max.y = viewOffset.y + render.canvas.height * scale;
         
-        // Синхронизируем мышь с новой видимой областью
         Mouse.setOffset(mouse, render.bounds.min);
-        Mouse.setScale(mouse, { x: scale, y: scale });
+        Mouse.setScale(mouse, { x: 1/scale, y: 1/scale });
         
-        // Синхронизируем визуальную землю
-        const groundScreenY = (Number(localStorage.getItem('ground_y')) - viewOffset.y) / scale;
-        Dom.groundDiv.style.transform = `translateY(${groundScreenY}px)`;
+        const groundScreenY = (Number(localStorage.getItem('ground_y')) - render.bounds.min.y) / scale;
+        Dom.groundDiv.style.transform = `translateY(${groundScreenY}px) scaleY(${1/scale})`;
     }
     
-    // Преобразуем экранные координаты в мировые с учетом масштаба
+    
     function getMousePos(event) {
         const rect = render.canvas.getBoundingClientRect();
+        const clientX = event.clientX ?? event.touches?.[0]?.clientX;
+        const clientY = event.clientY ?? event.touches?.[0]?.clientY;
         return { 
-            x: viewOffset.x + (event.clientX - rect.left) * scale,
-            y: viewOffset.y + (event.clientY - rect.top) * scale
+            x: render.bounds.min.x + (clientX - rect.left) / scale,
+            y: render.bounds.min.y + (clientY - rect.top) / scale
         };
     }
     
