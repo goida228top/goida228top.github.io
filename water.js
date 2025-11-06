@@ -1,167 +1,202 @@
-import Matter from 'matter-js';
+import planck from './planck.js';
 import * as Dom from './dom.js';
+import { PHYSICS_SCALE } from './config.js';
 
-const { Bodies, World, Events, Body, Sleeping, Vector } = Matter;
+const { Vec2 } = planck;
 
-const MAX_PARTICLES = 2500;
-let waterParticles = [];
+const MAX_PARTICLES = 1500;
+const waterParticlesPool = [];
 let currentParticleIndex = 0;
-const PHYSICAL_RADIUS = 6; // Увеличено для стабильности
+
 const VISUAL_RADIUS = 10;
-const INTERACTION_RADIUS = VISUAL_RADIUS * 2.2; 
-const STIFFNESS = 0.00075;
-const IMMUNITY_DURATION = 1000; 
+const PHYSICAL_RADIUS = (VISUAL_RADIUS * 0.6) / PHYSICS_SCALE;
 
-// Обновленные константы для более надежного засыпания
-const SLEEP_SPEED_THRESHOLD = 0.2; // Порог скорости, увеличен для толерантности к джиттеру
-const SLEEP_ANGULAR_THRESHOLD = 0.2; // Порог вращения, увеличен
-const FRAMES_TO_SLEEP = 90; // Время до засыпания ~1.5 секунды
-const CALM_COUNTER_DECAY = 5; // На сколько уменьшать счетчик при движении (ключевое изменение)
+// --- Новые константы для симуляции жидкости ---
+const WATER_GROUP_INDEX = -1;
+const INTERACTION_RADIUS = PHYSICAL_RADIUS * 3;
+const INTERACTION_RADIUS_SQ = INTERACTION_RADIUS * INTERACTION_RADIUS;
+const STIFFNESS = 0.08;
+const REPULSION_STRENGTH = 0.1;
+const VISCOSITY = 0.05;
+const MAX_FORCE_SQ = 4.0;
 
-
-// Эта переменная теперь изменяема, чтобы UI мог ей управлять
 let waterColor = getComputedStyle(document.documentElement).getPropertyValue('--water-color-transparent').trim() || 'hsla(230, 100%, 50%, 0.75)';
 
 const waterParticleOptions = {
-    restitution: 0.1,
-    friction: 0.3, // Увеличено для "вязкости"
-    frictionStatic: 0,
-    frictionAir: 0.03, // Увеличено для стабильности
-    density: 0.001,
-    slop: 0.15, // Увеличено для стабильности
-    render: { visible: false },
-    label: 'water',
-    createdAt: 0
+    restitution: 0.05,
+    friction: 0.1,
+    density: 1.0,
 };
 
-function applyLiquidForces(engine) {
-    const now = engine.timing.timestamp;
-    for (let i = 0; i < waterParticles.length; i++) {
-        const particleA = waterParticles[i];
-        if (particleA.isSleeping) continue;
-        
-        if (now - particleA.createdAt < IMMUNITY_DURATION) continue;
+const spatialGrid = new Map();
+const GRID_CELL_SIZE = INTERACTION_RADIUS;
 
-        for (let j = i + 1; j < waterParticles.length; j++) {
-            const particleB = waterParticles[j];
-            
-            if (now - particleB.createdAt < IMMUNITY_DURATION) continue;
-            if (particleB.isSleeping) continue;
+function getGridKey(x, y) {
+    const gx = Math.floor(x / GRID_CELL_SIZE);
+    const gy = Math.floor(y / GRID_CELL_SIZE);
+    return `${gx},${gy}`;
+}
 
-            const delta = Vector.sub(particleB.position, particleA.position);
-            const distance = Vector.magnitude(delta);
+function initializeWaterPool(world) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+        const body = world.createDynamicBody({
+            position: Vec2(-1000, -1000),
+            active: false,
+            bullet: false,
+            userData: {
+                label: 'water',
+            }
+        });
+        body.createFixture(planck.Circle(PHYSICAL_RADIUS), {
+            ...waterParticleOptions,
+            filterGroupIndex: WATER_GROUP_INDEX
+        });
+        waterParticlesPool.push(body);
+    }
+}
 
-            if (distance < INTERACTION_RADIUS && distance > 0) {
-                const forceMagnitude = STIFFNESS * (1 - distance / INTERACTION_RADIUS);
-                const force = Vector.mult(Vector.normalise(delta), forceMagnitude);
-                
-                Body.applyForce(particleA, particleA.position, Vector.neg(force));
-                Body.applyForce(particleB, particleB.position, force);
+export function initializeWater(engineData) {
+    const { world } = engineData;
+    initializeWaterPool(world);
+}
+
+export function updateWaterPhysics() {
+    spatialGrid.clear();
+    const activeParticles = [];
+    for (const particle of waterParticlesPool) {
+        // Проверяем isActive(), так как спящие тела (управляемые движком) неактивны
+        if (particle.isActive()) {
+            const pos = particle.getPosition();
+            const key = getGridKey(pos.x, pos.y);
+            if (!spatialGrid.has(key)) {
+                spatialGrid.set(key, []);
+            }
+            spatialGrid.get(key).push(particle);
+            activeParticles.push(particle);
+        }
+    }
+
+    for (const particle of activeParticles) {
+        const pos1 = particle.getPosition();
+        const gx = Math.floor(pos1.x / GRID_CELL_SIZE);
+        const gy = Math.floor(pos1.y / GRID_CELL_SIZE);
+
+        let density = 0;
+        let nearParticles = [];
+
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                const key = `${gx + i},${gy + j}`;
+                if (spatialGrid.has(key)) {
+                    for (const neighbor of spatialGrid.get(key)) {
+                        if (particle === neighbor) continue;
+
+                        const distVec = Vec2.sub(pos1, neighbor.getPosition());
+                        const distSq = distVec.lengthSquared();
+
+                        if (distSq < INTERACTION_RADIUS_SQ) {
+                           const dist = Math.sqrt(distSq);
+                           const influence = 1 - (dist / INTERACTION_RADIUS);
+                           density += influence * influence;
+                           nearParticles.push({neighbor, dist, distVec});
+                        }
+                    }
+                }
             }
         }
-    }
-}
-
-/**
- * Управляет засыпанием и пробуждением частиц воды для оптимизации.
- * Новая логика использует "затухающий" счетчик, который более устойчив
- * к кратковременным подергиваниям частиц, позволяя им уснуть.
- */
-function manageWaterSleeping() {
-    for (const particle of waterParticles) {
-        // Если частица уже спит, мы просто поддерживаем ее счетчик на максимуме
-        // и пропускаем дальнейшие проверки.
-        if (particle.isSleeping) {
-            particle.calmCounter = FRAMES_TO_SLEEP;
-            continue;
-        }
-
-        // Частица считается "спокойной", если ее скорости ниже пороговых значений.
-        const isCalm = particle.speed < SLEEP_SPEED_THRESHOLD && Math.abs(particle.angularVelocity) < SLEEP_ANGULAR_THRESHOLD;
-
-        if (isCalm) {
-            // Если частица спокойна, увеличиваем счетчик, но не выше максимума.
-            particle.calmCounter = Math.min(FRAMES_TO_SLEEP + 1, (particle.calmCounter || 0) + 1);
-        } else {
-            // Если частица движется, мы не сбрасываем счетчик в 0, а уменьшаем его.
-            // Это позволяет игнорировать небольшие, короткие "всплески" движения.
-            particle.calmCounter = Math.max(0, (particle.calmCounter || 0) - CALM_COUNTER_DECAY);
-        }
         
-        // Если счетчик спокойствия превысил порог, усыпляем частицу.
-        if (particle.calmCounter > FRAMES_TO_SLEEP) {
-            Sleeping.set(particle, true);
+        if (nearParticles.length > 0) {
+            const avgVelocity = Vec2(0, 0);
+            for (const item of nearParticles) {
+                avgVelocity.add(item.neighbor.getLinearVelocity());
+            }
+            avgVelocity.mul(1 / nearParticles.length);
+            
+            const velDifference = Vec2.sub(avgVelocity, particle.getLinearVelocity());
+            const viscosityForce = velDifference.mul(VISCOSITY);
+            particle.applyForceToCenter(viscosityForce, true);
         }
-    }
-}
 
+        const pressure = STIFFNESS * density;
+        let pressureForce = Vec2(0, 0);
 
-export function initializeWater(engineData, cameraData) {
-    const { engine } = engineData;
-
-    Events.on(engine, 'beforeUpdate', () => {
-        applyLiquidForces(engine);
-        manageWaterSleeping();
-    });
-
-    function renderWater() {
-        const isLiquidEffectEnabled = Dom.liquidEffectToggle.checked;
-
-        Dom.waterContext.clearRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
-
-        if (isLiquidEffectEnabled) {
-            Dom.waterContext.fillStyle = 'white';
-            Dom.waterContext.fillRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
-        }
-        
-        Dom.waterContext.save();
-        Dom.waterContext.translate(-cameraData.viewOffset.x / cameraData.scale, -cameraData.viewOffset.y / cameraData.scale);
-        Dom.waterContext.scale(1 / cameraData.scale, 1 / cameraData.scale);
-        Dom.waterContext.fillStyle = waterColor;
-        Dom.waterContext.beginPath();
-        for (const particle of waterParticles) {
-            const pos = particle.position;
-            const visualRadius = VISUAL_RADIUS; 
-            Dom.waterContext.moveTo(pos.x + visualRadius, pos.y);
-            Dom.waterContext.arc(pos.x, pos.y, visualRadius, 0, Math.PI * 2);
-        }
-        Dom.waterContext.fill();
-        Dom.waterContext.restore();
-    }
-
-    (function rerender() {
-        renderWater();
-        requestAnimationFrame(rerender);
-    })();
-}
-
-export function spawnWaterParticle(engine, world, x, y) {
-    const particleProps = { ...waterParticleOptions };
+        for (const item of nearParticles) {
+             if(item.dist > 0.0001) {
+                 const influence = 1 - (item.dist / INTERACTION_RADIUS);
+                 const direction = item.distVec.clone().mul(1 / item.dist);
+                 
+                 const pressureMagnitude = (pressure * influence * influence) / item.neighbor.getMass();
+                 pressureForce.add(direction.clone().mul(pressureMagnitude));
     
-    if (waterParticles.length < MAX_PARTICLES) {
-        const particle = Bodies.circle(x, y, PHYSICAL_RADIUS, particleProps);
-        Body.set(particle, 'createdAt', engine.timing.timestamp);
-        particle.calmCounter = 0; // Инициализируем счетчик спокойствия
-        World.add(world, particle);
-        waterParticles.push(particle);
-    } else {
-        const particle = waterParticles[currentParticleIndex];
-        Sleeping.set(particle, false);
-        Body.setPosition(particle, { x, y });
-        Body.setVelocity(particle, { x: 0, y: 0 });
-        Body.set(particle, 'createdAt', engine.timing.timestamp);
-        particle.calmCounter = 0; // Сбрасываем счетчик при переиспользовании
-        currentParticleIndex = (currentParticleIndex + 1) % MAX_PARTICLES;
+                 const repulsionMagnitude = (REPULSION_STRENGTH * influence) / item.neighbor.getMass();
+                 pressureForce.add(direction.clone().mul(repulsionMagnitude));
+             }
+        }
+
+        if (pressureForce.lengthSquared() > MAX_FORCE_SQ) {
+            pressureForce.normalize();
+            pressureForce.mul(Math.sqrt(MAX_FORCE_SQ));
+        }
+
+        if (pressureForce.lengthSquared() > 0) {
+            particle.applyForceToCenter(pressureForce, true);
+        }
     }
 }
 
-export function getWaterParticles() {
-    return waterParticles;
+
+export function renderWater(cameraData) {
+    const isLiquidEffectEnabled = Dom.liquidEffectToggle.checked;
+
+    Dom.waterContext.clearRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
+
+    if (isLiquidEffectEnabled) {
+        Dom.waterContext.fillStyle = 'white';
+        Dom.waterContext.fillRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
+    }
+
+    Dom.waterContext.save();
+    Dom.waterContext.scale(1 / cameraData.scale, 1 / cameraData.scale);
+    Dom.waterContext.translate(-cameraData.viewOffset.x, -cameraData.viewOffset.y);
+
+    Dom.waterContext.fillStyle = waterColor;
+    Dom.waterContext.beginPath();
+    for (const particle of waterParticlesPool) {
+        if (!particle.isActive()) continue;
+
+        const pos = particle.getPosition();
+        const px = pos.x * PHYSICS_SCALE;
+        const py = pos.y * PHYSICS_SCALE;
+        Dom.waterContext.moveTo(px + VISUAL_RADIUS, py);
+        Dom.waterContext.arc(px, py, VISUAL_RADIUS, 0, Math.PI * 2);
+    }
+    Dom.waterContext.fill();
+    Dom.waterContext.restore();
 }
 
-export function setWaterParticles(newParticles) {
-    waterParticles = newParticles;
+export function spawnWaterParticle(world, x, y, initialVelocity) {
+    const particle = waterParticlesPool[currentParticleIndex];
+
+    particle.setActive(true);
+    particle.setAwake(true);
+    particle.setPosition(Vec2(x, y));
+    particle.setLinearVelocity(initialVelocity || Vec2(0, 0));
+    particle.setAngularVelocity(0);
+    
+    currentParticleIndex = (currentParticleIndex + 1) % MAX_PARTICLES;
 }
+
+export function deleteAllWater() {
+    for (const particle of waterParticlesPool) {
+        if (particle.isActive()) {
+            particle.setActive(false);
+            particle.setPosition(Vec2(-1000, -1000));
+            particle.setLinearVelocity(Vec2(0, 0));
+        }
+    }
+    console.log('All water particles have been deactivated.');
+}
+
 
 export function setWaterColor(newColor) {
     waterColor = newColor;

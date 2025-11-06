@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { setLang } from './lang.js';
 
 let ysdkInstance = null;
 const INIT_TIMEOUT = 5000; // 5 секунд
@@ -7,6 +8,7 @@ let isStickyAdvVisible = false;
 export async function initYandexSDK() {
     if (typeof YaGames === 'undefined') {
         console.warn('Yandex SDK script not loaded.');
+        setLang('ru'); // Fallback to russian if SDK is not available
         return null;
     }
     try {
@@ -21,13 +23,28 @@ export async function initYandexSDK() {
         window.ysdk = ysdkInstance; 
         console.log('Yandex SDK initialized.');
         
+        // Set language based on SDK
+        if (ysdkInstance.environment?.i18n?.lang) {
+            setLang(ysdkInstance.environment.i18n.lang);
+        }
+
         // Автоматически показываем стики-баннер после успешной инициализации
         showStickyAdv();
 
         return ysdkInstance;
     } catch (error) {
         console.error('Yandex SDK initialization failed:', error.message);
+        setLang('ru'); // Fallback to russian on error
         return null;
+    }
+}
+
+export function gameReady() {
+    if (ysdkInstance && ysdkInstance.features?.LoadingAPI?.ready) {
+        console.log('Calling Game Ready API');
+        ysdkInstance.features.LoadingAPI.ready();
+    } else {
+        console.log('Game Ready API not available or Yandex SDK not initialized.');
     }
 }
 

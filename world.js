@@ -1,51 +1,62 @@
-import Matter from 'matter-js';
-
-const { World, Bodies } = Matter;
+import planck from './planck.js';
+import { PHYSICS_SCALE } from './config.js';
 
 let boundaries = [];
 
-// Фиксированная мировая координата для поверхности земли
-const GROUND_Y = 1000; 
+// --- Константы расположения мира в ПИКСЕЛЯХ ---
+export const GROUND_Y = 1000; 
+export const WORLD_LEFT_X = -4000;
+export const WORLD_RIGHT_X = 8000;
+export const WORLD_WIDTH = WORLD_RIGHT_X - WORLD_LEFT_X;
+export const WORLD_TOP_Y = -3000;
+
+// --- Константы слоев фона в ПИКСЕЛЯХ ---
+export const GRASS_HEIGHT = 20;
+export const DIRT_HEIGHT = 150;
+export const STONE_HEIGHT = DIRT_HEIGHT * 2;
+export const WORLD_BOTTOM_Y = GROUND_Y + GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT;
+
 
 export function setupWorld(world, viewportHeight) {
     if (boundaries.length > 0) {
-        World.remove(world, boundaries);
+        boundaries.forEach(body => {
+            if (body.getWorld() === world) {
+                world.destroyBody(body);
+            }
+        });
+        boundaries = [];
     }
     
-    const WORLD_WIDTH = 8000;
-    const WORLD_HEIGHT = 4000;
-    const WALL_THICKNESS = 500;
+    const ground = world.createBody({
+        userData: {
+            label: 'boundary',
+            render: { visible: false }
+        }
+    });
 
-    // Сохраняем позицию земли для доступа из других модулей (например, камеры)
-    localStorage.setItem('ground_y', GROUND_Y.toString());
+    const toMeters = (v) => v / PHYSICS_SCALE;
 
-    boundaries = [
-         // Земля - теперь ее позиция идеальна
-         Bodies.rectangle(
-             0, // Центр мира по X
-             GROUND_Y + WALL_THICKNESS / 2, // Позиция Y под видимой линией
-             WORLD_WIDTH, 
-             WALL_THICKNESS, 
-             { isStatic: true, render: { visible: false }, label: 'boundary' }
-         ),
-         // Левая стена
-         Bodies.rectangle(
-             -WORLD_WIDTH / 2, 
-             GROUND_Y - WORLD_HEIGHT / 2, 
-             WALL_THICKNESS, 
-             WORLD_HEIGHT * 2, 
-             { isStatic: true, render: { visible: false }, label: 'boundary' }
-         ),
-         // Правая стена
-         Bodies.rectangle(
-             WORLD_WIDTH / 2, 
-             GROUND_Y - WORLD_HEIGHT / 2, 
-             WALL_THICKNESS, 
-             WORLD_HEIGHT * 2, 
-             { isStatic: true, render: { visible: false }, label: 'boundary' }
-         )
-    ];
-    World.add(world, boundaries);
+    // Пол
+    ground.createFixture(planck.Edge(
+        planck.Vec2(toMeters(WORLD_LEFT_X), toMeters(GROUND_Y)), 
+        planck.Vec2(toMeters(WORLD_RIGHT_X), toMeters(GROUND_Y))
+    ));
+    // Потолок
+    ground.createFixture(planck.Edge(
+        planck.Vec2(toMeters(WORLD_LEFT_X), toMeters(WORLD_TOP_Y)), 
+        planck.Vec2(toMeters(WORLD_RIGHT_X), toMeters(WORLD_TOP_Y))
+    ));
+    // Стены
+    ground.createFixture(planck.Edge(
+        planck.Vec2(toMeters(WORLD_LEFT_X), toMeters(WORLD_TOP_Y)), 
+        planck.Vec2(toMeters(WORLD_LEFT_X), toMeters(GROUND_Y))
+    ));
+    ground.createFixture(planck.Edge(
+        planck.Vec2(toMeters(WORLD_RIGHT_X), toMeters(WORLD_TOP_Y)), 
+        planck.Vec2(toMeters(WORLD_RIGHT_X), toMeters(GROUND_Y))
+    ));
+    
+    boundaries.push(ground);
     
     return { GROUND_Y };
 }

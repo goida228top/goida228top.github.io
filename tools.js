@@ -1,181 +1,249 @@
-import Matter from 'matter-js';
+// @ts-nocheck
+
+
+import planck from './planck.js';
 import * as Dom from './dom.js';
 import { toolState, selectBody, deselectBody } from './selection.js';
-import { spawnWaterParticle, getWaterParticles, setWaterParticles } from './water.js';
+import { spawnWaterParticle } from './water.js';
 import { showObjectPropertiesPanel, hideObjectPropertiesPanel } from './ui.js';
+import { PHYSICS_SCALE } from './config.js';
+import { addExplosionEffect } from './engine.js';
+import { tntTypes } from './tnt_textures.js'; // Импортируем tntTypes из нового файла
 
-const { Body, Bodies, Composite, Constraint, MouseConstraint, Query, Vector, Events, Vertices } = Matter;
-
-let mouseConstraint; // Физическое перетаскивание
-let fingerConstraint; // Точное перетаскивание
+// Состояния инструментов
+let mouseJoint = null;
+let ground = null; // Тело для привязки MouseJoint
+let draggedBody = null; // Для инструмента "Переместить"
 
 let isDrawing = false;
-let startPoint = { x: 0, y: 0 };
+let startPoint = planck.Vec2(0, 0);
+let lastMousePos = planck.Vec2(0, 0);
 
 // Для полигонов
 let polygonVertices = [];
 
-// Для линий (веревок) 
-const LINE_SEGMENT_RADIUS = 12; 
-let currentLineSegments = [];
-let lineCollisionGroup = 0;
-
-
 // Для кисти
 let lastBrushPoint = null;
-const BRUSH_RADIUS = 8;
-
+const BRUSH_RADIUS = 8; // в пикселях
 
 let waterSpawnInterval = null;
-let lastMousePos = { x: 0, y: 0 };
 
-// Для долгого нажатия
-let longPressTimer = null;
-const LONG_PRESS_DURATION = 500;
-let touchStartPos = { x: 0, y: 0 };
-const TOUCH_MOVE_THRESHOLD = 10; // pixels
+// Константы для спавна воды, дублируют значения из water.js для согласованности
+const WATER_VISUAL_RADIUS = 10;
+const WATER_PHYSICAL_RADIUS_FACTOR = 0.6;
+const PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 
-
-function spawnWaterCluster(engine, world, x, y) {
-    const count = 3; 
-    const spread = 8;
-    for (let i = 0; i < count; i++) {
-        const offsetX = (Math.random() - 0.5) * spread;
-        const offsetY = (Math.random() - 0.5) * spread;
-        spawnWaterParticle(engine, world, x + offsetX, y + offsetY);
+// Настройки инструментов, теперь являются внутренними константами
+const toolSettings = {
+    tnt: {
+        small: { power: 0.3 },
+        medium: { power: 2 },
+        large: { power: 5 }
+    },
+    density: {
+        minMass: 0.0025,
+        normal: 0.0075
     }
+};
+
+// Глобальная карта для кэширования загруженных изображений текстур ТНТ
+const tntTextures = {};
+
+/**
+ * Загружает текстуру ТНТ из URL или возвращает уже загруженную.
+ * @param {string} type - Тип ТНТ ('small', 'medium', 'large').
+ * @param {string} imageUrl - URL изображения.
+ * @returns {Promise<HTMLImageElement | null>} - Промис, разрешающийся в объект Image или null в случае ошибки.
+ */
+async function loadTntTexture(type, imageUrl) {
+    if (tntTextures[type] !== undefined) {
+        return Promise.resolve(tntTextures[type]);
+    }
+    if (!imageUrl) { // Если текстура не предоставлена, возвращаем null
+        tntTextures[type] = null;
+        return Promise.resolve(null);
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        // img.crossOrigin = "anonymous"; // Удалено: не имеет эффекта для Base64 и не решает проблему CORS для внешних ссылок.
+        img.onload = () => {
+            tntTextures[type] = img;
+            resolve(img);
+        };
+        img.onerror = (e) => {
+            console.error(`Failed to load TNT texture for type ${type} from URL: ${imageUrl}`, e);
+            tntTextures[type] = null; // Store null to prevent retrying
+            resolve(null);
+        };
+        img.src = imageUrl; // Устанавливаем src напрямую из URL
+    });
 }
 
-export function initializeTools(engineData, cameraData, worldData) {
-    const { engine, world, render } = engineData;
+
+// --- Объявляем функции взрыва заранее для корректной работы ---
+let createExplosion;
+let detonateTNT;
+
+// --- Логика взрывов ---
+
+/**
+ * Безопасно детонирует один блок ТНТ.
+ * @param {import('planck-js').World} world
+ * @param {import('planck-js').Body} body
+ */
+detonateTNT = function(world, body) {
+    // Проверяем, существует ли тело в мире, чтобы избежать ошибок при цепной реакции
+    if (!body || !body.getWorld()) {
+        return;
+    }
+    const userData = body.getUserData() || {};
+    const type = userData.tntType || 'small'; // По умолчанию - малый ТНТ
+    const tntProps = tntTypes[type];
+    const explosionPower = toolSettings.tnt[type].power; // Используем настраиваемую мощность
+
+    const explosionCenter = body.getPosition();
+    try {
+        world.destroyBody(body);
+    } catch (e) {
+        console.warn("Попытка уничтожить уже уничтоженное тело.");
+        return;
+    }
+    // Создаем взрыв на месте ТНТ
+    createExplosion(world, explosionCenter, tntProps.radius, explosionPower);
+};
+
+/**
+ * Создает визуальный и физический эффект взрыва.
+ * @param {import('planck-js').World} world
+ * @param {import('planck-js').Vec2} center - Центр взрыва в метрах.
+ * @param {number} radius - Радиус взрыва в метрах.
+ * @param {number} power - Сила взрыва.
+ */
+createExplosion = function(world, center, radius, power) {
+    addExplosionEffect(center, radius, 400);
+
+    const aabb = new planck.AABB(
+        center.clone().sub(planck.Vec2(radius, radius)),
+        center.clone().add(planck.Vec2(radius, radius))
+    );
+    
+    // Используем Set, чтобы избежать повторной детонации одного и того же ТНТ
+    const tntsToDetonate = new Set();
+
+    world.queryAABB(aabb, (fixture) => {
+        const body = fixture.getBody();
+        const userData = body.getUserData() || {};
+
+        // Если это другой ТНТ, добавляем его в очередь на детонацию
+        if (userData.label === 'tnt') {
+            tntsToDetonate.add(body);
+            return true; // Продолжаем поиск
+        }
+
+        if (!body.isDynamic()) {
+            return true; // Пропускаем статические объекты
+        }
+        
+        const bodyPos = body.getPosition();
+        const direction = planck.Vec2.sub(bodyPos, center);
+        const distance = direction.length();
+
+        if (distance < 0.1 || distance > radius) {
+            return true; // Слишком близко или слишком далеко
+        }
+
+        direction.normalize();
+
+        const falloff = 1 - (distance / radius); // Сила уменьшается с расстоянием
+        const impulseMagnitude = power * falloff; 
+        
+        const impulse = direction.mul(impulseMagnitude);
+        body.applyLinearImpulse(impulse, bodyPos, true);
+        body.setAwake(true);
+
+        return true; // Продолжаем поиск
+    });
+    
+    // Детонируем все найденные ТНТ с небольшой задержкой для эффекта каскада
+    tntsToDetonate.forEach(bodyToDetonate => {
+        setTimeout(() => detonateTNT(world, bodyToDetonate), 50 + Math.random() * 100);
+    });
+};
+
+
+export async function initializeTools(engineData, cameraData, worldData) {
+    const { world, render } = engineData;
     const { getMousePos, isPanning } = cameraData;
 
-    // --- Инициализация инструментов перетаскивания ---
-    mouseConstraint = MouseConstraint.create(engine, {
-        mouse: cameraData.mouse,
-        constraint: {
-            stiffness: 0.05,
-            render: {
-                visible: false
-            }
-        }
-    });
-    mouseConstraint.collisionFilter.mask = 0; // Отключаем по умолчанию
-    Composite.add(world, mouseConstraint);
+    ground = world.createBody();
 
-    // --- Визуализация создания фигур ---
-    Events.on(render, 'afterRender', () => {
-        if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
-            drawPolygonPreview(render.context, cameraData);
-        }
-        if (toolState.currentTool === 'box' && isDrawing) {
-            drawBoxPreview(render.context, cameraData, startPoint, lastMousePos);
-        }
-    });
+    // Предварительная загрузка текстур ТНТ
+    await Promise.all([
+        loadTntTexture('small', tntTypes.small.textureUrl),
+        loadTntTexture('medium', tntTypes.medium.textureUrl),
+        loadTntTexture('large', tntTypes.large.textureUrl),
+    ]);
 
+    Dom.container.addEventListener('mousedown', handleMouseDown);
+    Dom.container.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    Dom.container.addEventListener('contextmenu', handleContextMenu);
+    Dom.container.addEventListener('dblclick', handleDoubleClick);
+    Dom.container.addEventListener('mouseleave', stopAllActions);
 
-    // --- Обработчики событий (унифицированные для мыши и касаний) ---
-    render.canvas.addEventListener('mousedown', onPointerDown);
-    render.canvas.addEventListener('mousemove', onPointerMove);
-    window.addEventListener('mouseup', onPointerUp);
-    
-    render.canvas.addEventListener('touchstart', onPointerDown, { passive: false });
-    render.canvas.addEventListener('touchmove', onPointerMove, { passive: false });
-    window.addEventListener('touchend', onPointerUp);
-    window.addEventListener('touchcancel', onPointerUp);
+    function handleMouseDown(e) {
+        if (isPanning() || e.target !== render.canvas) return;
 
-    render.canvas.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        triggerContextMenu(e.clientX, e.clientY);
-    });
-    render.canvas.addEventListener('dblclick', handleDoubleClick);
-    render.canvas.addEventListener('mouseleave', stopAllActions);
-
-
-    function onPointerDown(e) {
-        if (e.touches && e.touches.length > 1) return; // Камера обработает
-        if (e.type === 'touchstart') e.preventDefault();
-
-        if (isPanning()) return;
-
-        const pointer = e.touches ? e.touches[0] : e;
-        
-        // Логика долгого нажатия
-        clearTimeout(longPressTimer);
-        touchStartPos = { x: pointer.clientX, y: pointer.clientY };
-        longPressTimer = setTimeout(() => {
-            stopAllActions();
-            triggerContextMenu(pointer.clientX, pointer.clientY);
-            longPressTimer = null; // Помечаем, что таймер сработал
-        }, LONG_PRESS_DURATION);
-
-        handleToolStart(pointer);
-    }
-
-    function onPointerMove(e) {
-        if (e.touches && e.touches.length > 1) return;
-        if (e.type === 'touchmove') e.preventDefault();
-        
-        const pointer = e.touches ? e.touches[0] : e;
-        
-        // Отменяем долгое нажатие, если палец сдвинулся
-        if (longPressTimer) {
-            const dx = pointer.clientX - touchStartPos.x;
-            const dy = pointer.clientY - touchStartPos.y;
-            if (Math.sqrt(dx * dx + dy * dy) > TOUCH_MOVE_THRESHOLD) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-        }
-        
-        handleToolMove(pointer);
-    }
-
-    function onPointerUp(e) {
-        // Если таймер был, но не сработал - отменяем его
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        } else if (longPressTimer === null && e.type.startsWith('touch')) {
-            // Если таймер сработал (null), и это событие касания, то ничего не делаем,
-            // чтобы не создавать объект после вызова меню.
-            isDrawing = false; // Предотвращаем создание объекта
-            return;
-        }
-
-        const pointer = e.changedTouches ? e.changedTouches[0] : e;
-        if (!pointer) return;
-        
-        handleToolEnd(pointer);
-    }
-
-    function handleToolStart(pointer) {
-        startPoint = getMousePos(pointer);
+        startPoint = getMousePos(e); // в метрах
         lastMousePos = startPoint;
         isDrawing = true;
 
         switch (toolState.currentTool) {
             case 'move':
-                mouseConstraint.collisionFilter.mask = -1; // Включаем
-                break;
             case 'finger':
-                startFingerDrag(world, startPoint);
+                const bodyToDrag = getBodyAt(world, startPoint);
+                if (bodyToDrag) {
+                    bodyToDrag.setAwake(true);
+                    if (toolState.currentTool === 'finger') {
+                        const jointDef = {
+                            bodyA: ground,
+                            bodyB: bodyToDrag,
+                            target: startPoint,
+                            maxForce: 1000.0 * bodyToDrag.getMass(),
+                            frequencyHz: 5.0,
+                            dampingRatio: 0.9,
+                        };
+                        mouseJoint = world.createJoint(planck.MouseJoint(jointDef));
+                    } else { // 'move' tool
+                        draggedBody = bodyToDrag;
+                    }
+                }
                 break;
             case 'water':
-                spawnWaterCluster(engine, world, startPoint.x, startPoint.y);
+                spawnWaterCluster(world, startPoint.x, startPoint.y);
                 if (waterSpawnInterval) clearInterval(waterSpawnInterval);
                 waterSpawnInterval = setInterval(() => {
-                    spawnWaterCluster(engine, world, lastMousePos.x, lastMousePos.y);
+                    spawnWaterCluster(world, lastMousePos.x, lastMousePos.y);
                 }, 30);
+                break;
+            case 'tnt-small':
+                createTNT(world, startPoint, 'small');
+                isDrawing = false;
+                break;
+            case 'tnt-medium':
+                createTNT(world, startPoint, 'medium');
+                isDrawing = false;
+                break;
+            case 'tnt-large':
+                createTNT(world, startPoint, 'large');
+                isDrawing = false;
                 break;
             case 'eraser':
                 eraseAt(world, startPoint);
                 break;
             case 'polygon':
-                polygonVertices.push({ x: startPoint.x, y: startPoint.y });
-                break;
-            case 'line':
-                startLine(world, startPoint);
+                polygonVertices.push(startPoint.clone());
                 break;
             case 'brush':
                 createBrushSegment(world, startPoint);
@@ -184,26 +252,23 @@ export function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleToolMove(pointer) {
-        const currentPos = getMousePos(pointer);
+    function handleMouseMove(e) {
+        if (isPanning()) return;
+        const currentPos = getMousePos(e); // в метрах
         lastMousePos = currentPos;
+
+        if (mouseJoint) {
+            mouseJoint.setTarget(currentPos);
+        }
+        if (draggedBody) {
+             draggedBody.setPosition(currentPos);
+        }
 
         if (!isDrawing) return;
 
         switch (toolState.currentTool) {
-            case 'finger':
-                if (fingerConstraint) {
-                    fingerConstraint.pointA = currentPos;
-                }
-                break;
-            case 'water':
-                // Интервал уже обрабатывает это
-                break;
             case 'eraser':
                 eraseAt(world, currentPos);
-                break;
-            case 'line':
-                continueLine(world, currentPos);
                 break;
             case 'brush':
                 continueBrushStroke(world, currentPos);
@@ -211,74 +276,77 @@ export function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleToolEnd(pointer) {
+    function handleMouseUp(e) {
         if (waterSpawnInterval) {
             clearInterval(waterSpawnInterval);
             waterSpawnInterval = null;
         }
-
-        if (!isDrawing) return;
-        
-        const endPoint = getMousePos(pointer);
-
-        switch (toolState.currentTool) {
-            case 'move':
-                mouseConstraint.collisionFilter.mask = 0; // Отключаем
-                break;
-            case 'finger':
-                stopFingerDrag(world);
-                break;
-            case 'box':
-                createBox(world, startPoint, endPoint);
-                break;
-            case 'line':
-                endLine(world, endPoint);
-                break;
-            case 'brush':
-                lastBrushPoint = null;
-                break;
+        if (mouseJoint) {
+            world.destroyJoint(mouseJoint);
+            mouseJoint = null;
         }
-        isDrawing = false;
+        if (draggedBody) {
+            draggedBody.setLinearVelocity(planck.Vec2(0, 0));
+            draggedBody.setAngularVelocity(0);
+            draggedBody = null;
+        }
+        if (isDrawing) {
+            const endPoint = getMousePos(e); // в метрах
+            switch (toolState.currentTool) {
+                case 'box':
+                    createBox(world, startPoint, endPoint);
+                    break;
+                case 'brush':
+                    lastBrushPoint = null;
+                    break;
+            }
+            isDrawing = false;
+        }
     }
 
     function handleDoubleClick(e) {
         if (toolState.currentTool === 'polygon' && polygonVertices.length > 2) {
             createPolygon(world, polygonVertices);
             polygonVertices = [];
+            return;
+        }
+        
+        const worldPos = getMousePos(e);
+        const body = getBodyAt(world, worldPos);
+
+        if (body && body.getUserData() && body.getUserData().label === 'tnt') {
+            detonateTNT(world, body);
         }
     }
     
     function stopAllActions() {
-        if (waterSpawnInterval) {
-            clearInterval(waterSpawnInterval);
-            waterSpawnInterval = null;
+        if (waterSpawnInterval) clearInterval(waterSpawnInterval);
+        if (mouseJoint) {
+            world.destroyJoint(mouseJoint);
+            mouseJoint = null;
         }
-        if (isDrawing) {
-            isDrawing = false;
-        }
-        if (mouseConstraint) {
-            mouseConstraint.collisionFilter.mask = 0;
-        }
-        stopFingerDrag(world);
-        if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
-            polygonVertices = [];
-        }
-        if (toolState.currentTool === 'line' && currentLineSegments.length > 0) {
-            endLine(world, undefined);
-        }
-        if (toolState.currentTool === 'brush') {
-            lastBrushPoint = null;
-        }
+        draggedBody = null;
+        isDrawing = false;
+        polygonVertices = [];
+        lastBrushPoint = null;
     }
 
-    function triggerContextMenu(clientX, clientY) {
-        const worldPos = getMousePos({ clientX, clientY });
-        const bodies = Query.point(Composite.allBodies(world), worldPos);
-        const clickedBody = bodies.find(b => b.label !== 'boundary' && b.label !== 'water');
+    function handleContextMenu(e) {
+        e.preventDefault();
+        const worldPos = getMousePos(e); // в метрах
+        
+        let clickedBody = getBodyAt(world, worldPos);
+
+        if (clickedBody) {
+            const userData = clickedBody.getUserData() || {};
+             if (userData.label === 'boundary' || userData.label === 'water') {
+                clickedBody = null;
+             }
+        }
 
         if (clickedBody) {
             selectBody(clickedBody);
-            showObjectPropertiesPanel(clickedBody, clientX, clientY);
+            showObjectPropertiesPanel(clickedBody, e.clientX, e.clientY);
         } else {
             deselectBody();
             hideObjectPropertiesPanel();
@@ -289,293 +357,228 @@ export function initializeTools(engineData, cameraData, worldData) {
     }
 }
 
+
 // --- Логика инструментов ---
 
-function drawBoxPreview(context, cameraData, startPoint, endPoint) {
-    const { scale, viewOffset } = cameraData;
+async function createTNT(world, position, type = 'small') {
+    const tntProps = tntTypes[type];
+    const textureImage = await loadTntTexture(type, tntProps.textureUrl); // Загружаем/получаем текстуру
 
-    // Вспомогательная функция для преобразования мировых координат в экранные
-    const toScreen = (worldPos) => ({
-        x: (worldPos.x - viewOffset.x) / scale,
-        y: (worldPos.y - viewOffset.y) / scale,
-    });
+    // Общая ширина и высота объекта в метрах.
+    // Изменено для лучшего соответствия визуальному размеру и пропорциям.
+    const baseWidth = 0.8;
+    const baseHeight = 0.56;
+    let scaleFactor = 1;
 
-    const screenStart = toScreen(startPoint);
-    const screenEnd = toScreen(endPoint);
+    if (type === 'medium') {
+        scaleFactor = 2;
+    } else if (type === 'large') {
+        scaleFactor = 3;
+    }
 
-    const width = screenEnd.x - screenStart.x;
-    const height = screenEnd.y - screenStart.y;
+    const visualWidth = baseWidth * scaleFactor;
+    const visualHeight = baseHeight * scaleFactor;
 
-    context.save();
-    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    context.lineWidth = 2; // Используем постоянную ширину линии в экранном пространстве
-    context.setLineDash([6, 4]);
-    context.strokeRect(screenStart.x, screenStart.y, width, height);
-    context.setLineDash([]);
-    context.restore();
-}
+    const physicsWidth = visualWidth / 1.5;
+    const physicsHeight = visualHeight / 1.5;
 
-
-function drawPolygonPreview(context, cameraData) {
-    const { scale, viewOffset } = cameraData;
-
-    // Вспомогательная функция для преобразования мировых координат в экранные
-    const toScreen = (worldPos) => ({
-        x: (worldPos.x - viewOffset.x) / scale,
-        y: (worldPos.y - viewOffset.y) / scale,
-    });
-    
-    context.save();
-    context.beginPath();
-    
-    // Преобразуем все вершины в экранные координаты перед рисованием
-    const screenVertices = polygonVertices.map(toScreen);
-    const screenMousePos = toScreen(lastMousePos);
-
-    // Рисуем линии между установленными вершинами
-    if (screenVertices.length > 0) {
-        context.moveTo(screenVertices[0].x, screenVertices[0].y);
-        for (let i = 1; i < screenVertices.length; i++) {
-            context.lineTo(screenVertices[i].x, screenVertices[i].y);
+    const body = world.createDynamicBody({
+        position: position,
+        bullet: true,
+        userData: {
+            label: 'tnt',
+            tntType: type,
+            hasFuse: true, // Это свойство не используется для отрисовки фитиля, но может быть полезно для логики.
+            render: {
+                texture: textureImage, // Используем загруженное изображение
+                // Удаляем borderColor, так как обводка не нужна
+                // strokeStyle: tntProps.borderColor, // Опциональная обводка
+                width: visualWidth,
+                height: visualHeight
+            }
         }
-        // Рисуем "резиновую" линию до текущей позиции мыши
-        context.lineTo(screenMousePos.x, screenMousePos.y);
-    }
+    });
 
-    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    context.lineWidth = 2; // Используем постоянную ширину линии в экранном пространстве
-    context.setLineDash([6, 4]);
-    context.stroke();
-    context.setLineDash([]); // Сбрасываем для другого рендеринга
-
-    // Рисуем круги на каждой вершине для наглядности
-    context.fillStyle = 'rgba(255, 255, 255, 1)';
-    for (const sv of screenVertices) {
-        context.beginPath();
-        context.arc(sv.x, sv.y, 5, 0, Math.PI * 2); // Используем постоянный радиус в экранном пространстве
-        context.fill();
-    }
-
-    context.restore();
+    const fixtureDef = { density: 1.5, friction: 0.6, restitution: 0.1 };
+    
+    // Создаем одну бокс-фикстуру для всего блока ТНТ.
+    // Уменьшаем хитбокс в 1.5 раза, чтобы он лучше соответствовал видимой части текстуры.
+    body.createFixture(planck.Box(physicsWidth / 2, physicsHeight / 2), fixtureDef);
+    body.resetMassData();
 }
 
-function startFingerDrag(world, position) {
-    const bodies = Query.point(Composite.allBodies(world), position);
-    const body = bodies.find(b => !b.isStatic);
-    if (body) {
-        selectBody(body);
-        fingerConstraint = Constraint.create({
-            pointA: position,
-            bodyB: body,
-            pointB: { x: position.x - body.position.x, y: position.y - body.position.y },
-            stiffness: 0.2,
-            damping: 0.1,
-            render: { visible: true }
-        });
-        Composite.add(world, fingerConstraint);
+
+function spawnWaterCluster(world, x, y) {
+    const count = 2; // Спавним меньше частиц за раз для уменьшения плотности
+    const verticalSpread = PHYSICAL_RADIUS * 2.2; // Разносим их по вертикали, чтобы избежать пересечений
+    const jitter = 4 / PHYSICS_SCALE; // Небольшая горизонтальная случайность (в метрах)
+
+    for (let i = 0; i < count; i++) {
+        const offsetX = (Math.random() - 0.5) * jitter;
+        const offsetY = i * verticalSpread;
+        // Придаем частицам небольшую начальную скорость вниз, имитируя струю
+        const initialVelocity = planck.Vec2(0, 1.0);
+        spawnWaterParticle(world, x + offsetX, y + offsetY, initialVelocity);
     }
 }
 
-function stopFingerDrag(world) {
-    if (fingerConstraint) {
-        Composite.remove(world, fingerConstraint);
-        fingerConstraint = null;
+/**
+ * Вычисляет плотность для тела на основе его площади,
+ * устанавливая минимальную массу для очень маленьких объектов.
+ * @param {number} area - Площадь тела в кв. метрах.
+ * @returns {number} - Расчетная плотность.
+ */
+function getDensityForArea(area) {
+    const MIN_BODY_MASS = toolSettings.density.minMass;
+    const NORMAL_DENSITY = toolSettings.density.normal;
+    
+    // Пороговое значение площади, ниже которого масса становится фиксированной
+    const AREA_THRESHOLD = MIN_BODY_MASS / NORMAL_DENSITY;
+
+    if (area > 0 && area < AREA_THRESHOLD) {
+        // Для маленьких объектов плотность рассчитывается так, чтобы их масса была равна MIN_BODY_MASS
+        return MIN_BODY_MASS / area;
     }
+    
+    return NORMAL_DENSITY;
 }
+
 
 function createBox(world, start, end) {
     const width = Math.abs(end.x - start.x);
     const height = Math.abs(end.y - start.y);
-    if (width < 5 || height < 5) return;
+    // Проверяем минимальный размер в метрах (эквивалент 5 пикселей)
+    if (width < 5 / PHYSICS_SCALE || height < 5 / PHYSICS_SCALE) return;
+
+    const area = width * height;
+    const density = getDensityForArea(area);
 
     const centerX = (start.x + end.x) / 2;
     const centerY = (start.y + end.y) / 2;
 
-    const box = Bodies.rectangle(centerX, centerY, width, height, {
-        friction: 0.1,
-        restitution: 0.1,
-        density: 0.001,
-        slop: 0.25 // Допуск для предотвращения туннелирования
+    const body = world.createDynamicBody({
+        position: planck.Vec2(centerX, centerY),
+        bullet: true,
+        userData: {
+            label: 'box',
+            render: { fillStyle: '#cccccc', strokeStyle: '#aaaaaa' }
+        }
     });
-    Composite.add(world, box);
+
+    body.createFixture(planck.Box(width / 2, height / 2), {
+        friction: 0.3,
+        restitution: 0.1,
+        density: density,
+    });
 }
+
+/**
+ * Вычисляет площадь простого многоугольника по его вершинам (формула шнурков).
+ * @param {planck.Vec2[]} vertices 
+ * @returns {number}
+ */
+function getPolygonArea(vertices) {
+    let area = 0;
+    const n = vertices.length;
+    for (let i = 0; i < n; i++) {
+        const v1 = vertices[i];
+        const v2 = vertices[(i + 1) % n]; // Замыкаем последнюю вершину с первой
+        area += v1.x * v2.y - v2.x * v1.y;
+    }
+    return Math.abs(area) / 2;
+}
+
 
 function createPolygon(world, vertices) {
-    try {
-        // Matter.js требует, чтобы вершины были выпуклыми и шли по часовой стрелке.
-        const orderedVertices = Vertices.clockwiseSort(vertices);
-        const polygon = Bodies.fromVertices(0, 0, [orderedVertices], {
-            friction: 0.1,
-            restitution: 0.1,
-            density: 0.001,
-            slop: 0.25 // Допуск для предотвращения туннелирования
-        });
-        
-        if (!polygon) {
-            console.warn("Создание полигона не удалось. Фигура может быть самопересекающейся или слишком сложной.");
-            return;
-        }
-
-        const center = Vertices.centre(orderedVertices);
-        Body.setPosition(polygon, center);
-        Composite.add(world, polygon);
-    } catch (e) {
-        console.warn("Произошла ошибка при создании полигона:", e);
-    }
-}
-
-function startLine(world, position) {
-    lineCollisionGroup = Body.nextGroup(true);
-    const segment = createLineSegment(position);
-    currentLineSegments.push(segment);
-    Composite.add(world, segment);
-}
-
-function continueLine(world, position) {
-    if (currentLineSegments.length === 0) return;
-
-    const lastSegment = currentLineSegments[currentLineSegments.length - 1];
+    if (vertices.length < 3) return;
     
-    // Вектор от последнего сегмента до текущей позиции мыши
-    const delta = Vector.sub(position, lastSegment.position);
-    const distance = Vector.magnitude(delta);
+    const center = planck.Vec2.zero();
+    vertices.forEach(v => center.add(v));
+    center.mul(1 / vertices.length);
+
+    const localVertices = vertices.map(v => v.clone().sub(center));
+
+    const area = getPolygonArea(localVertices);
+    const density = getDensityForArea(area);
     
-    // Желаемое расстояние между центрами сегментов для плотного прилегания
-    const stepDistance = LINE_SEGMENT_RADIUS * 0.4;
-    
-    // Сколько новых сегментов нужно создать, чтобы заполнить пробел
-    const segmentsToCreate = Math.floor(distance / stepDistance);
-
-    if (segmentsToCreate > 0) {
-        // Вектор направления для одного шага
-        const stepVector = Vector.mult(Vector.normalise(delta), stepDistance);
-        let currentLastSegment = lastSegment;
-
-        for (let i = 0; i < segmentsToCreate; i++) {
-            // Вычисляем позицию для нового сегмента
-            const nextPosition = Vector.add(currentLastSegment.position, stepVector);
-            
-            const newSegment = createLineSegment(nextPosition);
-            currentLineSegments.push(newSegment);
-            Composite.add(world, newSegment);
-
-            const link = Constraint.create({
-                bodyA: currentLastSegment,
-                bodyB: newSegment,
-                stiffness: 1, 
-                damping: 0.1, 
-                length: stepDistance, // Длина должна быть равна шагу
-                render: { visible: false }
-            });
-            Composite.add(world, link);
-
-            // Обновляем ссылку на последний созданный сегмент
-            currentLastSegment = newSegment;
+    const body = world.createDynamicBody({
+        position: center,
+        bullet: true,
+        userData: {
+            label: 'polygon',
+            render: { fillStyle: '#cccccc', strokeStyle: '#aaaaaa' }
         }
-    }
-}
-
-
-function endLine(world, endPoint) {
-    if (world && endPoint && currentLineSegments.length > 1) {
-        const lastSegment = currentLineSegments[currentLineSegments.length - 1];
-        const bodiesAtEnd = Query.point(Composite.allBodies(world), endPoint);
-        const potentialTargets = bodiesAtEnd.filter(body =>
-            body.id !== lastSegment.id &&
-            !body.isStatic &&
-            body.label !== 'water'
-        );
-        const targetBody = potentialTargets[0];
-
-        if (targetBody) {
-            const knot = Constraint.create({
-                bodyA: lastSegment,
-                bodyB: targetBody,
-                pointA: { x: 0, y: 0 },
-                pointB: Vector.sub(endPoint, targetBody.position),
-                stiffness: 1, // Максимальная жесткость
-                damping: 0.1,
-                render: {
-                    strokeStyle: '#a9a9a9',
-                    lineWidth: 3,
-                    type: 'line',
-                    anchors: false,
-                }
-            });
-            Composite.add(world, knot);
-        }
-    }
-    currentLineSegments = [];
-}
-
-function createLineSegment(position) {
-    return Bodies.circle(position.x, position.y, LINE_SEGMENT_RADIUS, {
-        friction: 0.9, // Почти максимальное трение
-        restitution: 0, // Убрана упругость
-        density: 0.01, // Плотность снижена до разумного предела для стабильности
-        sleepThreshold: -1, 
-        collisionFilter: { group: lineCollisionGroup },
-        render: { fillStyle: '#cccccc' },
-        slop: 0.25 
     });
+
+    try {
+        body.createFixture(planck.Polygon(localVertices), {
+            friction: 0.3,
+            restitution: 0.1,
+            density: density,
+        });
+    } catch(e) {
+        console.error("Failed to create polygon fixture:", e);
+        world.destroyBody(body);
+    }
 }
 
 function createBrushSegment(world, position) {
-    const bodies = Query.point(Composite.allBodies(world), position);
-    if (bodies.some(b => Vector.magnitudeSquared(Vector.sub(b.position, position)) < (BRUSH_RADIUS * BRUSH_RADIUS * 0.25))) {
-        return;
-    }
-
-    const segment = Bodies.circle(position.x, position.y, BRUSH_RADIUS, {
-        isStatic: true,
-        friction: 0.3,
-        slop: 0.25, // Увеличиваем допуск для стабильности
-        label: 'user-static',
-        render: { fillStyle: '#8b4513' }
+    const body = world.createBody({
+        position: position,
+        type: 'static',
+        userData: {
+            label: 'user-static',
+            render: { fillStyle: '#8b4513', strokeStyle: '#6a3503' }
+        }
     });
-    Composite.add(world, segment);
+    body.createFixture(planck.Circle(BRUSH_RADIUS / PHYSICS_SCALE), { friction: 0.3 });
 }
 
 function continueBrushStroke(world, position) {
     if (!lastBrushPoint) return;
-    const distance = Vector.magnitude(Vector.sub(position, lastBrushPoint));
-    const angle = Vector.angle(lastBrushPoint, position);
+    const distanceVec = position.clone().sub(lastBrushPoint);
+    const distance = distanceVec.length();
+    
+    const minDistance = (BRUSH_RADIUS / PHYSICS_SCALE) / 2;
+    if (distance < minDistance) return;
 
-    for (let i = 0; i < distance; i += BRUSH_RADIUS / 2) {
+    const angle = Math.atan2(distanceVec.y, distanceVec.x);
+
+    for (let i = 0; i < distance; i += minDistance) {
         const x = lastBrushPoint.x + Math.cos(angle) * i;
         const y = lastBrushPoint.y + Math.sin(angle) * i;
-        createBrushSegment(world, { x, y });
+        createBrushSegment(world, planck.Vec2(x, y));
     }
     lastBrushPoint = position;
 }
 
 function eraseAt(world, position) {
-    const bodiesToRemove = Query.point(Composite.allBodies(world), position);
-    bodiesToRemove.forEach(body => {
-        if (body.label !== 'boundary') {
-            if (body.label === 'water') {
-                setWaterParticles(getWaterParticles().filter(p => p !== body));
-            }
-            Composite.remove(world, body);
-        }
-    });
+     const aabb = new planck.AABB(position, position);
+     world.queryAABB(aabb, (fixture) => {
+         const body = fixture.getBody();
+         const userData = body.getUserData() || {};
+         if (userData.label !== 'boundary' && fixture.testPoint(position)) {
+              if (userData.label === 'water') {
+                // ОПТИМИЗАЦИЯ: Деактивируем частицу, возвращая ее в пул, вместо уничтожения.
+                body.setActive(false);
+              } else {
+                // Другие динамические объекты уничтожаем как и раньше.
+                world.destroyBody(body);
+              }
+         }
+         return true; // Продолжаем поиск, чтобы стереть несколько объектов за раз.
+     });
 }
 
-export function makeItRain(world, render) {
-    const viewWidth = render.bounds.max.x - render.bounds.min.x;
-    const viewCenterX = render.bounds.min.x + viewWidth / 2;
-
-    for (let i = 0; i < 30; i++) {
-        setTimeout(() => {
-            const x = viewCenterX + (Math.random() - 0.5) * viewWidth;
-            const y = render.bounds.min.y - 100 - Math.random() * 200; // Порождаем над видимой областью
-            const radius = 10 + Math.random() * 20;
-            const body = Bodies.circle(x, y, radius, {
-                friction: 0.1,
-                restitution: 0.5,
-                density: 0.001,
-            });
-            Composite.add(world, body);
-        }, i * 50);
-    }
+function getBodyAt(world, point) {
+    let foundBody = null;
+    const aabb = new planck.AABB(point, point);
+    world.queryAABB(aabb, (fixture) => {
+        if (fixture.testPoint(point)) {
+            foundBody = fixture.getBody();
+            return false; // нашли, прекращаем поиск
+        }
+        return true; // продолжаем поиск
+    });
+    return foundBody;
 }
