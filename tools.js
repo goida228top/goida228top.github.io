@@ -66,7 +66,7 @@ async function loadTntTexture(type, imageUrl) {
 
     return new Promise((resolve) => {
         const img = new Image();
-        // img.crossOrigin = "anonymous"; // Удалено: не имеет эффекта для Base64 и не решает проблему CORS для внешних ссылок.
+        img.crossOrigin = "anonymous"; // Важно: для загрузки с внешнего домена на канвас
         img.onload = () => {
             tntTextures[type] = img;
             resolve(img);
@@ -90,7 +90,7 @@ let detonateTNT;
 /**
  * Безопасно детонирует один блок ТНТ.
  * @param {import('planck-js').World} world
- * @param {import('planck-js').Body} body
+ * @param {import('planock-js').Body} body
  */
 detonateTNT = function(world, body) {
     // Проверяем, существует ли тело в мире, чтобы избежать ошибок при цепной реакции
@@ -144,7 +144,7 @@ createExplosion = function(world, center, radius, power) {
         if (!body.isDynamic()) {
             return true; // Пропускаем статические объекты
         }
-        
+
         const bodyPos = body.getPosition();
         const direction = planck.Vec2.sub(bodyPos, center);
         const distance = direction.length();
