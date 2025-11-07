@@ -1,5 +1,5 @@
 import planck from './planck.js';
-import { PHYSICS_SCALE } from './config.js';
+import { PHYSICS_SCALE } from './game_config.js';
 
 export const toolState = {
     currentTool: 'move',

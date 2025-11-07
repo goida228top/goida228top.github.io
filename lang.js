@@ -1,4 +1,5 @@
 
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -12,7 +13,6 @@ const translations = {
         'tnt-large-title': 'Мощный ТНТ',
         'water-title': 'Вода',
         'eraser-title': 'Ластик',
-        'reward-title': 'Смотреть рекламу и получить дождь из объектов',
         'settings-title': 'Настройки',
         'play-title': 'Воспроизвести',
         'pause-title': 'Пауза',
@@ -30,13 +30,19 @@ const translations = {
         'static-label': 'Неподвижный:',
         'delete-button': 'Удалить',
         'brush-size-label': 'Толщина:',
-        'reward-button-text': 'Награда',
         'low-fps-title': 'Низкая производительность',
         'low-fps-message': 'Обнаружен низкий FPS. Большое количество воды может замедлять симуляцию. Что вы хотите сделать?',
         'delete-water-button': 'Удалить всю воду',
         'pause-button': 'Поставить на паузу',
         'do-nothing-button': 'Ничего не делать',
-        'dont-ask-again-button': 'Больше не спрашивать'
+        'dont-ask-again-button': 'Больше не спрашивать',
+        'coins-label': 'Резонансы',
+        'reward-menu-title': 'Получить Резонансы',
+        'reward-claimed': 'Получено!',
+        'claim-reward': 'Получить!',
+        'back-button': 'Назад',
+        'watching-ad-countdown': 'Смотрим рекламу: {time} сек',
+        'ad-failed-retry': 'Реклама не загрузилась, повторить?'
     },
     en: {
         'app-title': 'Physics Sandbox',
@@ -50,7 +56,6 @@ const translations = {
         'tnt-large-title': 'Large TNT',
         'water-title': 'Water',
         'eraser-title': 'Eraser',
-        'reward-title': 'Watch an ad and get a rain of objects',
         'settings-title': 'Settings',
         'play-title': 'Play',
         'pause-title': 'Pause',
@@ -68,13 +73,19 @@ const translations = {
         'static-label': 'Static:',
         'delete-button': 'Delete',
         'brush-size-label': 'Thickness:',
-        'reward-button-text': 'Reward',
         'low-fps-title': 'Low Performance',
         'low-fps-message': 'Low FPS detected. A large amount of water can slow down the simulation. What would you like to do?',
         'delete-water-button': 'Delete All Water',
         'pause-button': 'Pause',
         'do-nothing-button': 'Do Nothing',
-        'dont-ask-again-button': 'Don\'t ask again'
+        'dont-ask-again-button': 'Don\'t ask again',
+        'coins-label': 'Resonances',
+        'reward-menu-title': 'Get Resonances',
+        'reward-claimed': 'Claimed!',
+        'claim-reward': 'Claim!',
+        'back-button': 'Back',
+        'watching-ad-countdown': 'Watching ad: {time} sec',
+        'ad-failed-retry': 'Ad failed, retry?'
     },
     tr: {
         'app-title': 'Fizik Sandbox',
@@ -87,8 +98,7 @@ const translations = {
         'tnt-medium-title': 'Orta TNT',
         'tnt-large-title': 'Büyük TNT',
         'water-title': 'Su',
-        'silgi-title': 'Silgi',
-        'reward-title': 'Nesne yağmuru için reklam izle',
+        'eraser-title': 'Silgi',
         'settings-title': 'Ayarlar',
         'play-title': 'Oynat',
         'pause-title': 'Duraklat',
@@ -106,13 +116,19 @@ const translations = {
         'static-label': 'Sabit:',
         'delete-button': 'Sil',
         'brush-size-label': 'Kalınlık:',
-        'reward-button-text': 'Ödül',
         'low-fps-title': 'Düşük Performans',
         'low-fps-message': 'Düşük FPS algılandı. Çok miktarda su simülasyonu yavaşlatabilir. Ne yapmak istersiniz?',
         'delete-water-button': 'Tüm Suyu Sil',
         'pause-button': 'Duraklat',
         'do-nothing-button': 'Hiçbir Şey Yapma',
-        'dont-ask-again-button': 'Tekrar sorma'
+        'dont-ask-again-button': 'Tekrar sorma',
+        'coins-label': 'Rezonanslar',
+        'reward-menu-title': 'Rezonansları Al',
+        'reward-claimed': 'Alındı!',
+        'claim-reward': 'Al!',
+        'back-button': 'Geri',
+        'watching-ad-countdown': 'Reklam izleniyor: {time} sn',
+        'ad-failed-retry': 'Reklam yüklenemedi, tekrar dene?'
     }
 };
 
@@ -127,7 +143,10 @@ export function setLang(lang) {
     console.log(`Language set to: ${currentLang}`);
 }
 
-export function t(key) {
-    return translations[currentLang]?.[key] || translations['en'][key] || `[${key}]`;
+export function t(key, params = {}) {
+    let translation = translations[currentLang]?.[key] || translations['en'][key] || `[${key}]`;
+    for (const p in params) {
+        translation = translation.replace(`{${p}}`, params[p]);
+    }
+    return translation;
 }
-    

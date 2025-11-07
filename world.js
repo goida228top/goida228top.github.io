@@ -1,20 +1,19 @@
 import planck from './planck.js';
-import { PHYSICS_SCALE } from './config.js';
+import { 
+    PHYSICS_SCALE,
+    GROUND_Y, 
+    WORLD_LEFT_X, 
+    WORLD_RIGHT_X, 
+    WORLD_WIDTH, 
+    WORLD_TOP_Y, 
+    GRASS_HEIGHT, 
+    DIRT_HEIGHT, 
+    STONE_HEIGHT 
+} from './game_config.js';
 
 let boundaries = [];
 
-// --- Константы расположения мира в ПИКСЕЛЯХ ---
-export const GROUND_Y = 1000; 
-export const WORLD_LEFT_X = -4000;
-export const WORLD_RIGHT_X = 8000;
-export const WORLD_WIDTH = WORLD_RIGHT_X - WORLD_LEFT_X;
-export const WORLD_TOP_Y = -3000;
-
-// --- Константы слоев фона в ПИКСЕЛЯХ ---
-export const GRASS_HEIGHT = 20;
-export const DIRT_HEIGHT = 150;
-export const STONE_HEIGHT = DIRT_HEIGHT * 2;
-export const WORLD_BOTTOM_Y = GROUND_Y + GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT;
+// Константы расположения мира и слоев фона теперь импортируются из game_config.js
 
 
 export function setupWorld(world, viewportHeight) {

@@ -1,12 +1,15 @@
 import * as Dom from './dom.js';
-import { PHYSICS_SCALE } from './config.js';
-// Импортируем все необходимые константы
-import { WORLD_BOTTOM_Y, WORLD_TOP_Y, WORLD_LEFT_X, WORLD_RIGHT_X, GRASS_HEIGHT, DIRT_HEIGHT, STONE_HEIGHT } from './world.js';
+import { 
+    PHYSICS_SCALE, 
+    WORLD_BOTTOM_Y, WORLD_TOP_Y, WORLD_LEFT_X, WORLD_RIGHT_X, 
+    GRASS_HEIGHT, DIRT_HEIGHT, STONE_HEIGHT,
+    CAMERA_MIN_SCALE, CAMERA_MAX_SCALE, CAMERA_INITIAL_SCALE, CAMERA_PAN_START_OFFSET_Y
+} from './game_config.js';
 
 let viewOffset = { x: 0, y: 0 };
-let scale = 0.6; // Начальный зум -40%
-const minScale = 0.1;
-const maxScale = 7.0; // Увеличено до 7.0 для 600% отдаления
+let scale = CAMERA_INITIAL_SCALE; // Начальный зум
+const minScale = CAMERA_MIN_SCALE;
+const maxScale = CAMERA_MAX_SCALE;
 let isPanning = false;
 let panStart = { x: 0, y: 0 };
 
@@ -20,7 +23,7 @@ const CAMERA_PADDING = GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT;
 export function initializeCamera(render) {
     // Устанавливаем начальную позицию камеры до первого рендера
     viewOffset.x = 0 - (render.options.width * scale / 2);
-    viewOffset.y = 900 - (render.options.height * scale / 2);
+    viewOffset.y = CAMERA_PAN_START_OFFSET_Y - (render.options.height * scale / 2);
     
     Dom.container.addEventListener('wheel', handleWheel, { passive: false });
     Dom.container.addEventListener('mousedown', handleMouseDown);

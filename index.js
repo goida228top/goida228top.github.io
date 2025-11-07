@@ -8,6 +8,8 @@ import { initializeTools } from './tools.js';
 import { initializeUI } from './ui.js';
 import { initYandexSDK, gameReady } from './yandex.js';
 import { initializeBackground, renderBackground } from './background.js';
+import { ALL_IMAGE_URLS } from './game_config.js'; // Импортируем список всех изображений
+import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
 
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBar = document.getElementById('progress-bar');
@@ -31,7 +33,7 @@ async function main() {
     
     let sdkProgress = 10;
     const sdkProgressInterval = setInterval(() => {
-        if (sdkProgress < 49) {
+        if (sdkProgress < 20) { // Меньший диапазон для SDK, чтобы освободить место для загрузки изображений
             sdkProgress += Math.random() * 2;
             updateProgress(sdkProgress);
         }
@@ -42,7 +44,19 @@ async function main() {
     if (!ysdk) {
         console.warn('Yandex SDK failed to initialize, ads will not be available.');
     }
-    updateProgress(50);
+    updateProgress(20);
+    await sleep(150);
+
+    // --- Предварительная загрузка изображений ---
+    const imageLoadProgressIncrement = 30 / ALL_IMAGE_URLS.length; // 30% прогресса на изображения
+    let imagesLoadedCount = 0;
+    
+    await ImageLoader.preloadImages(ALL_IMAGE_URLS, () => {
+        imagesLoadedCount++;
+        const progress = 20 + (imagesLoadedCount * imageLoadProgressIncrement); // Начинаем с 20%
+        updateProgress(progress);
+    });
+    updateProgress(50); // Убедимся, что после загрузки изображений прогресс 50%
     await sleep(150);
 
     // 1. Движок создает мир и кастомный объект рендера

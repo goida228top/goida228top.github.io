@@ -1,8 +1,9 @@
 // @ts-nocheck
 import { setLang } from './lang.js';
+import { YANDEX_INIT_TIMEOUT } from './game_config.js';
 
 let ysdkInstance = null;
-const INIT_TIMEOUT = 5000; // 5 секунд
+const INIT_TIMEOUT = YANDEX_INIT_TIMEOUT; // 5 секунд
 let isStickyAdvVisible = false;
 
 export async function initYandexSDK() {

@@ -130,10 +130,37 @@
         #toolbar-separator {
             flex-grow: 1;
         }
-        #reward-btn {
-             width: auto;
-             padding: 0 12px;
+        
+        /* Стиль для отображения монет */
+        .coins-display {
+            height: 40px; /* Фиксированная высота как у кнопок */
+            padding: 0 10px; /* Убираем вертикальный padding */
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg); /* Фон как у кнопок */
+            color: var(--text-color); /* Цвет текста как у кнопок */
+            border-radius: 5px; /* Закругление как у кнопок */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer; /* Делаем курсор-указатель */
+            white-space: nowrap; /* Предотвращаем перенос текста */
+            transition: background-color 0.2s, border-color 0.2s;
         }
+        .coins-display #coins-count { /* Стиль для самой цифры монет */
+            color: #FF8C00; /* Оранжевый цвет */
+            margin-left: 5px; /* Отступ от текста "Монеты:" */
+        }
+        .coins-display:hover {
+            background-color: var(--button-hover-bg); /* Эффект наведения как у кнопок */
+        }
+        .coins-display img.coin-icon {
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
         #simulation-container {
             flex-grow: 1;
             width: 100%;
@@ -331,6 +358,200 @@
         #bottom-toolbar button:hover {
             background-color: var(--button-hover-bg);
         }
+
+        /* Styles for the new reward menu */
+        #reward-menu-panel {
+            position: fixed; /* Full screen */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent; /* Make the outer panel transparent */
+            display: none; /* Hidden by default */
+            flex-direction: column; /* Stack items vertically: title then buttons container */
+            justify-content: flex-start; /* Align content at start (for back button) */
+            align-items: center; /* Center content horizontally */
+            gap: 40px; /* Space between back button and content box */
+            padding-top: 100px; /* Adjust padding to make space for back button */
+            box-sizing: border-box; /* Include padding in width/height */
+            position: relative; /* Для позиционирования кнопки "Назад" */
+        }
+        #reward-menu-panel .reward-menu-content {
+            background: rgba(0, 0, 0, 0.8); /* Semi-transparent background for the content box */
+            border-radius: 8px;
+            padding: 40px; /* Padding inside the content box */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 40px; /* Gap between title and buttons */
+            max-width: 90%; /* Limit overall width on very large screens */
+            box-sizing: border-box;
+            max-height: 90%; /* Ensure it fits on screen */
+            overflow-y: auto; /* Scroll if content is too tall */
+        }
+        #reward-menu-panel h3 {
+            margin: 0; /* Remove margin as gap is handled by parent flex */
+            color: var(--text-color);
+            text-align: center;
+            font-size: 4em; /* Увеличено в 2 раза */
+        }
+
+        /* Кнопка "Назад" */
+        #reward-menu-back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 60px; /* Увеличен размер */
+            height: 60px; /* Увеличен размер */
+            font-size: 2em; /* Крупнее текст */
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        #reward-menu-back-btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+
+        .reward-buttons-container { /* New container for the reward buttons */
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap to new lines */
+            justify-content: center; /* Center buttons horizontally */
+            align-items: flex-start; /* Align items to the start of the cross axis (top) */
+            gap: 60px; /* Увеличено в 2 раза */
+            max-width: 90%; /* Limit overall width on very large screens */
+        }
+
+        .reward-button {
+            width: 320px; /* Увеличено в 2 раза */
+            height: 600px; /* Увеличено в 2 раза */
+            padding: 30px; /* Увеличено в 2 раза */
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border-radius: 8px; /* Slightly more rounded */
+            font-size: 1.5em; /* Увеличено для лучшей читаемости */
+            cursor: default; /* Default cursor for the parent container */
+            transition: background-color 0.2s;
+            display: flex; /* Make button content a flex column */
+            flex-direction: column;
+            justify-content: space-between; /* Distribute content top, middle, bottom */
+            align-items: center; /* Center content horizontally */
+            text-align: center;
+            box-sizing: border-box; /* Include padding in width/height */
+        }
+        /* .reward-button:hover { */
+            /* background-color: var(--button-hover-bg); */ /* Убран hover с родительской кнопки */
+        /* } */
+
+        .reward-button-header {
+            font-size: 4em; /* Увеличено для лучшей читаемости */
+            font-weight: bold;
+            color: var(--selection-color); /* White/light color */
+            line-height: 1; /* Adjust line height */
+            margin-bottom: 10px;
+        }
+
+        .reward-button-coins-container {
+            display: flex; /* Keep flex to center the single image */
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            /* Removed gap, flex-wrap, min-height as it's a single image */
+        }
+
+        /* Удален .coin-icon-small, так как теперь используются уникальные изображения */
+        /* .coin-icon-small { */
+            /* width: 288px; */
+            /* height: 288px; */
+            /* vertical-align: middle; */
+        /* } */
+
+        /* Новый стиль для уникального большого изображения монеты */
+        .reward-tier-image {
+            width: 288px; /* Явно большой размер, как запрашивалось, даже если выходит за границы */
+            height: 288px; /* Явно большой размер */
+            object-fit: contain; /* Убедитесь, что содержимое изображения видно */
+            vertical-align: middle;
+        }
+
+        /* Стиль для новой кнопки прогресса/получения награды */
+        .reward-progress-btn {
+            width: 100%; /* Занимает всю доступную ширину родительской кнопки */
+            padding: 15px 10px; /* Отступы */
+            border: 1px solid #FF8C00; /* Цвет как у текста монет */
+            background-color: #FF8C00; /* Оранжевый фон */
+            color: #333; /* Темный текст для контраста */
+            border-radius: 5px;
+            font-size: 1.2em; /* Крупнее текст */
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s, color 0.2s;
+            box-sizing: border-box; /* Учитываем padding в ширине */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .reward-progress-btn:hover:not(:disabled) {
+            background-color: #e07b00; /* Темнее оранжевый при наведении */
+            border-color: #e07b00;
+        }
+        
+        /* Состояние "Готово к получению" */
+        .reward-progress-btn.ready-to-claim {
+            background-color: #FF8C00; /* Оранжевый */
+            color: #333; /* Темный текст для контраста */
+            border-color: #e07b00;
+        }
+        .reward-progress-btn.ready-to-claim:hover:not(:disabled) {
+            background-color: #e07b00; /* Темнее оранжевый при наведении */
+            border-color: #e07b00;
+        }
+        
+        /* Состояние "Смотрим рекламу..." */
+        .reward-progress-btn.watching-ad {
+            background-color: #5cb85c; /* Зеленоватый, чтобы показать процесс */
+            color: white;
+            border-color: #4cae4c;
+            cursor: default;
+        }
+
+        /* Состояние "Реклама не загрузилась" */
+        .reward-progress-btn.ad-failed {
+            background-color: #d9534f; /* Красный */
+            color: white;
+            border-color: #d43f3a;
+        }
+        .reward-progress-btn.ad-failed:hover:not(:disabled) {
+            background-color: #c9302c;
+            border-color: #ac2925;
+        }
+
+
+        /* Состояние "Получено" - сохраняем зеленый для уникальности */
+        .reward-progress-btn.claimed {
+            background-color: #28a745; /* Зеленый */
+            color: white;
+            border-color: #218838;
+            cursor: default;
+            opacity: 0.8;
+        }
+
+        /* Общее состояние disabled */
+        .reward-progress-btn:disabled {
+            background-color: var(--button-bg); /* Серый фон как у обычных кнопок */
+            color: #888; /* Тусклый текст */
+            border-color: #666;
+            cursor: not-allowed;
+        }
     </style>
 <link rel="stylesheet" href="/index.css">
 <script type="importmap">
@@ -355,7 +576,7 @@
 
     <div id="toolbar">
         <button id="move-btn" class="active" data-translate-title="move-title">
-             <svg viewBox="0 0 24 24"><path d="M13,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V16.25L1.75,12L6,7.75V11H11V6H7.75L12,1.75L16.25,6H13Z"/></svg>
+             <svg viewBox="0 0 24 24"><path d="M13,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V18H1.75L6,13V11H1V6H7.75L3.5,1.75L7.75,6H11V1H6.25L10.5,5.25L14.75,1H9.25L13.5,5.25L17.75,1H12.25L16.5,5.25L20.75,1H15.25L19.5,5.25L23.75,1H18.25L22.5,5.25L17,10L13.5,10L13.5,6L16.25,6L16.25,10L20.5,5.75L20.5,10L16.25,14.25L16.25,10L11,10L11,6L6.75,10L6.75,6L1.5,10L1.5,5.75L5.75,10L10,5.75L14.25,10L14.25,5.75L18.5,10L18.5,5.75L22.75,10L22.75,5.75L18.5,10L13.5,10L13.5,6L16.25,6L16.25,10L20.5,5.75L20.5,10L16.25,14.25L16.25,10L11,10L11,6L6.75,10L6.75,6L1.5,10L1.5,5.75L5.75,10L10,5.75L14.25,10L14.25,5.75L18.5,10L18.5,5.75L22.75,10L22.75,5.75L18.5,10L13.5,10L13.5,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V16.25L1.75,12L6,7.75V11H11V6H7.75L12,1.75L16.25,6H13Z"/></svg>
         </button>
         <button id="finger-btn" data-translate-title="finger-title">
             <svg viewBox="0 0 24 24"><path d="m3.1 3.1l8.9 20.9l3.4-8.1l8.5-3.5L3.1 3.1Z" /></svg>
@@ -410,12 +631,13 @@
         
         <div id="toolbar-separator"></div>
         
-        <button id="reward-btn" data-translate-title="reward-title">
-            <span id="reward-btn-text" data-translate-text="reward-button-text">Награда</span>
-        </button>
+        <div id="reward-btn" class="coins-display" data-translate-title="coins-label">
+            <img class="coin-icon" src="https://goida228top.github.io/textures/монетка.png" alt="Coin">
+            <span id="coins-count">0</span>
+        </div>
         <button id="settings-btn" data-translate-title="settings-title">
              <svg viewBox="0 0 24 24">
-                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24-.42-.12-.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61.22l-2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24-.42-.12-.64l2 3.46c.12-.22.39.3.61.22l2.49-1c.23.09.49 0 .61.22l-2-3.46c-.13.22-.07.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
              </svg>
         </button>
     </div>
@@ -503,6 +725,19 @@
             <button id="do-nothing-btn" data-translate-text="do-nothing-button">Ничего не делать</button>
         </div>
         <button id="dont-ask-again-btn" data-translate-text="dont-ask-again-button">Больше не спрашивать</button>
+    </div>
+
+    <!-- Новое меню наград -->
+    <div id="reward-menu-panel" class="popup">
+        <button id="reward-menu-back-btn" data-translate-title="back-button">&larr;</button>
+        <div class="reward-menu-content">
+            <h3 data-translate-text="reward-menu-title">Получить Резонансы</h3>
+            <div class="reward-buttons-container">
+                <div id="reward-10-btn" class="reward-button" role="button" data-ads="1" data-reward="10"></div>
+                <div id="reward-50-btn" class="reward-button" role="button" data-ads="3" data-reward="50"></div>
+                <div id="reward-100-btn" class="reward-button" role="button" data-ads="5" data-reward="100"></div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="./src/index.js"></script>

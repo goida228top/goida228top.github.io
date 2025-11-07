@@ -5,6 +5,7 @@ export const container = document.getElementById('simulation-container');
 // Панели
 export const settingsPanel = document.getElementById('settings-panel');
 export const objectPropertiesPanel = document.getElementById('object-properties-panel');
+export const rewardMenuPanel = document.getElementById('reward-menu-panel'); // Новое меню наград
 
 // Эффекты
 export const waterEffectContainer = document.getElementById('water-effect-container');
@@ -27,8 +28,14 @@ export const tntLargeButton = document.getElementById('tnt-large-btn');
 export const waterButton = document.getElementById('water-btn');
 export const eraserButton = document.getElementById('eraser-btn');
 export const settingsButton = document.getElementById('settings-btn');
-export const rewardButton = document.getElementById('reward-btn');
-export const rewardButtonText = document.getElementById('reward-btn-text');
+export const coinsDisplay = document.getElementById('reward-btn'); // Теперь div для отображения монет
+export const coinsCountSpan = document.getElementById('coins-count'); // Span для количества монет
+
+// Кнопки меню наград
+export const reward10Btn = document.getElementById('reward-10-btn');
+export const reward50Btn = document.getElementById('reward-50-btn');
+export const reward100Btn = document.getElementById('reward-100-btn');
+export const rewardMenuBackBtn = document.getElementById('reward-menu-back-btn'); // Кнопка "Назад"
 
 export const toolButtons = [moveButton, fingerButton, boxButton, polygonButton, brushButton, tntSmallButton, tntMediumButton, tntLargeButton, waterButton, eraserButton];
 

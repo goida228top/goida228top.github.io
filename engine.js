@@ -2,7 +2,7 @@
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { drawSelection } from './selection.js';
-import { PHYSICS_SCALE } from './config.js';
+import { PHYSICS_SCALE } from './game_config.js';
 import { renderWater, updateWaterPhysics } from './water.js'; // Импортируем новую функцию физики воды
 
 let isPaused = false;

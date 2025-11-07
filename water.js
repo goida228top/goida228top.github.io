@@ -1,24 +1,35 @@
 import planck from './planck.js';
 import * as Dom from './dom.js';
-import { PHYSICS_SCALE } from './config.js';
+import { 
+    PHYSICS_SCALE,
+    WATER_MAX_PARTICLES,
+    WATER_VISUAL_RADIUS,
+    WATER_PHYSICAL_RADIUS_FACTOR,
+    WATER_GROUP_INDEX,
+    WATER_INTERACTION_RADIUS_FACTOR,
+    WATER_STIFFNESS,
+    WATER_REPULSION_STRENGTH,
+    WATER_VISCOSITY,
+    WATER_MAX_FORCE_SQ
+} from './game_config.js';
 
 const { Vec2 } = planck;
 
-const MAX_PARTICLES = 1500;
+const MAX_PARTICLES = WATER_MAX_PARTICLES;
 const waterParticlesPool = [];
 let currentParticleIndex = 0;
 
-const VISUAL_RADIUS = 10;
-const PHYSICAL_RADIUS = (VISUAL_RADIUS * 0.6) / PHYSICS_SCALE;
+const VISUAL_RADIUS = WATER_VISUAL_RADIUS;
+const PHYSICAL_RADIUS = (VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 
 // --- Новые константы для симуляции жидкости ---
-const WATER_GROUP_INDEX = -1;
-const INTERACTION_RADIUS = PHYSICAL_RADIUS * 3;
+// WATER_GROUP_INDEX уже импортирован
+const INTERACTION_RADIUS = PHYSICAL_RADIUS * WATER_INTERACTION_RADIUS_FACTOR;
 const INTERACTION_RADIUS_SQ = INTERACTION_RADIUS * INTERACTION_RADIUS;
-const STIFFNESS = 0.08;
-const REPULSION_STRENGTH = 0.1;
-const VISCOSITY = 0.05;
-const MAX_FORCE_SQ = 4.0;
+const STIFFNESS = WATER_STIFFNESS;
+const REPULSION_STRENGTH = WATER_REPULSION_STRENGTH;
+const VISCOSITY = WATER_VISCOSITY;
+const MAX_FORCE_SQ = WATER_MAX_FORCE_SQ;
 
 let waterColor = getComputedStyle(document.documentElement).getPropertyValue('--water-color-transparent').trim() || 'hsla(230, 100%, 50%, 0.75)';
 

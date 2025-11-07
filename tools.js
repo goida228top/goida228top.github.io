@@ -6,9 +6,16 @@ import * as Dom from './dom.js';
 import { toolState, selectBody, deselectBody } from './selection.js';
 import { spawnWaterParticle } from './water.js';
 import { showObjectPropertiesPanel, hideObjectPropertiesPanel } from './ui.js';
-import { PHYSICS_SCALE } from './config.js';
 import { addExplosionEffect } from './engine.js';
 import { tntTypes } from './tnt_textures.js'; // Импортируем tntTypes из нового файла
+import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
+import { 
+    PHYSICS_SCALE,
+    TOOL_SETTINGS,
+    WATER_VISUAL_RADIUS,
+    WATER_PHYSICAL_RADIUS_FACTOR,
+    WATER_INTERACTION_RADIUS_FACTOR, // Добавлен импорт, хотя используется только в water.js
+} from './game_config.js';
 
 // Состояния инструментов
 let mouseJoint = null;
@@ -24,30 +31,14 @@ let polygonVertices = [];
 
 // Для кисти
 let lastBrushPoint = null;
-const BRUSH_RADIUS = 8; // в пикселях
+const BRUSH_RADIUS = TOOL_SETTINGS.brush.radius; // Радиус кисти в пикселях
 
 let waterSpawnInterval = null;
 
 // Константы для спавна воды, дублируют значения из water.js для согласованности
-const WATER_VISUAL_RADIUS = 10;
-const WATER_PHYSICAL_RADIUS_FACTOR = 0.6;
 const PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 
-// Настройки инструментов, теперь являются внутренними константами
-const toolSettings = {
-    tnt: {
-        small: { power: 0.3 },
-        medium: { power: 2 },
-        large: { power: 5 }
-    },
-    density: {
-        minMass: 0.0025,
-        normal: 0.0075
-    }
-};
-
-// Глобальная карта для кэширования загруженных изображений текстур ТНТ
-const tntTextures = {};
+// Глобальная карта для кэширования загруженных изображений текстур ТНТ - УДАЛЕНО
 
 /**
  * Загружает текстуру ТНТ из URL или возвращает уже загруженную.
@@ -55,30 +46,7 @@ const tntTextures = {};
  * @param {string} imageUrl - URL изображения.
  * @returns {Promise<HTMLImageElement | null>} - Промис, разрешающийся в объект Image или null в случае ошибки.
  */
-async function loadTntTexture(type, imageUrl) {
-    if (tntTextures[type] !== undefined) {
-        return Promise.resolve(tntTextures[type]);
-    }
-    if (!imageUrl) { // Если текстура не предоставлена, возвращаем null
-        tntTextures[type] = null;
-        return Promise.resolve(null);
-    }
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous"; // Важно: для загрузки с внешнего домена на канвас
-        img.onload = () => {
-            tntTextures[type] = img;
-            resolve(img);
-        };
-        img.onerror = (e) => {
-            console.error(`Failed to load TNT texture for type ${type} from URL: ${imageUrl}`, e);
-            tntTextures[type] = null; // Store null to prevent retrying
-            resolve(null);
-        };
-        img.src = imageUrl; // Устанавливаем src напрямую из URL
-    });
-}
+// loadTntTexture функция удалена, используем ImageLoader.getImage напрямую
 
 
 // --- Объявляем функции взрыва заранее для корректной работы ---
@@ -99,8 +67,11 @@ detonateTNT = function(world, body) {
     }
     const userData = body.getUserData() || {};
     const type = userData.tntType || 'small'; // По умолчанию - малый ТНТ
-    const tntProps = tntTypes[type];
-    const explosionPower = toolSettings.tnt[type].power; // Используем настраиваемую мощность
+    
+    // Получаем параметры ТНТ из TOOL_SETTINGS
+    const tntConfig = TOOL_SETTINGS.tnt[type];
+    const explosionPower = tntConfig.power; 
+    const explosionRadius = tntConfig.explosionRadius;
 
     const explosionCenter = body.getPosition();
     try {
@@ -110,13 +81,13 @@ detonateTNT = function(world, body) {
         return;
     }
     // Создаем взрыв на месте ТНТ
-    createExplosion(world, explosionCenter, tntProps.radius, explosionPower);
+    createExplosion(world, explosionCenter, explosionRadius, explosionPower);
 };
 
 /**
  * Создает визуальный и физический эффект взрыва.
  * @param {import('planck-js').World} world
- * @param {import('planck-js').Vec2} center - Центр взрыва в метрах.
+ * @param {import('planock-js').Vec2} center - Центр взрыва в метрах.
  * @param {number} radius - Радиус взрыва в метрах.
  * @param {number} power - Сила взрыва.
  */
@@ -178,12 +149,12 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
     ground = world.createBody();
 
-    // Предварительная загрузка текстур ТНТ
-    await Promise.all([
-        loadTntTexture('small', tntTypes.small.textureUrl),
-        loadTntTexture('medium', tntTypes.medium.textureUrl),
-        loadTntTexture('large', tntTypes.large.textureUrl),
-    ]);
+    // Предварительная загрузка текстур ТНТ - УДАЛЕНО, теперь это делается централизованно через ImageLoader
+    // await Promise.all([
+    //     loadTntTexture('small', tntTypes.small.textureUrl),
+    //     loadTntTexture('medium', tntTypes.medium.textureUrl),
+    //     loadTntTexture('large', tntTypes.large.textureUrl),
+    // ]);
 
     Dom.container.addEventListener('mousedown', handleMouseDown);
     Dom.container.addEventListener('mousemove', handleMouseMove);
@@ -360,27 +331,22 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
 // --- Логика инструментов ---
 
-async function createTNT(world, position, type = 'small') {
-    const tntProps = tntTypes[type];
-    const textureImage = await loadTntTexture(type, tntProps.textureUrl); // Загружаем/получаем текстуру
+function createTNT(world, position, type = 'small') {
+    const tntProps = tntTypes[type]; 
+    const tntConfig = TOOL_SETTINGS.tnt[type]; 
+    const textureImage = ImageLoader.getImage(tntProps.textureUrl); // Используем ImageLoader
 
-    // Общая ширина и высота объекта в метрах.
-    // Изменено для лучшего соответствия визуальному размеру и пропорциям.
-    const baseWidth = 0.8;
-    const baseHeight = 0.56;
-    let scaleFactor = 1;
+    // Визуальные размеры объекта в метрах (полный размер для текстуры)
+    const visualWidth = tntConfig.baseVisualWidth;
+    const visualHeight = tntConfig.baseVisualHeight;
 
-    if (type === 'medium') {
-        scaleFactor = 2;
-    } else if (type === 'large') {
-        scaleFactor = 3;
-    }
+    // Физические размеры (хитбокс) в метрах, с учетом коэффициентов
+    const physicsWidth = visualWidth * tntConfig.hitboxWidthRatio;
+    const physicsHeight = visualHeight * tntConfig.hitboxHeightRatio;
 
-    const visualWidth = baseWidth * scaleFactor;
-    const visualHeight = baseHeight * scaleFactor;
-
-    const physicsWidth = visualWidth / 1.5;
-    const physicsHeight = visualHeight / 1.5;
+    // Смещение центра хитбокса относительно центра визуального объекта
+    // Если фитиль слева, то хитбокс смещается вправо
+    const hitboxOffsetX = visualWidth * tntConfig.hitboxOffsetXRatio;
 
     const body = world.createDynamicBody({
         position: position,
@@ -388,12 +354,11 @@ async function createTNT(world, position, type = 'small') {
         userData: {
             label: 'tnt',
             tntType: type,
-            hasFuse: true, // Это свойство не используется для отрисовки фитиля, но может быть полезно для логики.
+            hasFuse: true, 
             render: {
                 texture: textureImage, // Используем загруженное изображение
-                // Удаляем borderColor, так как обводка не нужна
-                // strokeStyle: tntProps.borderColor, // Опциональная обводка
-                width: visualWidth,
+                // strokeStyle: tntProps.borderColor || '#aaaaaa', // Обводка у ТНТ не нужна
+                width: visualWidth, // Сохраняем визуальные размеры
                 height: visualHeight
             }
         }
@@ -401,9 +366,8 @@ async function createTNT(world, position, type = 'small') {
 
     const fixtureDef = { density: 1.5, friction: 0.6, restitution: 0.1 };
     
-    // Создаем одну бокс-фикстуру для всего блока ТНТ.
-    // Уменьшаем хитбокс в 1.5 раза, чтобы он лучше соответствовал видимой части текстуры.
-    body.createFixture(planck.Box(physicsWidth / 2, physicsHeight / 2), fixtureDef);
+    // Создаем одну бокс-фикстуру для динамитных палок со смещением
+    body.createFixture(planck.Box(physicsWidth / 2, physicsHeight / 2, planck.Vec2(hitboxOffsetX, 0)), fixtureDef);
     body.resetMassData();
 }
 
@@ -429,8 +393,8 @@ function spawnWaterCluster(world, x, y) {
  * @returns {number} - Расчетная плотность.
  */
 function getDensityForArea(area) {
-    const MIN_BODY_MASS = toolSettings.density.minMass;
-    const NORMAL_DENSITY = toolSettings.density.normal;
+    const MIN_BODY_MASS = TOOL_SETTINGS.density.minMass;
+    const NORMAL_DENSITY = TOOL_SETTINGS.density.normal;
     
     // Пороговое значение площади, ниже которого масса становится фиксированной
     const AREA_THRESHOLD = MIN_BODY_MASS / NORMAL_DENSITY;
