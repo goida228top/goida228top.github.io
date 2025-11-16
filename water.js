@@ -16,7 +16,7 @@ import {
 const { Vec2 } = planck;
 
 const MAX_PARTICLES = WATER_MAX_PARTICLES;
-const waterParticlesPool = [];
+export const waterParticlesPool = [];
 let currentParticleIndex = 0;
 
 const VISUAL_RADIUS = WATER_VISUAL_RADIUS;

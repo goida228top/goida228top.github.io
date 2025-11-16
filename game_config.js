@@ -59,6 +59,14 @@ export const TOOL_SETTINGS = {
     },
     brush: {
         radius: 8 // Радиус кисти в пикселях
+    },
+    spring: { // NEW
+        defaultStiffness: 5.0, // frequencyHz
+        defaultDamping: 0.5,   // dampingRatio
+        minStiffness: 0.0,
+        maxStiffness: 100.0,
+        minDamping: 0.0,
+        maxDamping: 1.0,
     }
 };
 
@@ -73,6 +81,14 @@ export const WATER_STIFFNESS = 0.08;
 export const WATER_REPULSION_STRENGTH = 0.1;
 export const WATER_VISCOSITY = 0.05;
 export const WATER_MAX_FORCE_SQ = 4.0; // Максимальная квадрат силы
+
+// --- Настройки песка (квадратики) ---
+export const SAND_MAX_PARTICLES = 1500;
+export const SAND_VISUAL_RADIUS = 5; // Визуальный "радиус" (половина стороны) квадрата
+export const SAND_PHYSICAL_RADIUS_FACTOR = 0.6; // Физический хитбокс меньше визуального
+export const SAND_FRICTION = 1.0;
+export const SAND_RESTITUTION = 0.0;
+export const SAND_DENSITY = 0.2;
 
 // --- Настройки Yandex SDK ---
 export const YANDEX_INIT_TIMEOUT = 5000; // 5 секунд
@@ -93,4 +109,6 @@ export const ALL_IMAGE_URLS = [
     'https://goida228top.github.io/textures/крас.png', // Small TNT
     'https://goida228top.github.io/textures/син.png', // Medium TNT
     'https://goida228top.github.io/textures/жел.png', // Large TNT
+    'https://goida228top.github.io/textures/реклама.png', // Ad icon
+    'https://goida228top.github.io/textures/сохранение.png', // Save icon
 ];

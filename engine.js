@@ -1,14 +1,21 @@
+// @ts-nocheck
+
 
 import planck from './planck.js';
 import * as Dom from './dom.js';
-import { drawSelection } from './selection.js';
+import { drawSelection, drawPreview, toolState } from './selection.js';
 import { PHYSICS_SCALE } from './game_config.js';
 import { renderWater, updateWaterPhysics } from './water.js'; // Импортируем новую функцию физики воды
+import { renderSand } from './sand.js'; // Импортируем функции для песка, но updateSandPhysics больше не нужна
+import { keyState } from './ui.js'; // Импортируем состояние клавиш для моторов
 
 let isPaused = false;
 let cameraData = null;
 let beforeRenderCallback = () => {};
 let activeExplosions = [];
+
+// Новый Path2D для рендеринга иконки сварки (искры)
+const weldIconPath = new Path2D('M12 0 L15.5 8.5 L24 12 L15.5 15.5 L12 24 L8.5 15.5 L0 12 L8.5 8.5 Z');
 
 export function addExplosionEffect(positionInMeters, maxRadius = 15, duration = 300) {
     activeExplosions.push({
@@ -57,6 +64,81 @@ function drawHitbox(context, body, scale) {
     }
 }
 
+/**
+ * Рисует зигзагообразную линию, имитирующую пружину.
+ * @param {CanvasRenderingContext2D} context 
+ * @param {planck.Vec2} p1 - Начальная точка в метрах
+ * @param {planck.Vec2} p2 - Конечная точка в метрах
+ * @param {number} segments - Количество сегментов
+ * @param {number} widthRatio - Отношение ширины пружины к ее длине
+ */
+function drawSpring(context, p1, p2, segments = 10, widthRatio = 0.2) {
+    const p1_px = { x: p1.x * PHYSICS_SCALE, y: p1.y * PHYSICS_SCALE };
+    const p2_px = { x: p2.x * PHYSICS_SCALE, y: p2.y * PHYSICS_SCALE };
+
+    const dx = p2_px.x - p1_px.x;
+    const dy = p2_px.y - p1_px.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 1) return;
+
+    const nx = -dy / dist; // Нормализованный перпендикулярный вектор
+    const ny = dx / dist;
+
+    context.beginPath();
+    context.moveTo(p1_px.x, p1_px.y);
+
+    const segmentLength = dist / (segments + 1);
+    // Ширина пружины адаптируется к её длине, но имеет максимальное значение
+    const springWidth = Math.min(dist / 2, segmentLength * 1.5);
+
+    for (let i = 1; i <= segments; i++) {
+        const segmentProgress = i / (segments + 1);
+        const currentX = p1_px.x + dx * segmentProgress;
+        const currentY = p1_px.y + dy * segmentProgress;
+
+        const offsetSign = (i % 2 === 0) ? 1 : -1;
+        const offsetX = nx * springWidth * offsetSign;
+        const offsetY = ny * springWidth * offsetSign;
+
+        context.lineTo(currentX + offsetX, currentY + offsetY);
+    }
+
+    context.lineTo(p2_px.x, p2_px.y);
+    context.stroke();
+}
+
+// Новая функция для применения сил/импульсов от моторов
+function applyMotorForces(world) {
+    // Определяем направление вращения на основе нажатых клавиш
+    let moveDirection = 0;
+    if (keyState.ArrowRight && !keyState.ArrowLeft) {
+        moveDirection = 1; // Вперед = вращение по часовой стрелке (положительное)
+    } else if (keyState.ArrowLeft && !keyState.ArrowRight) {
+        moveDirection = -1; // Назад = вращение против часовой стрелки (отрицательное)
+    }
+    
+    // Если никакая клавиша не нажата, выходим
+    if (moveDirection === 0) {
+        return;
+    }
+
+    // Проходим по всем телам в мире
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData();
+        // Если у тела есть включенный мотор
+        if (userData?.motor?.isEnabled) {
+            const motorSpeed = userData.motor.speed || 10.0;
+            const targetAngVel = moveDirection * Math.abs(motorSpeed);
+            
+            // Применяем импульс, чтобы достичь целевой угловой скорости
+            const currentAngVel = body.getAngularVelocity();
+            const angVelChange = targetAngVel - currentAngVel;
+            const impulse = body.getInertia() * angVelChange;
+            body.applyAngularImpulse(impulse, true);
+        }
+    }
+}
+
 
 // --- Кастомный рендерер для Planck.js ---
 function renderWorld(world, render, camera) {
@@ -80,10 +162,10 @@ function renderWorld(world, render, camera) {
             continue;
         }
 
-        if (userData.label === 'water' || (userData.render && userData.render.visible === false)) {
+        if (userData.label === 'water' || userData.label === 'sand' || (userData.render && userData.render.visible === false)) { // NEW: Пропускаем частицы песка
             continue;
         }
-
+        
         const xf = body.getTransform();
 
         for (let fixture = body.getFixtureList(); fixture; fixture = fixture.getNext()) {
@@ -94,7 +176,6 @@ function renderWorld(world, render, camera) {
 
             const renderStyle = userData.render || {};
             let fillStyle = renderStyle.fillStyle || '#cccccc';
-            let strokeStyle = renderStyle.strokeStyle || '#aaaaaa';
             
             // НОВАЯ ЛОГИКА: Отрисовка текстуры, если она есть
             if (renderStyle.texture && shapeType === 'polygon') {
@@ -154,25 +235,10 @@ function renderWorld(world, render, camera) {
                     drawHeight
                 );
 
-                // Если задан цвет обводки, отрисовываем его по визуальным размерам
-                // Убираем обводку для TNT, так как она не нужна
-                if (renderStyle.strokeStyle && userData.label !== 'tnt') { 
-                    context.strokeStyle = renderStyle.strokeStyle;
-                    context.lineWidth = 2 * scale;
-                    context.strokeRect(
-                        -boxWidthPx / 2,
-                        -boxHeightPx / 2,
-                        boxWidthPx,
-                        boxHeightPx
-                    );
-                }
-
                 context.restore();
             } else {
                 // Существующая логика отрисовки для сплошных цветов
                 context.fillStyle = fillStyle;
-                context.strokeStyle = strokeStyle;
-                context.lineWidth = 2 * scale;
                 
                 if (shapeType === 'circle') {
                     const center = planck.Transform.mulVec2(xf, shape.m_p);
@@ -202,7 +268,6 @@ function renderWorld(world, render, camera) {
                 if (body.getType() !== 'static' || (userData.render && userData.render.fillStyle)) {
                      context.fill();
                 }
-                context.stroke();
             }
         }
 
@@ -210,6 +275,106 @@ function renderWorld(world, render, camera) {
             drawHitbox(context, body, scale);
         }
     }
+    
+    // Отрисовка соединений
+    for (let joint = world.getJointList(); joint; joint = joint.getNext()) {
+        const bodyA = joint.getBodyA();
+        const bodyB = joint.getBodyB();
+
+        if (!bodyA.isActive() && !bodyB.isActive()) continue;
+        
+        // --- Отрисовка ПРУЖИН и СТЕРЖНЕЙ ---
+        if (joint.getType() === 'distance-joint') {
+            const jointData = joint.getUserData() || {};
+            const p1 = joint.getAnchorA();
+            const p2 = joint.getAnchorB();
+            
+            // Если соединение выбрано, рисуем его выделенным
+            if (toolState.selectedSpring === joint) {
+                context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--selection-color').trim() || '#ffffff';
+                context.lineWidth = 2.5;
+                context.globalAlpha = 0.9;
+            } else {
+                context.strokeStyle = '#dddddd';
+                context.lineWidth = 1.5;
+                context.globalAlpha = 0.7;
+            }
+
+            // Рендерим в зависимости от типа, сохраненного в userData
+            if (jointData.tool === 'rod') {
+                const p1_px = { x: p1.x * PHYSICS_SCALE, y: p1.y * PHYSICS_SCALE };
+                const p2_px = { x: p2.x * PHYSICS_SCALE, y: p2.y * PHYSICS_SCALE };
+                context.beginPath();
+                context.moveTo(p1_px.x, p1_px.y);
+                context.lineTo(p2_px.x, p2_px.y);
+                context.stroke();
+            } else { // По умолчанию рисуем как пружину
+                drawSpring(context, p1, p2);
+            }
+            context.globalAlpha = 1.0; // Сбрасываем alpha
+        }
+        
+        // --- Отрисовка СВАРКИ ---
+        else if (joint.getType() === 'weld-joint') {
+            const posA = bodyA.getPosition();
+            const posB = bodyB.getPosition();
+            
+            const midX = (posA.x + posB.x) / 2 * PHYSICS_SCALE;
+            const midY = (posA.y + posB.y) / 2 * PHYSICS_SCALE;
+            const iconSize = 16; // в "мировых пикселях"
+
+            const gradient = context.createRadialGradient(midX, midY, 0, midX, midY, iconSize);
+            gradient.addColorStop(0, 'rgba(255, 237, 160, 0.95)'); // Light yellow
+            gradient.addColorStop(0.7, 'rgba(255, 179, 71, 0.9)');  // Orange
+            gradient.addColorStop(1, 'rgba(255, 140, 0, 0.8)');   // Darker orange
+
+            context.save();
+            context.translate(midX, midY);
+            
+            // Масштабируем иконку (24x24) до нужного размера (iconSize)
+            const scaleFactor = iconSize / 24;
+            context.scale(scaleFactor, scaleFactor);
+            // Центрируем иконку
+            context.translate(-12, -12);
+
+            context.fillStyle = gradient;
+            context.fill(weldIconPath);
+
+            context.restore();
+        }
+    }
+    
+    // --- НОВЫЙ ЦИКЛ: Отрисовка подсказки для привязки (ПОВЕРХ ВСЕГО) ---
+    const isJointToolActive = toolState.currentTool === 'spring' || toolState.currentTool === 'rod';
+    if (isJointToolActive) {
+        for (let body = world.getBodyList(); body; body = body.getNext()) {
+            const firstFixture = body.getFixtureList();
+            if (body.isActive() && firstFixture && firstFixture.getShape().getType() === 'circle') {
+                const center = body.getPosition();
+                // --- MODIFIED: Динамический радиус подсказки ---
+                const circleRadius = firstFixture.getShape().m_radius;
+                const hintRadius = Math.max(0.15, Math.min(circleRadius * 0.2, 0.5)); // 20% от радиуса, но в пределах 0.15м - 0.5м
+
+                context.beginPath();
+                context.arc(
+                    center.x * PHYSICS_SCALE,
+                    center.y * PHYSICS_SCALE,
+                    hintRadius * PHYSICS_SCALE, // Используем динамический радиус
+                    0, 2 * Math.PI
+                );
+                
+                // Делаем подсказку очень заметной
+                context.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
+                context.fill();
+                context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                context.lineWidth = 1.5; 
+                context.setLineDash([4, 4]);
+                context.stroke();
+                context.setLineDash([]);
+            }
+        }
+    }
+
 
     // Отрисовка взрывов
     const now = performance.now();
@@ -243,6 +408,9 @@ function renderWorld(world, render, camera) {
         
         return true;
     });
+    
+    // Отрисовка предпросмотра инструмента
+    drawPreview(context);
     
     // Отрисовка выделения поверх всего (в том же отмасштабированном пространстве)
     drawSelection(context);
@@ -343,6 +511,7 @@ export function initializeEngine() {
             accumulator += deltaTime;
             while (accumulator >= timeStep) {
                 updateWaterPhysics();
+                applyMotorForces(world); // Применяем силы моторов на каждом шаге физики
                 world.step(timeStep, velocityIterations, positionIterations);
                 accumulator -= timeStep;
             }
@@ -351,7 +520,8 @@ export function initializeEngine() {
         if (cameraData) {
             beforeRenderCallback(cameraData);
             renderWorld(world, render, cameraData);
-            renderWater(cameraData); 
+            renderWater(cameraData);
+            renderSand(cameraData); // NEW: Отрисовка песка
         }
     }
     

@@ -3,7 +3,8 @@ import { setLang } from './lang.js';
 import { YANDEX_INIT_TIMEOUT } from './game_config.js';
 
 let ysdkInstance = null;
-const INIT_TIMEOUT = YANDEX_INIT_TIMEOUT; // 5 секунд
+let player = null; // Переменная для хранения объекта игрока
+const INIT_TIMEOUT = YANDEX_INIT_TIMEOUT; 
 let isStickyAdvVisible = false;
 
 export async function initYandexSDK() {
@@ -24,7 +25,16 @@ export async function initYandexSDK() {
         window.ysdk = ysdkInstance; 
         console.log('Yandex SDK initialized.');
         
-        // Set language based on SDK
+        // Получаем объект игрока после успешной инициализации
+        try {
+            player = await ysdkInstance.getPlayer();
+            console.log('Yandex Player object received.');
+        } catch (e) {
+            console.error('Could not get Yandex Player object:', e);
+            player = null; // Убедимся, что player равен null в случае ошибки
+        }
+
+        // Устанавливаем язык на основе SDK
         if (ysdkInstance.environment?.i18n?.lang) {
             setLang(ysdkInstance.environment.i18n.lang);
         }
@@ -46,6 +56,36 @@ export function gameReady() {
         ysdkInstance.features.LoadingAPI.ready();
     } else {
         console.log('Game Ready API not available or Yandex SDK not initialized.');
+    }
+}
+
+// Новая функция для сохранения данных в облако
+export async function savePlayer_Data(data) {
+    if (!player) {
+        console.warn('Yandex Player not available, cannot save to cloud.');
+        return;
+    }
+    try {
+        await player.setData(data, true); // true для немедленной отправки
+        console.log('Player data saved to cloud:', data);
+    } catch (e) {
+        console.error('Failed to save data to Yandex Cloud:', e);
+    }
+}
+
+// Новая функция для загрузки данных из облака
+export async function loadPlayer_Data() {
+    if (!player) {
+        console.warn('Yandex Player not available, cannot load from cloud.');
+        return null;
+    }
+    try {
+        const data = await player.getData();
+        console.log('Player data loaded from cloud:', data);
+        return data || {}; // Возвращаем пустой объект, если данных нет
+    } catch (e) {
+        console.error('Failed to load data from Yandex Cloud:', e);
+        return null; // Возвращаем null при ошибке для запуска отката
     }
 }
 
@@ -82,7 +122,7 @@ export function showFullscreenAdv(engineData, onCloseCallback) {
 }
 
 
-export function showRewardedVideo(engineData, onRewarded) {
+export function showRewardedVideo(engineData, onRewarded, onError) {
     if (!window.ysdk) {
         console.warn('Yandex SDK not available. Simulating successful ad reward for testing.');
         onRewarded(); 
@@ -103,8 +143,12 @@ export function showRewardedVideo(engineData, onRewarded) {
                 console.log('User was rewarded!');
                 onRewarded();
             },
-            onClose: () => {
-                console.log('Rewarded video ad closed.');
+            onClose: (wasShown) => {
+                console.log(`Rewarded video ad closed. Was shown: ${wasShown}`);
+                if (!wasShown && onError) {
+                    // Если реклама не была показана, вызываем onError
+                    onError();
+                }
                 if (wasRunning) {
                     runner.enabled = true;
                 }
@@ -112,6 +156,9 @@ export function showRewardedVideo(engineData, onRewarded) {
             },
             onError: (error) => {
                 console.error('Rewarded video error:', error);
+                if (onError) {
+                    onError(error);
+                }
                 if (wasRunning) {
                     runner.enabled = true;
                 }

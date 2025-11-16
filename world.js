@@ -57,5 +57,8 @@ export function setupWorld(world, viewportHeight) {
     
     boundaries.push(ground);
     
-    return { GROUND_Y };
+    return { 
+        GROUND_Y,
+        groundBody: ground // Возвращаем тело земли для моторов
+    };
 }

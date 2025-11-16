@@ -3,9 +3,16 @@
 
 import planck from './planck.js';
 import * as Dom from './dom.js';
-import { toolState, selectBody, deselectBody } from './selection.js';
+import { 
+    toolState, 
+    selectBody, deselectBody, 
+    setFirstJointBody, getFirstJointBody,
+    selectSpring, deselectSpring,
+    setPreview, clearPreview 
+} from './selection.js';
 import { spawnWaterParticle } from './water.js';
-import { showObjectPropertiesPanel, hideObjectPropertiesPanel } from './ui.js';
+import { spawnSandParticle } from './sand.js'; // NEW: Импортируем спавнер песка
+import { showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel } from './ui.js';
 import { addExplosionEffect } from './engine.js';
 import { tntTypes } from './tnt_textures.js'; // Импортируем tntTypes из нового файла
 import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
@@ -14,8 +21,11 @@ import {
     TOOL_SETTINGS,
     WATER_VISUAL_RADIUS,
     WATER_PHYSICAL_RADIUS_FACTOR,
-    WATER_INTERACTION_RADIUS_FACTOR, // Добавлен импорт, хотя используется только в water.js
+    // WATER_INTERACTION_RADIUS_FACTOR, // Добавлен импорт, хотя используется только в water.js
+    SAND_VISUAL_RADIUS, // NEW: Визуальный радиус песка
+    SAND_PHYSICAL_RADIUS_FACTOR, // NEW: Физический радиус песка
 } from './game_config.js';
+import { t } from './lang.js';
 
 // Состояния инструментов
 let mouseJoint = null;
@@ -28,26 +38,19 @@ let lastMousePos = planck.Vec2(0, 0);
 
 // Для полигонов
 let polygonVertices = [];
+let polygonMouseDownTime = 0;
+const POLYGON_HOLD_DURATION = 400; // мс для удержания ЛКМ
 
 // Для кисти
 let lastBrushPoint = null;
 const BRUSH_RADIUS = TOOL_SETTINGS.brush.radius; // Радиус кисти в пикселях
 
 let waterSpawnInterval = null;
+let sandSpawnInterval = null; // NEW: Интервал для спавна песка
 
 // Константы для спавна воды, дублируют значения из water.js для согласованности
-const PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
-
-// Глобальная карта для кэширования загруженных изображений текстур ТНТ - УДАЛЕНО
-
-/**
- * Загружает текстуру ТНТ из URL или возвращает уже загруженную.
- * @param {string} type - Тип ТНТ ('small', 'medium', 'large').
- * @param {string} imageUrl - URL изображения.
- * @returns {Promise<HTMLImageElement | null>} - Промис, разрешающийся в объект Image или null в случае ошибки.
- */
-// loadTntTexture функция удалена, используем ImageLoader.getImage напрямую
-
+const WATER_PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
+const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE; // NEW: Физический радиус песка
 
 // --- Объявляем функции взрыва заранее для корректной работы ---
 let createExplosion;
@@ -149,13 +152,6 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
     ground = world.createBody();
 
-    // Предварительная загрузка текстур ТНТ - УДАЛЕНО, теперь это делается централизованно через ImageLoader
-    // await Promise.all([
-    //     loadTntTexture('small', tntTypes.small.textureUrl),
-    //     loadTntTexture('medium', tntTypes.medium.textureUrl),
-    //     loadTntTexture('large', tntTypes.large.textureUrl),
-    // ]);
-
     Dom.container.addEventListener('mousedown', handleMouseDown);
     Dom.container.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -165,10 +161,13 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
     function handleMouseDown(e) {
         if (isPanning() || e.target !== render.canvas) return;
+        
+        // --- Обработка только левого клика (e.button === 0) ---
+        if (e.button !== 0) return;
 
+        isDrawing = true;
         startPoint = getMousePos(e); // в метрах
         lastMousePos = startPoint;
-        isDrawing = true;
 
         switch (toolState.currentTool) {
             case 'move':
@@ -191,6 +190,42 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     }
                 }
                 break;
+            case 'box':
+            case 'circle':
+                setPreview(toolState.currentTool, startPoint, startPoint);
+                break;
+            case 'polygon':
+                polygonMouseDownTime = Date.now();
+                break;
+            case 'brush':
+                 lastBrushPoint = startPoint;
+                 createBrushStroke(world, startPoint, startPoint, BRUSH_RADIUS / PHYSICS_SCALE);
+                 break;
+            case 'weld':
+            case 'spring':
+            case 'rod':
+                const firstBody = getBodyAt(world, startPoint, true);
+                if (firstBody) {
+                    let anchorPoint = startPoint;
+                    const firstFixture = firstBody.getFixtureList();
+                    if (firstFixture && firstFixture.getShape().getType() === 'circle') {
+                        const circleRadius = firstFixture.getShape().m_radius;
+                        const hintRadius = Math.max(0.15, Math.min(circleRadius * 0.2, 0.5));
+                        const center = firstBody.getPosition();
+                        const distSq = planck.Vec2.distanceSquared(startPoint, center);
+                        if (distSq < hintRadius * hintRadius) {
+                            anchorPoint = center;
+                        }
+                    }
+                    setFirstJointBody(firstBody, anchorPoint);
+                }
+                break;
+            case 'tnt-small':
+            case 'tnt-medium':
+            case 'tnt-large':
+                const tntType = toolState.currentTool.replace('tnt-', '');
+                createTNT(world, startPoint, tntType);
+                break;
             case 'water':
                 spawnWaterCluster(world, startPoint.x, startPoint.y);
                 if (waterSpawnInterval) clearInterval(waterSpawnInterval);
@@ -198,351 +233,602 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     spawnWaterCluster(world, lastMousePos.x, lastMousePos.y);
                 }, 30);
                 break;
-            case 'tnt-small':
-                createTNT(world, startPoint, 'small');
-                isDrawing = false;
-                break;
-            case 'tnt-medium':
-                createTNT(world, startPoint, 'medium');
-                isDrawing = false;
-                break;
-            case 'tnt-large':
-                createTNT(world, startPoint, 'large');
-                isDrawing = false;
+            case 'sand':
+                spawnSandCluster(world, startPoint.x, startPoint.y);
+                if (sandSpawnInterval) clearInterval(sandSpawnInterval);
+                sandSpawnInterval = setInterval(() => {
+                    spawnSandCluster(world, lastMousePos.x, lastMousePos.y);
+                }, 30);
                 break;
             case 'eraser':
                 eraseAt(world, startPoint);
-                break;
-            case 'polygon':
-                polygonVertices.push(startPoint.clone());
-                break;
-            case 'brush':
-                createBrushSegment(world, startPoint);
-                lastBrushPoint = startPoint;
                 break;
         }
     }
 
     function handleMouseMove(e) {
-        if (isPanning()) return;
-        const currentPos = getMousePos(e); // в метрах
-        lastMousePos = currentPos;
+        lastMousePos = getMousePos(e);
 
-        if (mouseJoint) {
-            mouseJoint.setTarget(currentPos);
-        }
-        if (draggedBody) {
-             draggedBody.setPosition(currentPos);
+        if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
+            setPreview('polygon', polygonVertices, lastMousePos);
         }
 
-        if (!isDrawing) return;
+        if (isPanning() || !isDrawing) return;
 
         switch (toolState.currentTool) {
-            case 'eraser':
-                eraseAt(world, currentPos);
+            case 'move':
+                 if (draggedBody) {
+                    const dx = (lastMousePos.x - startPoint.x);
+                    const dy = (lastMousePos.y - startPoint.y);
+                    const currentPos = draggedBody.getPosition();
+                    draggedBody.setPosition(planck.Vec2(currentPos.x + dx, currentPos.y + dy));
+                    draggedBody.setAwake(true);
+                    startPoint = lastMousePos;
+                 }
+                 break;
+            case 'finger':
+                if (mouseJoint) {
+                    mouseJoint.setTarget(lastMousePos);
+                }
+                break;
+            case 'box':
+            case 'circle':
+                setPreview(toolState.currentTool, startPoint, lastMousePos);
                 break;
             case 'brush':
-                continueBrushStroke(world, currentPos);
+                if (lastBrushPoint) {
+                    const dist = planck.Vec2.distance(lastBrushPoint, lastMousePos);
+                    if (dist * PHYSICS_SCALE > BRUSH_RADIUS * 0.5) {
+                         createBrushStroke(world, lastBrushPoint, lastMousePos, BRUSH_RADIUS / PHYSICS_SCALE);
+                         lastBrushPoint = lastMousePos;
+                    }
+                }
+                break;
+            case 'eraser':
+                eraseAt(world, lastMousePos);
                 break;
         }
     }
 
     function handleMouseUp(e) {
-        if (waterSpawnInterval) {
-            clearInterval(waterSpawnInterval);
-            waterSpawnInterval = null;
-        }
-        if (mouseJoint) {
-            world.destroyJoint(mouseJoint);
-            mouseJoint = null;
-        }
-        if (draggedBody) {
-            draggedBody.setLinearVelocity(planck.Vec2(0, 0));
-            draggedBody.setAngularVelocity(0);
-            draggedBody = null;
-        }
-        if (isDrawing) {
-            const endPoint = getMousePos(e); // в метрах
-            switch (toolState.currentTool) {
-                case 'box':
-                    createBox(world, startPoint, endPoint);
-                    break;
-                case 'brush':
-                    lastBrushPoint = null;
-                    break;
+        if (e.button !== 0) return;
+        if (!isDrawing && toolState.currentTool !== 'polygon') return;
+        
+        const endPoint = getMousePos(e);
+
+        if (toolState.currentTool === 'polygon') {
+            const duration = Date.now() - polygonMouseDownTime;
+            const clickPoint = endPoint;
+
+            if (polygonVertices.length > 0) {
+                const lastVertex = polygonVertices[polygonVertices.length - 1];
+                if (planck.Vec2.distanceSquared(clickPoint, lastVertex) > 0.01) {
+                    polygonVertices.push(clickPoint);
+                }
+            } else {
+                polygonVertices.push(clickPoint);
+            }
+
+            if (polygonVertices.length === 1) {
+                setPreview('polygon', polygonVertices, clickPoint);
+            }
+
+            if (duration > POLYGON_HOLD_DURATION) {
+                if (polygonVertices.length >= 3) {
+                    createPolygon(world, polygonVertices);
+                }
+                polygonVertices = [];
+                clearPreview();
             }
             isDrawing = false;
-        }
-    }
-
-    function handleDoubleClick(e) {
-        if (toolState.currentTool === 'polygon' && polygonVertices.length > 2) {
-            createPolygon(world, polygonVertices);
-            polygonVertices = [];
             return;
         }
         
-        const worldPos = getMousePos(e);
-        const body = getBodyAt(world, worldPos);
-
-        if (body && body.getUserData() && body.getUserData().label === 'tnt') {
-            detonateTNT(world, body);
-        }
-    }
-    
-    function stopAllActions() {
-        if (waterSpawnInterval) clearInterval(waterSpawnInterval);
-        if (mouseJoint) {
-            world.destroyJoint(mouseJoint);
-            mouseJoint = null;
-        }
-        draggedBody = null;
         isDrawing = false;
-        polygonVertices = [];
-        lastBrushPoint = null;
+
+        switch (toolState.currentTool) {
+            case 'move':
+                draggedBody = null;
+                break;
+            case 'finger':
+                if (mouseJoint) {
+                    world.destroyJoint(mouseJoint);
+                    mouseJoint = null;
+                }
+                break;
+            case 'box':
+                createBox(world, startPoint, endPoint);
+                clearPreview();
+                break;
+            case 'circle':
+                createCircle(world, startPoint, endPoint);
+                clearPreview();
+                break;
+            case 'brush':
+                lastBrushPoint = null;
+                break;
+            case 'weld':
+            case 'spring':
+            case 'rod':
+                const { body: firstBody, anchor: firstAnchor } = getFirstJointBody();
+                if (firstBody) {
+                    const secondBody = getBodyAt(world, endPoint, true);
+                    if (secondBody && secondBody !== firstBody) {
+                        let secondAnchor = endPoint;
+                        const secondFixture = secondBody.getFixtureList();
+                        if (secondFixture && secondFixture.getShape().getType() === 'circle') {
+                            const circleRadius = secondFixture.getShape().m_radius;
+                            const hintRadius = Math.max(0.15, Math.min(circleRadius * 0.2, 0.5));
+                            const center = secondBody.getPosition();
+                            const distSq = planck.Vec2.distanceSquared(endPoint, center);
+                            if (distSq < hintRadius * hintRadius) {
+                                secondAnchor = center;
+                            }
+                        }
+
+                        if (toolState.currentTool === 'weld') {
+                            createWeld(world, firstBody, secondBody, endPoint);
+                        } else if (toolState.currentTool === 'spring') {
+                            createSpring(world, firstBody, secondBody, firstAnchor, secondAnchor);
+                        } else { // 'rod'
+                            createRod(world, firstBody, secondBody, firstAnchor, secondAnchor);
+                        }
+                    }
+                }
+                setFirstJointBody(null, null);
+                break;
+            case 'water':
+                 if (waterSpawnInterval) clearInterval(waterSpawnInterval);
+                 waterSpawnInterval = null;
+                 break;
+            case 'sand':
+                 if (sandSpawnInterval) clearInterval(sandSpawnInterval);
+                 sandSpawnInterval = null;
+                 break;
+        }
     }
 
     function handleContextMenu(e) {
         e.preventDefault();
-        const worldPos = getMousePos(e); // в метрах
         
-        let clickedBody = getBodyAt(world, worldPos);
-
-        if (clickedBody) {
-            const userData = clickedBody.getUserData() || {};
-             if (userData.label === 'boundary' || userData.label === 'water') {
-                clickedBody = null;
-             }
+        if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
+            polygonVertices = [];
+            clearPreview();
+            isDrawing = false;
+            return;
         }
 
-        if (clickedBody) {
-            selectBody(clickedBody);
-            showObjectPropertiesPanel(clickedBody, e.clientX, e.clientY);
+        const pos = getMousePos(e);
+        const screenPos = { x: e.clientX, y: e.clientY };
+
+        hideObjectPropertiesPanel();
+        hideSpringPropertiesPanel();
+
+        const joint = getDistanceJointAt(world, pos);
+        if(joint) {
+            const jointData = joint.getUserData() || {};
+            if (jointData.tool === 'spring') {
+                selectSpring(joint);
+                showSpringPropertiesPanel(joint, screenPos.x, screenPos.y);
+                return;
+            } else if (jointData.tool === 'rod') {
+                return;
+            }
+        }
+        
+        const body = getBodyAt(world, pos);
+        if (body) {
+            selectBody(body);
+            showObjectPropertiesPanel(body, screenPos.x, screenPos.y);
         } else {
             deselectBody();
-            hideObjectPropertiesPanel();
-            if (toolState.currentTool === 'polygon') {
-                polygonVertices = [];
-            }
+            deselectSpring();
+        }
+    }
+
+    function handleDoubleClick(e) {
+        const pos = getMousePos(e);
+        const body = getBodyAt(world, pos);
+        if(body && (body.getUserData()?.label === 'tnt')) {
+             detonateTNT(world, body);
+        }
+    }
+
+    function stopAllActions() {
+        if(isDrawing) isDrawing = false;
+        if(mouseJoint) {
+            world.destroyJoint(mouseJoint);
+            mouseJoint = null;
+        }
+        draggedBody = null;
+        if(waterSpawnInterval) clearInterval(waterSpawnInterval);
+        waterSpawnInterval = null;
+        if(sandSpawnInterval) clearInterval(sandSpawnInterval);
+        sandSpawnInterval = null;
+
+        clearPreview();
+        if (polygonVertices.length > 0) {
+            polygonVertices = [];
         }
     }
 }
 
+function getBodyAt(world, worldPoint, onlyDynamic = false) {
+    let selectedBody = null;
+    const aabb = new planck.AABB(
+        worldPoint.clone().sub(planck.Vec2(0.01, 0.01)),
+        worldPoint.clone().add(planck.Vec2(0.01, 0.01))
+    );
 
-// --- Логика инструментов ---
-
-function createTNT(world, position, type = 'small') {
-    const tntProps = tntTypes[type]; 
-    const tntConfig = TOOL_SETTINGS.tnt[type]; 
-    const textureImage = ImageLoader.getImage(tntProps.textureUrl); // Используем ImageLoader
-
-    // Визуальные размеры объекта в метрах (полный размер для текстуры)
-    const visualWidth = tntConfig.baseVisualWidth;
-    const visualHeight = tntConfig.baseVisualHeight;
-
-    // Физические размеры (хитбокс) в метрах, с учетом коэффициентов
-    const physicsWidth = visualWidth * tntConfig.hitboxWidthRatio;
-    const physicsHeight = visualHeight * tntConfig.hitboxHeightRatio;
-
-    // Смещение центра хитбокса относительно центра визуального объекта
-    // Если фитиль слева, то хитбокс смещается вправо
-    const hitboxOffsetX = visualWidth * tntConfig.hitboxOffsetXRatio;
-
-    const body = world.createDynamicBody({
-        position: position,
-        bullet: true,
-        userData: {
-            label: 'tnt',
-            tntType: type,
-            hasFuse: true, 
-            render: {
-                texture: textureImage, // Используем загруженное изображение
-                // strokeStyle: tntProps.borderColor || '#aaaaaa', // Обводка у ТНТ не нужна
-                width: visualWidth, // Сохраняем визуальные размеры
-                height: visualHeight
-            }
+    world.queryAABB(aabb, (fixture) => {
+        const body = fixture.getBody();
+        if (onlyDynamic && !body.isDynamic()) {
+            return true; // continue searching
         }
+        if (fixture.testPoint(worldPoint)) {
+            selectedBody = body;
+            return false; // stop searching
+        }
+        return true;
     });
-
-    const fixtureDef = { density: 1.5, friction: 0.6, restitution: 0.1 };
-    
-    // Создаем одну бокс-фикстуру для динамитных палок со смещением
-    body.createFixture(planck.Box(physicsWidth / 2, physicsHeight / 2, planck.Vec2(hitboxOffsetX, 0)), fixtureDef);
-    body.resetMassData();
+    return selectedBody;
 }
 
+function getDistanceJointAt(world, worldPoint) {
+    let selectedJoint = null;
+    const clickRadius = 0.5; // в метрах
 
-function spawnWaterCluster(world, x, y) {
-    const count = 2; // Спавним меньше частиц за раз для уменьшения плотности
-    const verticalSpread = PHYSICAL_RADIUS * 2.2; // Разносим их по вертикали, чтобы избежать пересечений
-    const jitter = 4 / PHYSICS_SCALE; // Небольшая горизонтальная случайность (в метрах)
+    for (let joint = world.getJointList(); joint; joint = joint.getNext()) {
+        if (joint.getType() !== 'distance-joint') continue;
 
-    for (let i = 0; i < count; i++) {
-        const offsetX = (Math.random() - 0.5) * jitter;
-        const offsetY = i * verticalSpread;
-        // Придаем частицам небольшую начальную скорость вниз, имитируя струю
-        const initialVelocity = planck.Vec2(0, 1.0);
-        spawnWaterParticle(world, x + offsetX, y + offsetY, initialVelocity);
+        const p1 = joint.getAnchorA();
+        const p2 = joint.getAnchorB();
+
+        const d = planck.Vec2.distance(worldPoint, p1) + planck.Vec2.distance(worldPoint, p2);
+        const len = planck.Vec2.distance(p1, p2);
+
+        if (Math.abs(d - len) < clickRadius) {
+            selectedJoint = joint;
+            break;
+        }
     }
+    return selectedJoint;
 }
-
-/**
- * Вычисляет плотность для тела на основе его площади,
- * устанавливая минимальную массу для очень маленьких объектов.
- * @param {number} area - Площадь тела в кв. метрах.
- * @returns {number} - Расчетная плотность.
- */
-function getDensityForArea(area) {
-    const MIN_BODY_MASS = TOOL_SETTINGS.density.minMass;
-    const NORMAL_DENSITY = TOOL_SETTINGS.density.normal;
-    
-    // Пороговое значение площади, ниже которого масса становится фиксированной
-    const AREA_THRESHOLD = MIN_BODY_MASS / NORMAL_DENSITY;
-
-    if (area > 0 && area < AREA_THRESHOLD) {
-        // Для маленьких объектов плотность рассчитывается так, чтобы их масса была равна MIN_BODY_MASS
-        return MIN_BODY_MASS / area;
-    }
-    
-    return NORMAL_DENSITY;
-}
-
 
 function createBox(world, start, end) {
-    const width = Math.abs(end.x - start.x);
-    const height = Math.abs(end.y - start.y);
-    // Проверяем минимальный размер в метрах (эквивалент 5 пикселей)
-    if (width < 5 / PHYSICS_SCALE || height < 5 / PHYSICS_SCALE) return;
+    const minX = Math.min(start.x, end.x);
+    const minY = Math.min(start.y, end.y);
+    const maxX = Math.max(start.x, end.x);
+    const maxY = Math.max(start.y, end.y);
 
-    const area = width * height;
-    const density = getDensityForArea(area);
+    const width = maxX - minX;
+    const height = maxY - minY;
 
-    const centerX = (start.x + end.x) / 2;
-    const centerY = (start.y + end.y) / 2;
+    if (width < 0.1 || height < 0.1) return;
 
     const body = world.createDynamicBody({
-        position: planck.Vec2(centerX, centerY),
-        bullet: true,
-        userData: {
-            label: 'box',
-            render: { fillStyle: '#cccccc', strokeStyle: '#aaaaaa' }
-        }
+        position: planck.Vec2(minX + width / 2, minY + height / 2),
+        linearDamping: 0.1,
     });
 
     body.createFixture(planck.Box(width / 2, height / 2), {
         friction: 0.3,
         restitution: 0.1,
-        density: density,
+        density: 1.0,
     });
 }
 
-/**
- * Вычисляет площадь простого многоугольника по его вершинам (формула шнурков).
- * @param {planck.Vec2[]} vertices 
- * @returns {number}
- */
-function getPolygonArea(vertices) {
-    let area = 0;
-    const n = vertices.length;
-    for (let i = 0; i < n; i++) {
-        const v1 = vertices[i];
-        const v2 = vertices[(i + 1) % n]; // Замыкаем последнюю вершину с первой
-        area += v1.x * v2.y - v2.x * v1.y;
-    }
-    return Math.abs(area) / 2;
-}
+function createCircle(world, center, edge) {
+    const dx = edge.x - center.x;
+    const dy = edge.y - center.y;
+    let radius = Math.sqrt(dx * dx + dy * dy);
 
+    radius = Math.max(0.25, Math.round(radius * 4) / 4);
 
-function createPolygon(world, vertices) {
-    if (vertices.length < 3) return;
-    
-    const center = planck.Vec2.zero();
-    vertices.forEach(v => center.add(v));
-    center.mul(1 / vertices.length);
+    if (radius < 0.25) return;
 
-    const localVertices = vertices.map(v => v.clone().sub(center));
-
-    const area = getPolygonArea(localVertices);
-    const density = getDensityForArea(area);
-    
     const body = world.createDynamicBody({
         position: center,
-        bullet: true,
-        userData: {
-            label: 'polygon',
-            render: { fillStyle: '#cccccc', strokeStyle: '#aaaaaa' }
+        linearDamping: 0.1,
+    });
+    body.createFixture(planck.Circle(radius), {
+        friction: 0.8,
+        restitution: 0.1,
+        density: 1.0,
+    });
+    body.setUserData({
+        motor: {
+            isEnabled: false,
+            speed: 10.0
         }
     });
+}
 
+// --- NEW HELPERS FOR POLYGON ---
+
+function onSegment(p, q, r) {
+    return (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+        q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y));
+}
+
+function orientation(p, q, r) {
+    const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+    if (Math.abs(val) < 1e-10) return 0;
+    return (val > 0) ? 1 : 2;
+}
+
+function segmentsIntersect(p1, q1, p2, q2) {
+    const o1 = orientation(p1, q1, p2);
+    const o2 = orientation(p1, q1, q2);
+    const o3 = orientation(p2, q2, p1);
+    const o4 = orientation(p2, q2, q1);
+    if (o1 !== o2 && o3 !== o4) return true;
+    if (o1 === 0 && onSegment(p1, p2, q1)) return true;
+    if (o2 === 0 && onSegment(p1, q2, q1)) return true;
+    if (o3 === 0 && onSegment(p2, p1, q2)) return true;
+    if (o4 === 0 && onSegment(p2, q1, q2)) return true;
+    return false;
+}
+
+function isSelfIntersecting(vertices) {
+    const n = vertices.length;
+    if (n <= 3) return false;
+    for (let i = 0; i < n; ++i) {
+        for (let j = i + 2; j < n; ++j) {
+            if (i === 0 && j === n - 1) continue;
+            if (segmentsIntersect(vertices[i], vertices[(i + 1) % n], vertices[j], vertices[(j + 1) % n])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function getPolygonArea(vertices) {
+    let area = 0;
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+        area += vertices[i].x * vertices[j].y - vertices[j].x * vertices[i].y;
+    }
+    return area / 2;
+}
+
+function isPointInTriangle(p, a, b, c) {
+    const s = a.y * c.x - a.x * c.y + (c.y - a.y) * p.x + (a.x - c.x) * p.y;
+    const t = a.x * b.y - a.y * b.x + (a.y - b.y) * p.x + (b.x - a.x) * p.y;
+    if ((s < 0) !== (t < 0) && s !== 0 && t !== 0) return false;
+    const A = -b.y * c.x + a.y * (c.x - b.x) + a.x * (b.y - c.y) + b.x * c.y;
+    return A < 0 ? (s <= 0 && s + t >= A) : (s >= 0 && s + t <= A);
+}
+
+function triangulate(vertices) {
+    const triangles = [];
+    if (vertices.length < 3) return triangles;
+    let localVertices = [...vertices];
+    if (getPolygonArea(localVertices) > 0) {
+        localVertices.reverse();
+    }
+    let iterations = 0;
+    const maxIterations = localVertices.length * 2;
+    while (localVertices.length >= 3 && iterations < maxIterations) {
+        iterations++;
+        let foundEar = false;
+        for (let i = 0; i < localVertices.length; i++) {
+            const p1_idx = i;
+            const p2_idx = (i + 1) % localVertices.length;
+            const p3_idx = (i + 2) % localVertices.length;
+            const p1 = localVertices[p1_idx];
+            const p2 = localVertices[p2_idx];
+            const p3 = localVertices[p3_idx];
+            if (orientation(p1, p2, p3) === 2) {
+                let isEar = true;
+                for (let j = 0; j < localVertices.length; j++) {
+                    if (j === p1_idx || j === p2_idx || j === p3_idx) continue;
+                    if (isPointInTriangle(localVertices[j], p1, p2, p3)) {
+                        isEar = false;
+                        break;
+                    }
+                }
+                if (isEar) {
+                    triangles.push([p1, p2, p3]);
+                    localVertices.splice(p2_idx, 1);
+                    foundEar = true;
+                    break;
+                }
+            }
+        }
+        if (!foundEar) {
+            console.error("Triangulation failed: No ear found.");
+            return null;
+        }
+    }
+    if (iterations >= maxIterations) {
+        console.error("Triangulation failed: Exceeded max iterations.");
+        return null;
+    }
+    return triangles;
+}
+
+// --- REWRITTEN createPolygon ---
+function createPolygon(world, vertices) {
+    if (vertices.length < 3) return;
+    if (isSelfIntersecting(vertices)) {
+        alert(t('polygon-self-intersection-error'));
+        return;
+    }
+    const triangles = triangulate(vertices);
+    if (!triangles || triangles.length === 0) {
+        console.warn("Polygon triangulation failed. Body not created.");
+        return;
+    }
+    const body = world.createDynamicBody({ linearDamping: 0.1 });
     try {
-        body.createFixture(planck.Polygon(localVertices), {
-            friction: 0.3,
-            restitution: 0.1,
-            density: density,
+        triangles.forEach(triangle => {
+            const shape = planck.Polygon(triangle);
+            body.createFixture(shape, {
+                friction: 0.3,
+                restitution: 0.1,
+                density: 1.0,
+            });
         });
     } catch(e) {
-        console.error("Failed to create polygon fixture:", e);
+        console.error("Error creating fixtures from triangles:", e);
         world.destroyBody(body);
     }
 }
 
-function createBrushSegment(world, position) {
-    const body = world.createBody({
-        position: position,
+
+function createBrushStroke(world, p1, p2, thickness) {
+     const dist = planck.Vec2.distance(p1, p2);
+     if (dist < 0.01) return;
+
+     const center = planck.Vec2.mid(p1, p2);
+     const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+     const body = world.createBody({
         type: 'static',
+        position: center,
+        angle: angle,
         userData: {
-            label: 'user-static',
-            render: { fillStyle: '#8b4513', strokeStyle: '#6a3503' }
+            label: 'brush-stroke',
+            render: { fillStyle: '#4a2a0a' }
         }
-    });
-    body.createFixture(planck.Circle(BRUSH_RADIUS / PHYSICS_SCALE), { friction: 0.3 });
-}
+     });
 
-function continueBrushStroke(world, position) {
-    if (!lastBrushPoint) return;
-    const distanceVec = position.clone().sub(lastBrushPoint);
-    const distance = distanceVec.length();
-    
-    const minDistance = (BRUSH_RADIUS / PHYSICS_SCALE) / 2;
-    if (distance < minDistance) return;
-
-    const angle = Math.atan2(distanceVec.y, distanceVec.x);
-
-    for (let i = 0; i < distance; i += minDistance) {
-        const x = lastBrushPoint.x + Math.cos(angle) * i;
-        const y = lastBrushPoint.y + Math.sin(angle) * i;
-        createBrushSegment(world, planck.Vec2(x, y));
-    }
-    lastBrushPoint = position;
-}
-
-function eraseAt(world, position) {
-     const aabb = new planck.AABB(position, position);
-     world.queryAABB(aabb, (fixture) => {
-         const body = fixture.getBody();
-         const userData = body.getUserData() || {};
-         if (userData.label !== 'boundary' && fixture.testPoint(position)) {
-              if (userData.label === 'water') {
-                // ОПТИМИЗАЦИЯ: Деактивируем частицу, возвращая ее в пул, вместо уничтожения.
-                body.setActive(false);
-              } else {
-                // Другие динамические объекты уничтожаем как и раньше.
-                world.destroyBody(body);
-              }
-         }
-         return true; // Продолжаем поиск, чтобы стереть несколько объектов за раз.
+     body.createFixture(planck.Box(dist / 2, thickness / 2), {
+        friction: 0.8,
+        restitution: 0.1,
      });
 }
 
-function getBodyAt(world, point) {
-    let foundBody = null;
-    const aabb = new planck.AABB(point, point);
-    world.queryAABB(aabb, (fixture) => {
-        if (fixture.testPoint(point)) {
-            foundBody = fixture.getBody();
-            return false; // нашли, прекращаем поиск
-        }
-        return true; // продолжаем поиск
+function createWeld(world, bodyA, bodyB, point) {
+    const worldAnchor = point;
+    world.createJoint(planck.WeldJoint({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        localAnchorA: bodyA.getLocalPoint(worldAnchor),
+        localAnchorB: bodyB.getLocalPoint(worldAnchor),
+        referenceAngle: bodyB.getAngle() - bodyA.getAngle(),
+    }));
+}
+
+function createSpring(world, bodyA, bodyB, anchorA, anchorB) {
+    const length = planck.Vec2.distance(anchorA, anchorB);
+    const joint = planck.DistanceJoint({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        localAnchorA: bodyA.getLocalPoint(anchorA),
+        localAnchorB: bodyB.getLocalPoint(anchorB),
+        length: length,
+        frequencyHz: TOOL_SETTINGS.spring.defaultStiffness,
+        dampingRatio: TOOL_SETTINGS.spring.defaultDamping,
     });
-    return foundBody;
+    joint.setUserData({ tool: 'spring' });
+    world.createJoint(joint);
+}
+
+function createRod(world, bodyA, bodyB, anchorA, anchorB) {
+    const length = planck.Vec2.distance(anchorA, anchorB);
+    const joint = planck.DistanceJoint({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        localAnchorA: bodyA.getLocalPoint(anchorA),
+        localAnchorB: bodyB.getLocalPoint(anchorB),
+        length: length,
+        frequencyHz: 100.0,
+        dampingRatio: 1.0,
+    });
+    joint.setUserData({ tool: 'rod' });
+    world.createJoint(joint);
+}
+
+
+function createTNT(world, position, type = 'small') {
+    const tntConfig = TOOL_SETTINGS.tnt[type];
+    const textureUrl = tntTypes[type].textureUrl;
+    const texture = ImageLoader.getImage(textureUrl);
+
+    if (!texture) {
+        console.error(`Текстура для ТНТ типа "${type}" не найдена.`);
+        return;
+    }
+
+    const width = tntConfig.baseVisualWidth;
+    const height = tntConfig.baseVisualHeight;
+    
+    const hitboxWidth = width * tntConfig.hitboxWidthRatio;
+    const hitboxHeight = height * tntConfig.hitboxHeightRatio;
+    const hitboxOffsetX = width * tntConfig.hitboxOffsetXRatio;
+
+    const body = world.createDynamicBody({
+        position: position,
+        linearDamping: 0.1,
+    });
+
+    body.createFixture(planck.Box(
+        hitboxWidth / 2, 
+        hitboxHeight / 2, 
+        planck.Vec2(hitboxOffsetX, 0)
+    ), {
+        friction: 0.5,
+        restitution: 0.1,
+        density: 2.0,
+    });
+
+    body.setUserData({
+        label: 'tnt',
+        tntType: type,
+        render: {
+            texture: texture,
+            textureUrl: textureUrl,
+            width: width,
+            height: height,
+            strokeStyle: '#FFD700'
+        }
+    });
+}
+
+
+function spawnWaterCluster(world, x, y) {
+    for (let i = 0; i < 5; i++) {
+        const offsetX = (Math.random() - 0.5) * WATER_PHYSICAL_RADIUS * 4;
+        const offsetY = (Math.random() - 0.5) * WATER_PHYSICAL_RADIUS * 4;
+        spawnWaterParticle(world, x + offsetX, y + offsetY);
+    }
+}
+
+function spawnSandCluster(world, x, y) {
+    for (let i = 0; i < 5; i++) {
+        const offsetX = (Math.random() - 0.5) * SAND_PHYSICAL_RADIUS * 4;
+        const offsetY = (Math.random() - 0.5) * SAND_PHYSICAL_RADIUS * 4;
+        spawnSandParticle(world, x + offsetX, y + offsetY);
+    }
+}
+
+
+function eraseAt(world, point) {
+    const aabb = new planck.AABB(
+        point.clone().sub(planck.Vec2(0.5, 0.5)),
+        point.clone().add(planck.Vec2(0.5, 0.5))
+    );
+    const bodiesToDestroy = [];
+    world.queryAABB(aabb, (fixture) => {
+        const body = fixture.getBody();
+        if (fixture.testPoint(point)) {
+            const userData = body.getUserData() || {};
+            if(body.isDynamic() || userData.label === 'brush-stroke') {
+                bodiesToDestroy.push(body);
+            }
+        }
+        return true;
+    });
+
+    bodiesToDestroy.forEach(body => {
+        if (body.getWorld()) {
+            const userData = body.getUserData() || {};
+            if(userData.motor && userData.motor.joint) {
+                world.destroyJoint(userData.motor.joint);
+            }
+            world.destroyBody(body);
+        }
+    });
 }

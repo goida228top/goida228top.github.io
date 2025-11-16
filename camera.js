@@ -19,6 +19,29 @@ let lastPinchDistance = 0;
 
 const CAMERA_PADDING = GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT;
 
+function setCanvasSize(canvas) {
+    canvas.width = Dom.container.clientWidth;
+    canvas.height = Dom.container.clientHeight;
+}
+
+export function resizeCamera(render) {
+    setCanvasSize(render.canvas); // physics-canvas
+    setCanvasSize(Dom.waterCanvas);
+    setCanvasSize(Dom.sandCanvas); // NEW: resize sand canvas
+    setCanvasSize(Dom.backgroundCanvas);
+    
+    // Обновляем размер контейнера эффектов воды, если необходимо
+    if (Dom.waterEffectContainer) {
+        Dom.waterEffectContainer.style.width = `${Dom.container.clientWidth}px`;
+        Dom.waterEffectContainer.style.height = `${Dom.container.clientHeight}px`;
+    }
+    // NEW: Обновляем размер контейнера эффектов песка
+    if (Dom.sandEffectContainer) {
+        Dom.sandEffectContainer.style.width = `${Dom.container.clientWidth}px`;
+        Dom.sandEffectContainer.style.height = `${Dom.container.clientHeight}px`;
+    }
+}
+
 
 export function initializeCamera(render) {
     // Устанавливаем начальную позицию камеры до первого рендера
@@ -41,13 +64,16 @@ export function initializeCamera(render) {
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
 
-    function applyWaterFilter() {
+    function applyLiquidFilters() {
         if (Dom.liquidEffectToggle.checked) {
             const blurAmount = 5 / scale;
             const contrastAmount = 25;
-            Dom.waterEffectContainer.style.filter = `blur(${blurAmount.toFixed(2)}px) contrast(${contrastAmount})`;
+            const filterStyle = `blur(${blurAmount.toFixed(2)}px) contrast(${contrastAmount})`;
+            Dom.waterEffectContainer.style.filter = filterStyle;
+            Dom.sandEffectContainer.style.filter = filterStyle;
         } else {
             Dom.waterEffectContainer.style.filter = 'none';
+            Dom.sandEffectContainer.style.filter = 'none';
         }
     }
 
@@ -115,7 +141,7 @@ export function initializeCamera(render) {
             clampViewOffset();
 
             updateView();
-            applyWaterFilter();
+            applyLiquidFilters();
         }
     }
     
@@ -175,7 +201,7 @@ export function initializeCamera(render) {
             clampViewOffset();
 
             updateView();
-            applyWaterFilter();
+            applyLiquidFilters();
         }
     }
 
@@ -217,35 +243,20 @@ export function initializeCamera(render) {
         
         return planck.Vec2(worldX / PHYSICS_SCALE, worldY / PHYSICS_SCALE);
     }
-    
-    function resetCamera(height, groundY) {
-         scale = 1;
-         viewOffset.x = -render.canvas.width / 2;
-         viewOffset.y = groundY - height + 100;
-    }
-
-    updateView();
-    applyWaterFilter();
 
     return {
-        render,
-        get viewOffset() { return viewOffset; },
         get scale() { return scale; },
+        get viewOffset() { return viewOffset; },
+        get render() { return render; }, // Добавим render в возвращаемый объект
         isPanning: () => isPanning,
-        updateView,
         getMousePos,
-        resetCamera,
-        applyWaterFilter
+        updateView,
+        applyLiquidFilters, // Экспортируем для использования в UI
+        // Новые функции для сохранения/загрузки состояния камеры
+        restoreCameraState: (state) => {
+            scale = state.scale;
+            viewOffset.x = state.viewOffset.x;
+            viewOffset.y = state.viewOffset.y;
+        }
     };
-}
-
-export function resizeCamera(render) {
-    const { clientWidth: width, clientHeight: height } = Dom.container;
-    // Обновляем все canvas
-    render.canvas.width = width;
-    render.canvas.height = height;
-    Dom.waterCanvas.width = width;
-    Dom.waterCanvas.height = height;
-    Dom.backgroundCanvas.width = width;
-    Dom.backgroundCanvas.height = height;
 }

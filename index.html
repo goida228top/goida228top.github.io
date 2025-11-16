@@ -7,6 +7,35 @@
     <!-- Заменяем Matter.js на более мощный Planck.js -->
     <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
     <script src="https://yandex.ru/games/sdk/v2"></script>
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Критическая ошибка на раннем этапе:", message, error);
+
+            // Прячем прогресс бар и текст
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            if (progressBarContainer) progressBarContainer.style.display = 'none';
+
+            const loadingText = document.getElementById('loading-text');
+            if (loadingText) loadingText.style.display = 'none';
+
+            // Показываем сообщение об ошибке
+            const loadingErrorContainer = document.getElementById('loading-error');
+            if (loadingErrorContainer) loadingErrorContainer.style.display = 'block';
+            
+            const loadingErrorMessage = document.getElementById('loading-error-message');
+            if (loadingErrorMessage) {
+                loadingErrorMessage.textContent = 'Произошла ошибка при загрузке. Пожалуйста, обновите страницу.';
+            }
+            
+            const reloadButton = document.getElementById('reload-button');
+            if (reloadButton) {
+                reloadButton.onclick = () => window.location.reload();
+            }
+
+            // Предотвращаем стандартную обработку ошибки браузером
+            return true; 
+        };
+    </script>
     <style>
         :root {
             --toolbar-height: 56px;
@@ -16,6 +45,9 @@
             --water-color-opaque: hsl(230, 100%, 50%);
             --water-color-transparent: hsla(230, 100%, 50%, 0.75);
             --water-color: var(--water-color-transparent); /* Fallback/default */
+            --sand-color-opaque: #c2b280; /* Песочный цвет */
+            --sand-color-transparent: rgba(194, 178, 128, 0.75); /* Песок теперь с прозрачностью для правильного эффекта */
+            --sand-color: var(--sand-color-transparent); /* Default */
             --button-active-bg: var(--water-color-opaque);
             --text-color: #f0f0f0;
             --border-color: #555;
@@ -77,6 +109,23 @@
         #loading-text {
             font-size: 1.2em;
         }
+        #loading-error {
+            color: #ffcccc;
+        }
+        #reload-button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s;
+        }
+        #reload-button:hover {
+            background-color: var(--button-hover-bg);
+        }
 
         #toolbar {
             padding: 8px;
@@ -126,6 +175,17 @@
             border: none;
             width: 36px;
             height: 36px;
+        }
+        .tool-group button img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        #tnt-small-btn img,
+        #tnt-medium-btn img,
+        #tnt-large-btn img {
+            transform: scale(1.5) rotate(45deg);
+            transition: transform 0.2s;
         }
         #toolbar-separator {
             flex-grow: 1;
@@ -183,10 +243,26 @@
         }
 
         #water-effect-container.liquid-effect-enabled {
-            /* Фильтр теперь применяется динамически через JS */
             mix-blend-mode: multiply;
+            isolation: isolate; /* FIX: Prevents blending with other effect layers */
         }
         
+        /* NEW: Sand effect container */
+        #sand-effect-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2; /* Between water and physics */
+        }
+
+        #sand-effect-container.liquid-effect-enabled {
+            mix-blend-mode: multiply;
+            isolation: isolate; /* FIX: Prevents blending with other effect layers */
+        }
+
         canvas {
             display: block;
             position: absolute;
@@ -251,7 +327,8 @@
             align-items: center;
             width: 100%;
         }
-        #object-properties-panel .delete-button {
+        #object-properties-panel .delete-button,
+        #spring-properties-panel .delete-button {
             background-color: #c0392b;
             color: white;
             border: none;
@@ -260,7 +337,8 @@
             cursor: pointer;
             text-align: center;
         }
-        #object-properties-panel .delete-button:hover {
+        #object-properties-panel .delete-button:hover,
+        #spring-properties-panel .delete-button:hover {
             background-color: #e74c3c;
         }
         input[type="color"] {
@@ -280,6 +358,18 @@
             text-align: right;
         }
         input[type="number"]:focus {
+            outline: 1px solid var(--button-active-bg);
+            border-color: var(--button-active-bg);
+        }
+        input[type="text"] {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px;
+            text-transform: lowercase;
+        }
+        input[type="text"]:focus {
             outline: 1px solid var(--button-active-bg);
             border-color: var(--button-active-bg);
         }
@@ -366,78 +456,82 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: transparent; /* Make the outer panel transparent */
+            background: rgba(0, 0, 0, 0.8); /* Make the outer panel semi-transparent (the overlay) */
             display: none; /* Hidden by default */
-            flex-direction: column; /* Stack items vertically: title then buttons container */
-            justify-content: flex-start; /* Align content at start (for back button) */
+            flex-direction: column; /* Stack items vertically */
+            justify-content: center; /* Center content vertically */
             align-items: center; /* Center content horizontally */
-            gap: 40px; /* Space between back button and content box */
-            padding-top: 100px; /* Adjust padding to make space for back button */
+            padding-top: 0; /* No need for top padding with justify-content: center */
             box-sizing: border-box; /* Include padding in width/height */
-            position: relative; /* Для позиционирования кнопки "Назад" */
+            z-index: 1000; /* Ensure it's on top */
         }
         #reward-menu-panel .reward-menu-content {
-            background: rgba(0, 0, 0, 0.8); /* Semi-transparent background for the content box */
+            background: transparent; /* Content box itself has no background */
             border-radius: 8px;
-            padding: 40px; /* Padding inside the content box */
+            padding: 30px; /* Уменьшено */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 40px; /* Gap between title and buttons */
+            gap: 30px; /* Уменьшено */
             max-width: 90%; /* Limit overall width on very large screens */
             box-sizing: border-box;
             max-height: 90%; /* Ensure it fits on screen */
-            overflow-y: auto; /* Scroll if content is too tall */
+            overflow-y: hidden; /* Убираем внутреннюю вертикальную прокрутку */
         }
         #reward-menu-panel h3 {
             margin: 0; /* Remove margin as gap is handled by parent flex */
             color: var(--text-color);
             text-align: center;
-            font-size: 4em; /* Увеличено в 2 раза */
+            font-size: 2.8em; /* Уменьшено */
         }
 
-        /* Кнопка "Назад" */
-        #reward-menu-back-btn {
+        /* Кнопка "Закрыть" (X) */
+        #reward-menu-close-btn {
             position: absolute;
             top: 20px;
-            left: 20px;
-            width: 60px; /* Увеличен размер */
-            height: 60px; /* Увеличен размер */
-            font-size: 2em; /* Крупнее текст */
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
+            right: 20px;
+            width: 50px; /* Чуть меньше */
+            height: 50px; /* Чуть меньше */
+            font-size: 1.8em; /* Уменьшен текст */
+            background-color: #dc3545; /* Красный цвет */
+            color: white; /* Белый текст */
+            border: 1px solid #c0392b;
+            border-radius: 50%; /* Круглая форма */
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.2s;
+            z-index: 1001; /* Higher z-index than panel content */
         }
-        #reward-menu-back-btn:hover {
-            background-color: var(--button-hover-bg);
+        #reward-menu-close-btn:hover {
+            background-color: #c0392b; /* Темнее красный при наведении */
+            transform: scale(1.05); /* Небольшое увеличение при наведении */
         }
 
 
         .reward-buttons-container { /* New container for the reward buttons */
             display: flex;
-            flex-wrap: wrap; /* Allow buttons to wrap to new lines */
+            flex-wrap: nowrap; /* ! Важно: Запрещаем перенос, чтобы кнопки всегда были в один ряд */
             justify-content: center; /* Center buttons horizontally */
             align-items: flex-start; /* Align items to the start of the cross axis (top) */
-            gap: 60px; /* Увеличено в 2 раза */
-            max-width: 90%; /* Limit overall width on very large screens */
+            gap: 40px; /* Уменьшено */
+            min-width: calc(3 * 280px + 2 * 40px); /* 3 кнопки по 280px + 2 зазора по 40px = 920px */
+            overflow-x: hidden; /* Убираем горизонтальную полосу прокрутки */
+            /* padding-bottom: 10px; */ /* Не нужен, если нет overflow-x: auto */
         }
 
         .reward-button {
-            width: 320px; /* Увеличено в 2 раза */
-            height: 600px; /* Увеличено в 2 раза */
-            padding: 30px; /* Увеличено в 2 раза */
+            flex-shrink: 0; /* Запрещаем кнопкам сжиматься */
+            width: 280px; /* Уменьшено */
+            height: 520px; /* Уменьшено */
+            padding: 25px; /* Уменьшено */
             border: 1px solid var(--border-color);
             background-color: var(--button-bg);
             color: var(--text-color);
             border-radius: 8px; /* Slightly more rounded */
-            font-size: 1.5em; /* Увеличено для лучшей читаемости */
+            font-size: 1.3em; /* Уменьшено */
             cursor: default; /* Default cursor for the parent container */
             transition: background-color 0.2s;
             display: flex; /* Make button content a flex column */
@@ -452,32 +546,25 @@
         /* } */
 
         .reward-button-header {
-            font-size: 4em; /* Увеличено для лучшей читаемости */
+            font-size: 3em; /* Уменьшено */
             font-weight: bold;
             color: var(--selection-color); /* White/light color */
             line-height: 1; /* Adjust line height */
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Уменьшено */
         }
 
         .reward-button-coins-container {
             display: flex; /* Keep flex to center the single image */
             justify-content: center;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Уменьшено */
             /* Removed gap, flex-wrap, min-height as it's a single image */
         }
 
-        /* Удален .coin-icon-small, так как теперь используются уникальные изображения */
-        /* .coin-icon-small { */
-            /* width: 288px; */
-            /* height: 288px; */
-            /* vertical-align: middle; */
-        /* } */
-
         /* Новый стиль для уникального большого изображения монеты */
         .reward-tier-image {
-            width: 288px; /* Явно большой размер, как запрашивалось, даже если выходит за границы */
-            height: 288px; /* Явно большой размер */
+            width: 220px; /* Уменьшено */
+            height: 220px; /* Уменьшено */
             object-fit: contain; /* Убедитесь, что содержимое изображения видно */
             vertical-align: middle;
         }
@@ -485,12 +572,12 @@
         /* Стиль для новой кнопки прогресса/получения награды */
         .reward-progress-btn {
             width: 100%; /* Занимает всю доступную ширину родительской кнопки */
-            padding: 15px 10px; /* Отступы */
+            padding: 12px 10px; /* Уменьшен padding */
             border: 1px solid #FF8C00; /* Цвет как у текста монет */
             background-color: #FF8C00; /* Оранжевый фон */
             color: #333; /* Темный текст для контраста */
             border-radius: 5px;
-            font-size: 1.2em; /* Крупнее текст */
+            font-size: 1.1em; /* Уменьшено */
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s, opacity 0.2s, color 0.2s;
@@ -498,6 +585,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 5px; /* Добавлен отступ между текстом и иконкой */
         }
 
         .reward-progress-btn:hover:not(:disabled) {
@@ -552,8 +640,212 @@
             border-color: #666;
             cursor: not-allowed;
         }
+
+        /* Стиль для иконки рекламы */
+        .ad-icon {
+            width: 20px; /* Размер, как у иконки монет */
+            height: 20px;
+            vertical-align: middle;
+            margin-left: 5px; /* Отступ от текста */
+        }
+
+        /* Стили для панели Сохранения/Загрузки (ПЕРЕДЕЛАННЫЕ) */
+        #save-load-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .save-load-content {
+            background: transparent;
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            max-width: 95%;
+            box-sizing: border-box;
+        }
+        #save-load-panel h3 {
+            margin: 0;
+            color: var(--text-color);
+            text-align: center;
+            font-size: 2.8em;
+        }
+
+        #save-load-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.8em;
+            background-color: #dc3545;
+            color: white;
+            border: 1px solid #c0392b;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s, transform 0.2s;
+            z-index: 1001;
+        }
+        #save-load-close-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        #save-slots-container {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .save-slot-button {
+            flex-shrink: 0;
+            width: 220px;
+            min-height: 400px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .save-button-header {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--selection-color);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .save-button-image-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .save-tier-image {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+        }
+        .save-slot-date {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-bottom: 5px;
+            min-height: 1.2em; /* Adjusted height */
+        }
+
+        /* Новые стили для статистики */
+        .save-slot-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            margin: 5px 0 10px 0;
+            font-size: 0.9em;
+            width: 100%;
+            text-align: left;
+            color: #ddd;
+            flex-grow: 1; /* Allow it to take up space */
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-item .stat-icon {
+            font-weight: bold;
+        }
+
+        .save-slot-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .save-slot-actions button {
+            width: 100%;
+            padding: 12px 10px;
+            border: 1px solid;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s, color 0.2s, border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .save-slot-actions .action-save-load {
+            background-color: #28a745;
+            color: white;
+            border-color: #218838;
+        }
+        .save-slot-actions .action-save-load:hover {
+            background-color: #218838;
+        }
+
+        .save-slot-actions .action-reset {
+            background-color: #c0392b;
+            color: white;
+            border-color: #a03024;
+        }
+        .save-slot-actions .action-reset:hover {
+            background-color: #a03024;
+        }
+
+        /* Новая кнопка разблокировки */
+        .save-slot-actions .action-unlock {
+            background-color: #FF8C00;
+            color: #333;
+            border-color: #e07b00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        .save-slot-actions .action-unlock:hover:not(:disabled) {
+            background-color: #e07b00;
+        }
+        .save-slot-actions .action-unlock:disabled {
+            background-color: var(--button-bg);
+            color: #888;
+            border-color: #666;
+            cursor: not-allowed;
+        }
+        .coin-icon-small {
+            width: 16px;
+            height: 16px;
+        }
+
     </style>
-<link rel="stylesheet" href="/index.css">
 <script type="importmap">
 {
   "imports": {
@@ -570,13 +862,25 @@
             <div id="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
-            <div id="loading-text">0%</div>
+            <div id="loading-text"></div>
+            <!-- NEW: Error container -->
+            <div id="loading-error" style="display: none; margin-top: 15px;">
+                <p id="loading-error-message"></p>
+                <button id="reload-button">Обновить страницу</button>
+            </div>
         </div>
     </div>
 
     <div id="toolbar">
         <button id="move-btn" class="active" data-translate-title="move-title">
-             <svg viewBox="0 0 24 24"><path d="M13,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V18H1.75L6,13V11H1V6H7.75L3.5,1.75L7.75,6H11V1H6.25L10.5,5.25L14.75,1H9.25L13.5,5.25L17.75,1H12.25L16.5,5.25L20.75,1H15.25L19.5,5.25L23.75,1H18.25L22.5,5.25L17,10L13.5,10L13.5,6L16.25,6L16.25,10L20.5,5.75L20.5,10L16.25,14.25L16.25,10L11,10L11,6L6.75,10L6.75,6L1.5,10L1.5,5.75L5.75,10L10,5.75L14.25,10L14.25,5.75L18.5,10L18.5,5.75L22.75,10L22.75,5.75L18.5,10L13.5,10L13.5,6L16.25,6L16.25,10L20.5,5.75L20.5,10L16.25,14.25L16.25,10L11,10L11,6L6.75,10L6.75,6L1.5,10L1.5,5.75L5.75,10L10,5.75L14.25,10L14.25,5.75L18.5,10L18.5,5.75L22.75,10L22.75,5.75L18.5,10L13.5,10L13.5,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V16.25L1.75,12L6,7.75V11H11V6H7.75L12,1.75L16.25,6H13Z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="3" x2="12" y2="21"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <polyline points="6 9 3 12 6 15"></polyline>
+                <polyline points="18 9 21 12 18 15"></polyline>
+                <polyline points="9 6 12 3 15 6"></polyline>
+                <polyline points="9 18 12 21 15 18"></polyline>
+            </svg>
         </button>
         <button id="finger-btn" data-translate-title="finger-title">
             <svg viewBox="0 0 24 24"><path d="m3.1 3.1l8.9 20.9l3.4-8.1l8.5-3.5L3.1 3.1Z" /></svg>
@@ -585,42 +889,52 @@
             <button id="box-btn" data-translate-title="box-title">
                 <svg viewBox="0 0 24 24"><path d="M3,3H21V21H3V3M5,5V19H19V5H5Z"/></svg>
             </button>
+            <button id="circle-btn" data-translate-title="circle-title">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+            </button>
             <button id="polygon-btn" data-translate-title="polygon-title">
                 <svg viewBox="0 0 24 24"><path d="M21,16.5V7.5L12,2.18L3,7.5V16.5L12,21.82L21,16.5M12,4.4L18.9,8.5V15.5L12,19.6L5.1,15.5V8.5L12,4.4Z"/></svg>
             </button>
             <button id="brush-btn" data-translate-title="brush-title">
                 <svg viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
             </button>
+            <button id="weld-btn" data-translate-title="weld-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z"/>
+                </svg>
+            </button>
+            <button id="spring-btn" data-translate-title="spring-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h2l2 -4l2 8l2 -10l2 8l2 -4h2"/>
+                </svg>
+            </button>
+            <button id="rod-btn" data-translate-title="rod-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="20" x2="20" y2="4"></line>
+                    <circle cx="4" cy="20" r="2.5"></circle>
+                    <circle cx="20" cy="4" r="2.5"></circle>
+                </svg>
+            </button>
         </div>
         <div class="tool-group">
-            <button id="tnt-small-btn" data-translate-title="tnt-small-title" style="color: #d9534f;">
-                <svg viewBox="0 0 24 24">
-                    <rect x="6" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="13" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="5" y="11" width="14" height="4" fill="#333"/>
-                    <path d="M12 2 Q 17 -1, 22 -2" stroke="#555" stroke-width="3" fill="none" stroke-linecap="round"/>
-                </svg>
+            <button id="tnt-small-btn" data-translate-title="tnt-small-title">
+                <img src="https://goida228top.github.io/textures/крас.png" alt="Малый ТНТ">
             </button>
-            <button id="tnt-medium-btn" data-translate-title="tnt-medium-title" style="color: #428bca;">
-                <svg viewBox="0 0 24 24">
-                    <rect x="6" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="13" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="5" y="11" width="14" height="4" fill="#333"/>
-                    <path d="M12 2 Q 17 -1, 22 -2" stroke="#555" stroke-width="3" fill="none" stroke-linecap="round"/>
-                </svg>
+            <button id="tnt-medium-btn" data-translate-title="tnt-medium-title">
+                <img src="https://goida228top.github.io/textures/син.png" alt="Средний ТНТ">
             </button>
-             <button id="tnt-large-btn" data-translate-title="tnt-large-title" style="color: #f0ad4e;">
-                <svg viewBox="0 0 24 24">
-                    <rect x="6" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="13" y="2" width="5" height="20" rx="2.5" fill="currentColor"/>
-                    <rect x="5" y="11" width="14" height="4" fill="#333"/>
-                    <path d="M12 2 Q 17 -1, 22 -2" stroke="#555" stroke-width="3" fill="none" stroke-linecap="round"/>
-                </svg>
+             <button id="tnt-large-btn" data-translate-title="tnt-large-title">
+                <img src="https://goida228top.github.io/textures/жел.png" alt="Мощный ТНТ">
             </button>
         </div>
         <button id="water-btn" data-translate-title="water-title" style="color: #428bca;">
             <svg viewBox="0 0 24 24">
                 <path d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z" stroke="white" stroke-width="1.5" fill="currentColor"/>
+            </svg>
+        </button>
+        <button id="sand-btn" data-translate-title="sand-title" style="color: var(--sand-color-opaque);">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z"/>
             </svg>
         </button>
         <button id="eraser-btn" data-translate-title="eraser-title">
@@ -635,9 +949,19 @@
             <img class="coin-icon" src="https://goida228top.github.io/textures/монетка.png" alt="Coin">
             <span id="coins-count">0</span>
         </div>
+        <button id="save-btn" data-translate-title="save-title">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M17,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V7L17,3M19,19H5V5H16.17L19,7.83V19M12,12C10.34,12 9,13.34 9,15S10.34,18 12,18 15,16.66 15,15 13.66,12 12,12M6,6H15V10H6V6Z" />
+            </svg>
+        </button>
+        <button id="load-btn" data-translate-title="load-title">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+        </button>
         <button id="settings-btn" data-translate-title="settings-title">
              <svg viewBox="0 0 24 24">
-                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24-.42-.12-.64l2 3.46c.12-.22.39.3.61.22l2.49-1c.23.09.49 0 .61.22l-2-3.46c-.13.22-.07.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                <path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.98C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98Z" />
              </svg>
         </button>
     </div>
@@ -646,6 +970,9 @@
         <canvas id="background-canvas"></canvas>
         <div id="water-effect-container">
             <canvas id="water-canvas"></canvas>
+        </div>
+        <div id="sand-effect-container">
+            <canvas id="sand-canvas"></canvas>
         </div>
         <canvas id="physics-canvas"></canvas>
         <div id="debug-info">
@@ -687,12 +1014,12 @@
             <label for="obj-color" data-translate-text="color-label">Цвет:</label>
             <input type="color" id="obj-color" value="#cccccc">
         </div>
-        <div class="popup-slider-container">
+        <div class="popup-slider-container" id="obj-friction-container">
             <div class="label-value">
                  <label for="obj-friction" data-translate-text="friction-label">Трение:</label>
-                 <span id="obj-friction-value">0.30</span>
+                 <span id="obj-friction-value">0.3</span>
             </div>
-            <input type="range" id="obj-friction" min="0" max="1" step="0.01" value="0.3">
+            <input type="range" id="obj-friction" min="0" max="10" step="0.1" value="0.3">
         </div>
         <div class="popup-slider-container">
             <div class="label-value">
@@ -708,13 +1035,60 @@
             </div>
             <input type="range" id="obj-density" min="0.001" max="10" step="0.001" value="1.0">
         </div>
+        <div class="popup-slider-container">
+            <div class="label-value">
+                <label for="obj-resistance" data-translate-text="resistance-label">Сопротивление:</label>
+                <span id="obj-resistance-value">0.1</span>
+            </div>
+            <input type="range" id="obj-resistance" min="0" max="10" step="0.1" value="0.1">
+        </div>
          <div class="popup-toggle-container">
             <label for="obj-static" data-translate-text="static-label">Неподвижный:</label>
             <input type="checkbox" id="obj-static">
         </div>
+        <!-- NEW: Motor Section -->
+        <div id="motor-properties-section" style="display: none; flex-direction: column; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
+            <div class="popup-toggle-container">
+                <label for="obj-motor-enable" data-translate-text="enable-motor-label">Включить мотор:</label>
+                <input type="checkbox" id="obj-motor-enable">
+            </div>
+            <div class="popup-slider-container">
+                <div class="label-value">
+                    <label for="obj-motor-speed" data-translate-text="motor-speed-label">Скорость:</label>
+                    <span id="obj-motor-speed-value">10.0</span>
+                </div>
+                <input type="range" id="obj-motor-speed" min="-100" max="100" step="0.1" value="10.0">
+            </div>
+            <div class="popup-slider-container" id="obj-motor-grip-container">
+                <div class="label-value">
+                    <label for="obj-motor-grip" data-translate-text="grip-label">Сцепление:</label>
+                    <span id="obj-motor-grip-value">0.8</span>
+                </div>
+                <input type="range" id="obj-motor-grip" min="0" max="20" step="0.1" value="0.8">
+            </div>
+        </div>
         <div class="delete-button" id="delete-selected-btn" data-translate-text="delete-button">Удалить</div>
     </div>
     
+    <!-- NEW: Панель свойств пружины -->
+    <div id="spring-properties-panel" class="popup">
+        <div class="popup-slider-container">
+            <div class="label-value">
+                <label for="spring-stiffness" data-translate-text="stiffness-label">Жёсткость:</label>
+                <span id="spring-stiffness-value">5.0</span>
+            </div>
+            <input type="range" id="spring-stiffness" min="0" max="100" step="0.1" value="5.0">
+        </div>
+        <div class="popup-slider-container">
+            <div class="label-value">
+                <label for="spring-damping" data-translate-text="damping-label">Затухание:</label>
+                <span id="spring-damping-value">0.50</span>
+            </div>
+            <input type="range" id="spring-damping" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        <div class="delete-button" id="delete-selected-spring-btn" data-translate-text="delete-spring-button">Удалить пружину</div>
+    </div>
+
     <!-- Предупреждение о низкой производительности -->
     <div id="low-fps-warning" class="popup">
         <h3 data-translate-text="low-fps-title">Низкая производительность</h3>
@@ -729,7 +1103,8 @@
 
     <!-- Новое меню наград -->
     <div id="reward-menu-panel" class="popup">
-        <button id="reward-menu-back-btn" data-translate-title="back-button">&larr;</button>
+        <!-- Кнопка "Закрыть" (X) -->
+        <button id="reward-menu-close-btn" data-translate-title="close-button">X</button>
         <div class="reward-menu-content">
             <h3 data-translate-text="reward-menu-title">Получить Резонансы</h3>
             <div class="reward-buttons-container">
@@ -740,7 +1115,18 @@
         </div>
     </div>
 
-    <script type="module" src="./src/index.js"></script>
-<script type="module" src="/index.tsx"></script>
+    <!-- Новая панель Сохранения/Загрузки -->
+    <div id="save-load-panel" class="popup">
+        <button id="save-load-close-btn" data-translate-title="close-button">X</button>
+        <div class="save-load-content">
+            <h3 id="save-load-title"></h3>
+            <div id="save-slots-container">
+                <!-- Слоты будут генерироваться здесь -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="index.js"></script>
+
 </body>
 </html>
