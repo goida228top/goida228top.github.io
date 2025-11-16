@@ -98,6 +98,12 @@ async function main() {
         if (!playerData.unlockedSlots) {
             playerData.unlockedSlots = Array(5).fill(false);
         }
+
+        // Если SDK не доступен (например, на GitHub Pages), выдаем монеты для теста
+        if (!ysdk) {
+            playerData.coins = 10000000;
+            console.log("Yandex SDK not found. Awarding 10,000,000 test coins.");
+        }
         
         // Инициализируем UI с загруженными или свежими данными
         initUIData(playerData);
