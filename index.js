@@ -67,8 +67,12 @@ async function main() {
 
         // --- Загрузка данных игрока (Облако с локальным откатом) ---
         let playerData = null;
+        let isFunctionalSdk = false; // Флаг, определяющий, работает ли SDK
         if (ysdk) {
-            playerData = await loadPlayer_Data();
+            playerData = await loadPlayer_Data(); // Вернет null при ошибке, {} если данных нет
+            if (playerData !== null) {
+                isFunctionalSdk = true; // Запрос к API прошел, SDK функционален
+            }
         }
         
         if (!playerData || Object.keys(playerData).length === 0) {
@@ -99,10 +103,10 @@ async function main() {
             playerData.unlockedSlots = Array(5).fill(false);
         }
 
-        // Если SDK не доступен (например, на GitHub Pages), выдаем монеты для теста
-        if (!ysdk) {
+        // Если SDK не функционален (например, на GitHub Pages), выдаем монеты для теста
+        if (!isFunctionalSdk) {
             playerData.coins = 10000000;
-            console.log("Yandex SDK not found. Awarding 10,000,000 test coins.");
+            console.log("Yandex SDK not functional. Awarding 10,000,000 test coins.");
         }
         
         // Инициализируем UI с загруженными или свежими данными
