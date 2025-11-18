@@ -534,8 +534,8 @@ export function initializeEngine() {
 
     // --- Игровой цикл с фиксированным шагом ---
     const timeStep = 1 / 60;
-    const velocityIterations = 8;
-    const positionIterations = 3;
+    let velocityIterations = 8;
+    let positionIterations = 3;
     let lastTime = performance.now();
     let accumulator = 0;
 
@@ -580,6 +580,8 @@ export function initializeEngine() {
             };
         },
         setCamera: (camData) => { cameraData = camData; },
-        setBeforeRenderCallback: (cb) => { beforeRenderCallback = cb; }
+        setBeforeRenderCallback: (cb) => { beforeRenderCallback = cb; },
+        setVelocityIterations: (value) => { velocityIterations = value; },
+        setPositionIterations: (value) => { positionIterations = value; }
     };
 }

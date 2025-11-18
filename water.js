@@ -18,6 +18,7 @@ const { Vec2 } = planck;
 const MAX_PARTICLES = WATER_MAX_PARTICLES;
 export const waterParticlesPool = [];
 let currentParticleIndex = 0;
+let maxActiveParticles = MAX_PARTICLES;
 
 const VISUAL_RADIUS = WATER_VISUAL_RADIUS;
 const PHYSICAL_RADIUS = (VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
@@ -157,7 +158,7 @@ export function updateWaterPhysics() {
 
 
 export function renderWater(cameraData) {
-    const isLiquidEffectEnabled = Dom.liquidEffectToggle.checked;
+    const isLiquidEffectEnabled = Dom.newLiquidEffectToggle.checked;
 
     Dom.waterContext.clearRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
 
@@ -194,7 +195,7 @@ export function spawnWaterParticle(world, x, y, initialVelocity) {
     particle.setLinearVelocity(initialVelocity || Vec2(0, 0));
     particle.setAngularVelocity(0);
     
-    currentParticleIndex = (currentParticleIndex + 1) % MAX_PARTICLES;
+    currentParticleIndex = (currentParticleIndex + 1) % maxActiveParticles;
 }
 
 export function deleteAllWater() {
@@ -206,6 +207,26 @@ export function deleteAllWater() {
         }
     }
     console.log('All water particles have been deactivated.');
+}
+
+export function setMaxWaterParticles(count) {
+    const oldMax = maxActiveParticles;
+    maxActiveParticles = Math.min(count, MAX_PARTICLES); // Ensure we don't go over the pool size
+    if (maxActiveParticles < oldMax) {
+        // Deactivate particles that are now outside the allowed range
+        for (let i = maxActiveParticles; i < oldMax; i++) {
+            const particle = waterParticlesPool[i];
+            if (particle && particle.isActive()) {
+                particle.setActive(false);
+                particle.setPosition(Vec2(-1000, -1000));
+                particle.setLinearVelocity(Vec2(0, 0));
+            }
+        }
+    }
+    // Если новый лимит меньше текущего индекса, сбрасываем индекс
+    if (currentParticleIndex >= maxActiveParticles) {
+        currentParticleIndex = 0;
+    }
 }
 
 

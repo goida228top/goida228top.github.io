@@ -16,6 +16,7 @@ const { Vec2 } = planck;
 const MAX_PARTICLES = SAND_MAX_PARTICLES;
 export const sandParticlesPool = [];
 let currentSandParticleIndex = 0;
+let maxActiveParticles = MAX_PARTICLES;
 
 const VISUAL_RADIUS = SAND_VISUAL_RADIUS;
 // Для квадратов это будет половина ширины/высоты
@@ -60,7 +61,7 @@ export function initializeSand(engineData) {
 
 
 export function renderSand(cameraData) {
-    const isLiquidEffectEnabled = Dom.liquidEffectToggle.checked;
+    const isLiquidEffectEnabled = Dom.newLiquidEffectToggle.checked;
 
     Dom.sandContext.clearRect(0, 0, Dom.sandCanvas.width, Dom.sandCanvas.height);
 
@@ -105,7 +106,7 @@ export function spawnSandParticle(world, x, y, initialVelocity) {
     particle.setLinearVelocity(initialVelocity || Vec2(0, 0));
     particle.setAngularVelocity((Math.random() - 0.5) * 2); // Небольшое случайное вращение
     
-    currentSandParticleIndex = (currentSandParticleIndex + 1) % MAX_PARTICLES;
+    currentSandParticleIndex = (currentSandParticleIndex + 1) % maxActiveParticles;
 }
 
 export function deleteAllSand() {
@@ -119,6 +120,23 @@ export function deleteAllSand() {
     console.log('Все частицы песка были деактивированы.');
 }
 
+export function setMaxSandParticles(count) {
+    const oldMax = maxActiveParticles;
+    maxActiveParticles = Math.min(count, MAX_PARTICLES);
+    if (maxActiveParticles < oldMax) {
+        for (let i = maxActiveParticles; i < oldMax; i++) {
+            const particle = sandParticlesPool[i];
+            if (particle && particle.isActive()) {
+                particle.setActive(false);
+                particle.setPosition(Vec2(-1000, -1000));
+                particle.setLinearVelocity(Vec2(0, 0));
+            }
+        }
+    }
+    if (currentSandParticleIndex >= maxActiveParticles) {
+        currentSandParticleIndex = 0;
+    }
+}
 
 export function setSandColor(newColor) {
     sandColor = newColor;

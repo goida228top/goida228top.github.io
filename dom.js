@@ -3,7 +3,6 @@
 export const container = document.getElementById('simulation-container');
 
 // Панели
-export const settingsPanel = document.getElementById('settings-panel');
 export const objectPropertiesPanel = document.getElementById('object-properties-panel');
 export const springPropertiesPanel = document.getElementById('spring-properties-panel'); // NEW
 export const rewardMenuPanel = document.getElementById('reward-menu-panel'); // Новое меню наград
@@ -75,16 +74,7 @@ export const toolButtons = [moveButton, fingerButton, boxButton, circleButton, p
 export const playPauseButton = document.getElementById('play-pause-btn');
 export const playIcon = document.getElementById('play-icon');
 export const pauseIcon = document.getElementById('pause-icon');
-export const clearAllButton = document.getElementById('clear-all-btn'); // Новая кнопка
-
-// Элементы панели настроек
-export const gravitySlider = document.getElementById('gravity-slider');
-export const gravityValue = document.getElementById('gravity-value');
-export const liquidEffectToggle = document.getElementById('liquid-effect-toggle');
-export const showHitboxesToggle = document.getElementById('show-hitboxes-toggle');
-export const uiSoundsToggle = document.getElementById('ui-sounds-toggle');
-export const objectSoundsToggle = document.getElementById('object-sounds-toggle');
-export const environmentSoundsToggle = document.getElementById('environment-sounds-toggle');
+export const clearAllButton = document.getElementById('clear-all-btn');
 
 // Элементы панели свойств объекта
 export const objColorInput = document.getElementById('obj-color');
@@ -123,6 +113,7 @@ export const springFixedToggle = document.getElementById('spring-fixed-toggle');
 
 
 // Индикаторы для отладки
+export const debugInfo = document.getElementById('debug-info');
 export const zoomIndicator = document.getElementById('zoom-indicator');
 export const coordsIndicator = document.getElementById('coords-indicator');
 export const fpsIndicator = document.getElementById('fps-indicator');
@@ -143,3 +134,35 @@ export const confirmModalTitle = document.getElementById('confirm-modal-title');
 export const confirmModalMessage = document.getElementById('confirm-modal-message');
 export const confirmModalConfirmBtn = document.getElementById('confirm-modal-confirm-btn');
 export const confirmModalCancelBtn = document.getElementById('confirm-modal-cancel-btn');
+
+// --- Новые элементы панели настроек ---
+export const newSettingsPanel = document.getElementById('new-settings-panel');
+export const newSettingsCloseBtn = document.getElementById('new-settings-close-btn');
+
+// Physics Settings
+export const newGravitySlider = document.getElementById('new-gravity-slider');
+export const newGravityValue = document.getElementById('new-gravity-value');
+export const velocityIterationsSlider = document.getElementById('velocity-iterations-slider');
+export const velocityIterationsValue = document.getElementById('velocity-iterations-value');
+export const positionIterationsSlider = document.getElementById('position-iterations-slider');
+export const positionIterationsValue = document.getElementById('position-iterations-value');
+
+// Graphics Settings
+export const newLiquidEffectToggle = document.getElementById('new-liquid-effect-toggle');
+export const newShowHitboxesToggle = document.getElementById('new-show-hitboxes-toggle');
+export const maxWaterSlider = document.getElementById('max-water-slider');
+export const maxWaterValue = document.getElementById('max-water-value');
+export const maxSandSlider = document.getElementById('max-sand-slider');
+export const maxSandValue = document.getElementById('max-sand-value');
+export const waterColorPicker = document.getElementById('water-color-picker');
+export const sandColorPicker = document.getElementById('sand-color-picker');
+
+// Sound Settings
+export const masterVolumeSlider = document.getElementById('master-volume-slider');
+export const masterVolumeValue = document.getElementById('master-volume-value');
+export const newUiSoundsToggle = document.getElementById('new-ui-sounds-toggle');
+export const newObjectSoundsToggle = document.getElementById('new-object-sounds-toggle');
+export const newEnvSoundsToggle = document.getElementById('new-env-sounds-toggle');
+
+// Interface Settings
+export const showDebugToggle = document.getElementById('show-debug-toggle');

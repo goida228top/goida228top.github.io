@@ -45,8 +45,8 @@
             --toolbar-bg: #2d2d2d;
             --button-bg: #444;
             --button-hover-bg: #555;
-            --water-color-opaque: hsl(230, 100%, 50%);
-            --water-color-transparent: hsla(230, 100%, 50%, 0.75);
+            --water-color-opaque: #428bca;
+            --water-color-transparent: rgba(66, 139, 202, 0.75);
             --water-color: var(--water-color-transparent); /* Fallback/default */
             --sand-color-opaque: #c2b280; /* Песочный цвет */
             --sand-color-transparent: rgba(194, 178, 128, 0.75); /* Песок теперь с прозрачностью для правильного эффекта */
@@ -512,13 +512,6 @@
         }
         #bottom-toolbar button:hover {
             background-color: var(--button-hover-bg);
-        }
-        #clear-all-btn {
-            color: #dc3545;
-        }
-        #clear-all-btn:hover {
-            background-color: #c0392b;
-            color: var(--text-color);
         }
 
         /* Styles for the new reward menu */
@@ -1053,6 +1046,73 @@
             background-color: var(--button-hover-bg);
         }
         
+        /* NEW: Styles for the full-screen settings panel */
+        #new-settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .settings-panel-content {
+            background: var(--toolbar-bg);
+            border-radius: 8px;
+            padding: 30px 40px;
+            max-width: 90%;
+            width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .settings-panel-content h2 {
+            margin-top: 0;
+            font-size: 2em;
+            color: var(--text-color);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .settings-category {
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .settings-category:last-child {
+            border-bottom: none;
+        }
+        .settings-category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5px;
+            cursor: pointer;
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+        .category-arrow {
+            transition: transform 0.3s ease-out;
+            transform: rotate(-90deg);
+        }
+        .settings-category.expanded .category-arrow {
+            transform: rotate(0deg);
+        }
+        .settings-category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .settings-category.expanded .settings-category-content {
+            /* Set a max-height large enough to contain the content */
+            max-height: 600px; 
+            padding: 10px 5px 20px 5px;
+        }
     </style>
 <script type="importmap">
 {
@@ -1145,7 +1205,7 @@
                 <img src="https://goida228top.github.io/textures/жел.png" alt="Мощный ТНТ">
             </button>
         </div>
-        <button id="water-btn" data-translate-title="water-title" style="color: #428bca;">
+        <button id="water-btn" data-translate-title="water-title" style="color: var(--water-color-opaque);">
             <svg viewBox="0 0 24 24">
                 <path d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z" stroke="white" stroke-width="1.5" fill="currentColor"/>
             </svg>
@@ -1162,6 +1222,10 @@
         </button>
         
         <div id="toolbar-separator"></div>
+
+        <button id="clear-all-btn" data-translate-title="clear-all-title">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V6H20V4H15V3H9M7,19V6H17V19H7Z"/></svg>
+        </button>
         
         <div id="reward-btn" class="coins-display" data-translate-title="coins-label">
             <img class="coin-icon" src="https://goida228top.github.io/textures/монетка.png" alt="Coin">
@@ -1205,40 +1269,6 @@
             <svg id="play-icon" viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
             <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
         </button>
-        <button id="clear-all-btn" data-translate-title="clear-all-title">
-            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V6H20V4H15V3H9M7,19V6H17V19H7Z"/></svg>
-        </button>
-    </div>
-
-    <!-- Панель настроек -->
-    <div id="settings-panel" class="popup">
-        <div class="popup-slider-container">
-             <div class="label-value">
-                <label for="gravity-slider" data-translate-text="gravity-label">Гравитация:</label>
-                <span id="gravity-value">1.0</span>
-            </div>
-            <input type="range" id="gravity-slider" min="-2" max="2" step="0.1" value="1">
-        </div>
-        <div class="popup-toggle-container">
-            <label for="liquid-effect-toggle" data-translate-text="liquid-effect-label">Эффект жидкости:</label>
-            <input type="checkbox" id="liquid-effect-toggle" checked>
-        </div>
-        <div class="popup-toggle-container">
-            <label for="show-hitboxes-toggle" data-translate-text="show-hitboxes-label">Показывать хитбоксы:</label>
-            <input type="checkbox" id="show-hitboxes-toggle">
-        </div>
-        <div class="popup-toggle-container" style="border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
-            <label for="ui-sounds-toggle" data-translate-text="ui-sounds-label">Звуки UI:</label>
-            <input type="checkbox" id="ui-sounds-toggle" checked>
-        </div>
-        <div class="popup-toggle-container">
-            <label for="object-sounds-toggle" data-translate-text="object-sounds-label">Звуки объектов:</label>
-            <input type="checkbox" id="object-sounds-toggle" checked>
-        </div>
-        <div class="popup-toggle-container">
-            <label for="environment-sounds-toggle" data-translate-text="environment-sounds-label">Звуки окружения:</label>
-            <input type="checkbox" id="environment-sounds-toggle" checked>
-        </div>
     </div>
     
     <!-- Панель свойств объекта -->
@@ -1369,6 +1399,143 @@
             </div>
         </div>
     </div>
+    
+    <!-- NEW: Новая панель настроек (полноэкранная) -->
+    <div id="new-settings-panel" class="popup">
+        <button id="new-settings-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
+        <div class="settings-panel-content">
+            <h2 data-translate-text="settings-title">Настройки</h2>
+            
+            <!-- Категория: Физика мира -->
+            <div class="settings-category">
+                <div class="settings-category-header">
+                    <span data-translate-text="category-physics">Физика мира</span>
+                    <span class="category-arrow">▼</span>
+                </div>
+                <div class="settings-category-content">
+                    <!-- Гравитация -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="new-gravity-slider" data-translate-text="gravity-label">Гравитация:</label>
+                            <span id="new-gravity-value">1.0</span>
+                        </div>
+                        <input type="range" id="new-gravity-slider" min="-2" max="2" step="0.1" value="1">
+                    </div>
+                    <!-- Итерации скорости -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="velocity-iterations-slider" data-translate-text="velocity-iterations-label">Точность симуляции:</label>
+                            <span id="velocity-iterations-value">8</span>
+                        </div>
+                        <input type="range" id="velocity-iterations-slider" min="4" max="16" step="1" value="8">
+                    </div>
+                    <!-- Итерации позиции -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="position-iterations-slider" data-translate-text="position-iterations-label">Стабильность симуляции:</label>
+                            <span id="position-iterations-value">3</span>
+                        </div>
+                        <input type="range" id="position-iterations-slider" min="2" max="10" step="1" value="3">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Категория: Графика -->
+            <div class="settings-category">
+                <div class="settings-category-header">
+                    <span data-translate-text="category-graphics">Графика</span>
+                    <span class="category-arrow">▼</span>
+                </div>
+                <div class="settings-category-content">
+                    <!-- Эффект жидкости -->
+                    <div class="popup-toggle-container">
+                        <label for="new-liquid-effect-toggle" data-translate-text="liquid-effect-label">Эффект жидкости:</label>
+                        <input type="checkbox" id="new-liquid-effect-toggle" checked>
+                    </div>
+                    <!-- Показывать хитбоксы -->
+                    <div class="popup-toggle-container">
+                        <label for="new-show-hitboxes-toggle" data-translate-text="show-hitboxes-label">Показывать хитбоксы:</label>
+                        <input type="checkbox" id="new-show-hitboxes-toggle">
+                    </div>
+                    <!-- Макс. частиц воды -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="max-water-slider" data-translate-text="max-water-label">Макс. частиц воды:</label>
+                            <span id="max-water-value">1500</span>
+                        </div>
+                        <input type="range" id="max-water-slider" min="100" max="1500" step="50" value="1500">
+                    </div>
+                    <!-- Макс. частиц песка -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="max-sand-slider" data-translate-text="max-sand-label">Макс. частиц песка:</label>
+                            <span id="max-sand-value">1500</span>
+                        </div>
+                        <input type="range" id="max-sand-slider" min="100" max="1500" step="50" value="1500">
+                    </div>
+                    <!-- Цвет воды -->
+                    <div class="popup-color-container">
+                        <label for="water-color-picker" data-translate-text="water-color-label">Цвет воды:</label>
+                        <input type="color" id="water-color-picker" value="#428bca">
+                    </div>
+                    <!-- Цвет песка -->
+                    <div class="popup-color-container">
+                        <label for="sand-color-picker" data-translate-text="sand-color-label">Цвет песка:</label>
+                        <input type="color" id="sand-color-picker" value="#c2b280">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Категория: Звук -->
+            <div class="settings-category">
+                <div class="settings-category-header">
+                    <span data-translate-text="category-sound">Звук</span>
+                    <span class="category-arrow">▼</span>
+                </div>
+                <div class="settings-category-content">
+                    <!-- Общая громкость -->
+                    <div class="popup-slider-container">
+                        <div class="label-value">
+                            <label for="master-volume-slider" data-translate-text="master-volume-label">Общая громкость:</label>
+                            <span id="master-volume-value">100%</span>
+                        </div>
+                        <input type="range" id="master-volume-slider" min="0" max="1" step="0.01" value="1">
+                    </div>
+                    <!-- Звуки UI -->
+                    <div class="popup-toggle-container">
+                        <label for="new-ui-sounds-toggle" data-translate-text="ui-sounds-label">Звуки UI:</label>
+                        <input type="checkbox" id="new-ui-sounds-toggle" checked>
+                    </div>
+                    <!-- Звуки объектов -->
+                    <div class="popup-toggle-container">
+                        <label for="new-object-sounds-toggle" data-translate-text="object-sounds-label">Звуки объектов:</label>
+                        <input type="checkbox" id="new-object-sounds-toggle" checked>
+                    </div>
+                    <!-- Звуки окружения -->
+                    <div class="popup-toggle-container">
+                        <label for="new-env-sounds-toggle" data-translate-text="environment-sounds-label">Звуки окружения:</label>
+                        <input type="checkbox" id="new-env-sounds-toggle" checked>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Категория: Интерфейс -->
+            <div class="settings-category">
+                <div class="settings-category-header">
+                    <span data-translate-text="category-interface">Интерфейс</span>
+                    <span class="category-arrow">▼</span>
+                </div>
+                <div class="settings-category-content">
+                    <!-- Показывать FPS -->
+                    <div class="popup-toggle-container">
+                        <label for="show-debug-toggle" data-translate-text="show-debug-label">Показывать FPS и коорд.:</label>
+                        <input type="checkbox" id="show-debug-toggle" checked>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- NEW: About Panel -->
     <div id="about-panel" class="popup">

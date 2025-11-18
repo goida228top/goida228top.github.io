@@ -240,6 +240,13 @@ export const SoundManager = {
         }
         return { ...mutedCategories }; // Return a copy
     },
+    
+    // NEW: Function to control master volume
+    setMasterVolume(volume) {
+        if (masterGain) {
+            masterGain.gain.setValueAtTime(volume, audioContext.currentTime);
+        }
+    },
 };
 
 // Проверяем, был ли AudioContext создан успешно.
@@ -248,6 +255,7 @@ if (!audioContext) {
     // "Заглушки" для всех функций, чтобы игра не вылетала
     SoundManager.playSound = () => {};
     SoundManager.setCategoryMute = () => {};
+    SoundManager.setMasterVolume = () => {};
     SoundManager.loadMuteSettings = () => ({ ui: false, object: false, environment: false });
     SoundManager.loadAllSounds = async () => {};
 }
