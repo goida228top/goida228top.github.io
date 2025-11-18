@@ -7,6 +7,19 @@ export const settingsPanel = document.getElementById('settings-panel');
 export const objectPropertiesPanel = document.getElementById('object-properties-panel');
 export const springPropertiesPanel = document.getElementById('spring-properties-panel'); // NEW
 export const rewardMenuPanel = document.getElementById('reward-menu-panel'); // Новое меню наград
+export const toolbar = document.getElementById('toolbar');
+export const bottomToolbar = document.getElementById('bottom-toolbar');
+
+
+// Main Menu
+export const mainMenuOverlay = document.getElementById('main-menu-overlay');
+export const startGameBtn = document.getElementById('start-game-btn');
+export const loadGameMenuBtn = document.getElementById('load-game-menu-btn');
+export const aboutGameBtn = document.getElementById('about-game-btn');
+
+// About Panel
+export const aboutPanel = document.getElementById('about-panel');
+export const aboutPanelCloseBtn = document.getElementById('about-panel-close-btn');
 
 // Эффекты
 export const waterEffectContainer = document.getElementById('water-effect-container');
@@ -62,12 +75,16 @@ export const toolButtons = [moveButton, fingerButton, boxButton, circleButton, p
 export const playPauseButton = document.getElementById('play-pause-btn');
 export const playIcon = document.getElementById('play-icon');
 export const pauseIcon = document.getElementById('pause-icon');
+export const clearAllButton = document.getElementById('clear-all-btn'); // Новая кнопка
 
 // Элементы панели настроек
 export const gravitySlider = document.getElementById('gravity-slider');
 export const gravityValue = document.getElementById('gravity-value');
 export const liquidEffectToggle = document.getElementById('liquid-effect-toggle');
 export const showHitboxesToggle = document.getElementById('show-hitboxes-toggle');
+export const uiSoundsToggle = document.getElementById('ui-sounds-toggle');
+export const objectSoundsToggle = document.getElementById('object-sounds-toggle');
+export const environmentSoundsToggle = document.getElementById('environment-sounds-toggle');
 
 // Элементы панели свойств объекта
 export const objColorInput = document.getElementById('obj-color');
@@ -99,6 +116,10 @@ export const springStiffnessValue = document.getElementById('spring-stiffness-va
 export const springDampingSlider = document.getElementById('spring-damping');
 export const springDampingValue = document.getElementById('spring-damping-value');
 export const deleteSelectedSpringButton = document.getElementById('delete-selected-spring-btn');
+export const springLengthContainer = document.getElementById('spring-length-container');
+export const springLengthSlider = document.getElementById('spring-length');
+export const springLengthValue = document.getElementById('spring-length-value');
+export const springFixedToggle = document.getElementById('spring-fixed-toggle');
 
 
 // Индикаторы для отладки
@@ -112,3 +133,13 @@ export const deleteAllWaterBtn = document.getElementById('delete-all-water-btn')
 export const pauseFromWarningBtn = document.getElementById('pause-from-warning-btn');
 export const doNothingBtn = document.getElementById('do-nothing-btn');
 export const dontAskAgainBtn = document.getElementById('dont-ask-again-btn');
+
+// NEW: Toast Container
+export const toastContainer = document.getElementById('toast-container');
+
+// NEW: Confirmation Modal Elements
+export const confirmModalOverlay = document.getElementById('confirm-modal-overlay');
+export const confirmModalTitle = document.getElementById('confirm-modal-title');
+export const confirmModalMessage = document.getElementById('confirm-modal-message');
+export const confirmModalConfirmBtn = document.getElementById('confirm-modal-confirm-btn');
+export const confirmModalCancelBtn = document.getElementById('confirm-modal-cancel-btn');

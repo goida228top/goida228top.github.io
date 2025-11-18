@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Физическая песочница 2D</title>
+    <title>Физическая песочница</title>
     <!-- Заменяем Matter.js на более мощный Planck.js -->
     <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
     <script src="https://yandex.ru/games/sdk/v2"></script>
@@ -14,6 +14,9 @@
             // Прячем прогресс бар и текст
             const progressBarContainer = document.getElementById('progress-bar-container');
             if (progressBarContainer) progressBarContainer.style.display = 'none';
+            
+            const loadingTitle = document.getElementById('loading-title');
+            if(loadingTitle) loadingTitle.style.display = 'none';
 
             const loadingText = document.getElementById('loading-text');
             if (loadingText) loadingText.style.display = 'none';
@@ -69,6 +72,14 @@
             -webkit-touch-callout: none;
         }
         
+        /* Prevent context menu on images */
+        img {
+            pointer-events: none;
+            -webkit-user-drag: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
         /* --- Loading Screen Styles --- */
         #loading-overlay {
             position: fixed;
@@ -91,6 +102,12 @@
             max-width: 400px;
             text-align: center;
             color: white;
+        }
+        #loading-title {
+            font-size: 2.5em;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--sky-top);
         }
         #progress-bar-container {
             width: 100%;
@@ -125,6 +142,54 @@
         }
         #reload-button:hover {
             background-color: var(--button-hover-bg);
+        }
+
+        /* NEW: Main Menu Styles */
+        #main-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 900;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+        }
+        .main-menu-title {
+            font-size: 4em;
+            color: white;
+            text-shadow: 0 2px 15px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
+        }
+        #main-menu-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .main-menu-btn {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            min-width: 300px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .main-menu-btn:hover {
+            background-color: var(--button-hover-bg);
+            transform: scale(1.05);
+        }
+
+        /* Initially hide toolbars */
+        #toolbar, #bottom-toolbar {
+            display: none;
         }
 
         #toolbar {
@@ -448,6 +513,13 @@
         #bottom-toolbar button:hover {
             background-color: var(--button-hover-bg);
         }
+        #clear-all-btn {
+            color: #dc3545;
+        }
+        #clear-all-btn:hover {
+            background-color: #c0392b;
+            color: var(--text-color);
+        }
 
         /* Styles for the new reward menu */
         #reward-menu-panel {
@@ -486,31 +558,30 @@
             font-size: 2.8em; /* Уменьшено */
         }
 
-        /* Кнопка "Закрыть" (X) */
-        #reward-menu-close-btn {
+        /* NEW: Общий стиль для кнопок закрытия панелей */
+        .panel-close-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 50px; /* Чуть меньше */
-            height: 50px; /* Чуть меньше */
-            font-size: 1.8em; /* Уменьшен текст */
-            background-color: #dc3545; /* Красный цвет */
-            color: white; /* Белый текст */
+            top: 40px;
+            right: 40px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.8em;
+            background-color: #dc3545;
+            color: white;
             border: 1px solid #c0392b;
-            border-radius: 50%; /* Круглая форма */
+            border-radius: 50%;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: background-color 0.2s, transform 0.2s;
-            z-index: 1001; /* Higher z-index than panel content */
+            z-index: 1001; /* Must be on top of the panel content */
         }
-        #reward-menu-close-btn:hover {
-            background-color: #c0392b; /* Темнее красный при наведении */
-            transform: scale(1.05); /* Небольшое увеличение при наведении */
+        .panel-close-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
         }
-
-
+        
         .reward-buttons-container { /* New container for the reward buttons */
             display: flex;
             flex-wrap: nowrap; /* ! Важно: Запрещаем перенос, чтобы кнопки всегда были в один ряд */
@@ -544,6 +615,21 @@
         /* .reward-button:hover { */
             /* background-color: var(--button-hover-bg); */ /* Убран hover с родительской кнопки */
         /* } */
+
+        /* NEW: Container for the top part of the reward button */
+        .reward-info-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Spacing between header, image, and subtitle */
+        }
+        
+        /* NEW: Style for the reward subtitle */
+        .reward-button-subtitle {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #ddd;
+        }
 
         .reward-button-header {
             font-size: 3em; /* Уменьшено */
@@ -680,29 +766,6 @@
             color: var(--text-color);
             text-align: center;
             font-size: 2.8em;
-        }
-
-        #save-load-close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 1.8em;
-            background-color: #dc3545;
-            color: white;
-            border: 1px solid #c0392b;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.2s, transform 0.2s;
-            z-index: 1001;
-        }
-        #save-load-close-btn:hover {
-            background-color: #c0392b;
-            transform: scale(1.05);
         }
 
         #save-slots-container {
@@ -845,6 +908,151 @@
             height: 16px;
         }
 
+        /* NEW: About Panel Styles */
+        #about-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .about-panel-content {
+            background: var(--toolbar-bg);
+            border-radius: 8px;
+            padding: 30px 40px;
+            max-width: 90%;
+            width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            line-height: 1.6;
+        }
+        .about-panel-content h2 {
+            margin-top: 0;
+            font-size: 2em;
+            color: var(--sky-top);
+            text-align: center;
+        }
+        .about-panel-content h3 {
+            margin-top: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        .about-panel-content ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .about-panel-content li {
+            margin-bottom: 10px;
+        }
+
+        /* --- NEW: Toast Notification Styles --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .toast {
+            background-color: rgba(45, 45, 45, 0.9);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            border-left: 5px solid;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast.hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .toast.success { border-color: #28a745; }
+        .toast.error { border-color: #dc3545; }
+        .toast.info { border-color: #17a2b8; }
+
+        /* --- NEW: Confirmation Modal Styles --- */
+        #confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+        }
+        .confirm-modal {
+            background: var(--toolbar-bg);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 90%;
+            width: 450px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+        .confirm-modal-title {
+            font-size: 1.8em;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+        .confirm-modal-message {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            color: #ddd;
+            line-height: 1.5;
+        }
+        .confirm-modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .confirm-modal-buttons button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #confirm-modal-confirm-btn {
+            background-color: #dc3545;
+            color: white;
+            border: 1px solid #c0392b;
+        }
+        #confirm-modal-confirm-btn:hover {
+            background-color: #c0392b;
+        }
+        #confirm-modal-cancel-btn {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        #confirm-modal-cancel-btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+        
     </style>
 <script type="importmap">
 {
@@ -856,9 +1064,10 @@
 }
 </script>
 </head>
-<body>
+<body oncontextmenu="return false;">
     <div id="loading-overlay">
         <div id="loading-container">
+            <h1 id="loading-title">Физическая песочница</h1>
             <div id="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
@@ -868,6 +1077,15 @@
                 <p id="loading-error-message"></p>
                 <button id="reload-button">Обновить страницу</button>
             </div>
+        </div>
+    </div>
+    
+    <div id="main-menu-overlay">
+        <div id="main-menu-container">
+            <h1 class="main-menu-title">Физическая песочница</h1>
+            <button id="start-game-btn" class="main-menu-btn">Начать игру</button>
+            <button id="load-game-menu-btn" class="main-menu-btn">Загрузить игру</button>
+            <button id="about-game-btn" class="main-menu-btn">Об игре</button>
         </div>
     </div>
 
@@ -983,9 +1201,12 @@
     </div>
     
     <div id="bottom-toolbar">
-        <button id="play-pause-btn">
+        <button id="play-pause-btn" data-translate-title="play-title">
             <svg id="play-icon" viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
             <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+        </button>
+        <button id="clear-all-btn" data-translate-title="clear-all-title">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V6H20V4H15V3H9M7,19V6H17V19H7Z"/></svg>
         </button>
     </div>
 
@@ -1005,6 +1226,18 @@
         <div class="popup-toggle-container">
             <label for="show-hitboxes-toggle" data-translate-text="show-hitboxes-label">Показывать хитбоксы:</label>
             <input type="checkbox" id="show-hitboxes-toggle">
+        </div>
+        <div class="popup-toggle-container" style="border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
+            <label for="ui-sounds-toggle" data-translate-text="ui-sounds-label">Звуки UI:</label>
+            <input type="checkbox" id="ui-sounds-toggle" checked>
+        </div>
+        <div class="popup-toggle-container">
+            <label for="object-sounds-toggle" data-translate-text="object-sounds-label">Звуки объектов:</label>
+            <input type="checkbox" id="object-sounds-toggle" checked>
+        </div>
+        <div class="popup-toggle-container">
+            <label for="environment-sounds-toggle" data-translate-text="environment-sounds-label">Звуки окружения:</label>
+            <input type="checkbox" id="environment-sounds-toggle" checked>
         </div>
     </div>
     
@@ -1086,6 +1319,17 @@
             </div>
             <input type="range" id="spring-damping" min="0" max="1" step="0.01" value="0.5">
         </div>
+        <div class="popup-slider-container" id="spring-length-container">
+            <div class="label-value">
+                <label for="spring-length" data-translate-text="spring-length-label">Длина:</label>
+                <span id="spring-length-value">1.00</span>
+            </div>
+            <input type="range" id="spring-length" min="0.1" max="20" step="0.05" value="1.0">
+        </div>
+        <div class="popup-toggle-container">
+            <label for="spring-fixed-toggle" data-translate-text="spring-fixed-label">Фиксированная:</label>
+            <input type="checkbox" id="spring-fixed-toggle">
+        </div>
         <div class="delete-button" id="delete-selected-spring-btn" data-translate-text="delete-spring-button">Удалить пружину</div>
     </div>
 
@@ -1104,7 +1348,7 @@
     <!-- Новое меню наград -->
     <div id="reward-menu-panel" class="popup">
         <!-- Кнопка "Закрыть" (X) -->
-        <button id="reward-menu-close-btn" data-translate-title="close-button">X</button>
+        <button id="reward-menu-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="reward-menu-content">
             <h3 data-translate-text="reward-menu-title">Получить Резонансы</h3>
             <div class="reward-buttons-container">
@@ -1117,7 +1361,7 @@
 
     <!-- Новая панель Сохранения/Загрузки -->
     <div id="save-load-panel" class="popup">
-        <button id="save-load-close-btn" data-translate-title="close-button">X</button>
+        <button id="save-load-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="save-load-content">
             <h3 id="save-load-title"></h3>
             <div id="save-slots-container">
@@ -1125,6 +1369,48 @@
             </div>
         </div>
     </div>
+
+    <!-- NEW: About Panel -->
+    <div id="about-panel" class="popup">
+        <button id="about-panel-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
+        <div class="about-panel-content">
+            <h2>Об игре "Физическая песочница"</h2>
+            <p>
+                Добро пожаловать! Это первая версия игры, и я буду рад любой поддержке. <br>
+                Имейте в виду, что не все предметы и механики доделаны до конца. Например, песок в данный момент находится в стадии активной разработки и может вести себя некорректно.
+            </p>
+            <p style="color: #ffcc00;">
+                <b>Внимание:</b> Большое количество частиц воды и песка может вызывать сильное падение производительности на некоторых устройствах.
+            </p>
+            <h3>Что в планах</h3>
+            <ul>
+                <li>Полная переработка и оптимизация песка.</li>
+                <li>Добавление новых интерактивных предметов и инструментов.</li>
+                <li>Возможность загружать собственные изображения как текстуры для объектов.</li>
+                <li>Инструмент "Нож" для вырезания отверстий в объектах.</li>
+                <li>Улучшение и исправление существующих инструментов (Перемещение, Кисть, Пружина).</li>
+                <li>Добавление настроек для инструментов (размер ластика, толщина кисти и т.д.).</li>
+                <li>Больше настроек для симуляции и улучшение интерфейса.</li>
+                <li>Готовые карты и постройки для исследования в главном меню.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- NEW: Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- NEW: Confirmation Modal -->
+    <div id="confirm-modal-overlay">
+        <div class="confirm-modal">
+            <h2 id="confirm-modal-title" class="confirm-modal-title"></h2>
+            <p id="confirm-modal-message" class="confirm-modal-message"></p>
+            <div class="confirm-modal-buttons">
+                <button id="confirm-modal-cancel-btn" data-translate-text="cancel-button">Отмена</button>
+                <button id="confirm-modal-confirm-btn" data-translate-text="confirm-button">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module" src="index.js"></script>
 

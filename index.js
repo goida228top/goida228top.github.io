@@ -8,9 +8,10 @@ import { initializeSand } from './sand.js'; // Импортируем иници
 import { initializeTools } from './tools.js';
 import { initializeUI, initUIData } from './ui.js';
 import { initYandexSDK, gameReady, loadPlayer_Data } from './yandex.js';
-import { ALL_IMAGE_URLS } from './game_config.js'; // Импортируем список всех изображений
-import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
-import { initializeBackground, renderBackground } from './background.js'; // ИМПОРТ: Добавлено для initializeBackground и renderBackground
+import { ALL_IMAGE_URLS, ALL_SOUND_URLS } from './game_config.js';
+import { ImageLoader } from './image_loader.js';
+import { SoundManager } from './sound.js';
+import { initializeBackground, renderBackground } from './background.js';
 
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBar = document.getElementById('progress-bar');
@@ -35,11 +36,11 @@ function sleep(ms) {
 async function main() {
     try {
         // --- Экран загрузки ---
-        updateProgress(10);
+        updateProgress(5);
         
-        let sdkProgress = 10;
+        let sdkProgress = 5;
         const sdkProgressInterval = setInterval(() => {
-            if (sdkProgress < 20) { // Меньший диапазон для SDK, чтобы освободить место для загрузки изображений
+            if (sdkProgress < 15) {
                 sdkProgress += Math.random() * 2;
                 updateProgress(sdkProgress);
             }
@@ -50,19 +51,31 @@ async function main() {
         if (!ysdk) {
             console.warn('Yandex SDK failed to initialize, ads will not be available.');
         }
-        updateProgress(20);
+        updateProgress(15);
+        await sleep(150);
+        
+        // --- Предварительная загрузка ЗВУКОВ ---
+        const soundLoadProgressIncrement = 25 / ALL_SOUND_URLS.length; // 25% прогресса на звуки
+        let soundsLoadedCount = 0;
+        await SoundManager.loadAllSounds(ALL_SOUND_URLS, () => {
+             soundsLoadedCount++;
+             const progress = 15 + (soundsLoadedCount * soundLoadProgressIncrement);
+             updateProgress(progress);
+        });
+        updateProgress(40);
         await sleep(150);
 
+
         // --- Предварительная загрузка изображений ---
-        const imageLoadProgressIncrement = 30 / ALL_IMAGE_URLS.length; // 30% прогресса на изображения
+        const imageLoadProgressIncrement = 25 / ALL_IMAGE_URLS.length; // 25% прогресса на изображения
         let imagesLoadedCount = 0;
         
         await ImageLoader.preloadImages(ALL_IMAGE_URLS, () => {
             imagesLoadedCount++;
-            const progress = 20 + (imagesLoadedCount * imageLoadProgressIncrement); // Начинаем с 20%
+            const progress = 40 + (imagesLoadedCount * imageLoadProgressIncrement); // Начинаем с 40%
             updateProgress(progress);
         });
-        updateProgress(50); // Убедимся, что после загрузки изображений прогресс 50%
+        updateProgress(65); // Убедимся, что после загрузки изображений прогресс 65%
         await sleep(150);
 
         // --- Загрузка данных игрока (Облако с локальным откатом) ---
@@ -114,7 +127,7 @@ async function main() {
 
         // 1. Движок создает мир и кастомный объект рендера
         const engineData = initializeEngine();
-        updateProgress(60);
+        updateProgress(75);
         await sleep(150);
         
         // 2. Камера подключается к объекту рендера и добавляет управление
@@ -125,27 +138,27 @@ async function main() {
         initializeBackground();
         // 4. Устанавливаем колбек для отрисовки фона перед отрисовкой физики
         engineData.setBeforeRenderCallback(() => renderBackground(cameraData));
-        updateProgress(70);
+        updateProgress(80);
         await sleep(150);
 
 
         // 5. Создаем мир и воду
         const worldData = setupWorld(engineData.world, engineData.render.options.height);
-        updateProgress(80);
+        updateProgress(85);
         await sleep(150);
         
         initializeWater(engineData);
         initializeSand(engineData); // Инициализируем песок
-        updateProgress(85);
+        updateProgress(90);
         await sleep(100);
 
         // 6. Подключаем UI и инструменты, передавая им нужные зависимости
         await initializeTools(engineData, cameraData, worldData); // Добавляем await здесь
-        updateProgress(90);
+        updateProgress(95);
         await sleep(150);
         
         initializeUI(engineData, cameraData, worldData);
-        updateProgress(95);
+        updateProgress(98);
         await sleep(100);
         
         // 7. Обработка изменения размера окна

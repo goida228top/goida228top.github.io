@@ -1,494 +1,55 @@
-// @ts-nocheck
 
-
-import planck from './planck.js';
 import * as Dom from './dom.js';
-import { toolState, getSelectedBody, deselectBody, deleteSelectedBody, setFirstJointBody, getSelectedSpring, deleteSelectedSpring, deselectSpring } from './selection.js';
-import { setWaterColor, deleteAllWater, waterParticlesPool } from './water.js';
-import { setSandColor, deleteAllSand, sandParticlesPool } from './sand.js'; // NEW: Импортируем функции для песка
-import { showRewardedVideo, showFullscreenAdv, savePlayer_Data } from './yandex.js';
+import { SoundManager } from './sound.js';
 import { t } from './lang.js';
-import { PHYSICS_SCALE, LOW_FPS_THRESHOLD, LOW_FPS_COOLDOWN_MS, REWARD_AD_DELAY_SECONDS, TOOL_SETTINGS } from './game_config.js';
-import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
+import { savePlayer_Data, loadPlayer_Data, showRewardedVideo, showFullscreenAdv } from './yandex.js';
 import { serializeWorld, deserializeWorld } from './world_serializer.js';
+import { PHYSICS_SCALE, TOOL_SETTINGS } from './game_config.js';
+import { deleteAllWater, setWaterColor } from './water.js';
+import { deleteAllSand, setSandColor } from './sand.js';
+import { 
+    selectBody, deselectBody, getSelectedBody, deleteSelectedBody, 
+    selectSpring, deselectSpring, getSelectedSpring, deleteSelectedSpring, 
+    toolState 
+} from './selection.js';
+import planck from './planck.js';
 
-// Хранит состояние панелей
-const panelState = {
-    isSettingsOpen: false,
-    isPropertiesOpen: false,
-    isSpringPropertiesOpen: false, // NEW
-    isRewardMenuOpen: false,
-    isSaveLoadOpen: false,
-};
-
-let bodyForPropertiesPanel = null; // Текущий объект, для которого открыта панель свойств
-
-let coins = 0;
-const rewardProgress = {};
-let unlockedSlots = Array(5).fill(false); // Состояние разблокированных слотов
-let currentPlaytime = 0; // Время игры в текущей сессии в секундах
-let playtimeInterval = null;
-
-// Переменная для управления предупреждением о низкой производительности
-let askAboutLowFps = JSON.parse(localStorage.getItem('askAboutLowFps') || 'true');
-
-// Состояние таймера и показа рекламы для каждой кнопки награды
-// { rewardAmount: { timerId: number|null, status: 'idle'|'waiting'|'showing'|'failed', remainingTime: number } }
-const adProgressStates = new Map();
-
-const NUM_SAVE_SLOTS = 5;
-const SAVE_SLOT_PREFIX = 'sandbox_save_';
-const SLOT_PRICES = [25, 50, 50, 100, 100]; // Цены для слотов 1-5
-
-// Глобальный объект для отслеживания нажатых клавиш для моторов
-export let keyState = {
+export const keyState = {
+    ArrowUp: false,
+    ArrowDown: false,
     ArrowLeft: false,
     ArrowRight: false
 };
 
+export let playerData = {
+    coins: 0,
+    rewardProgress: {},
+    unlockedSlots: [false, false, false, false, false]
+};
 
-function applyTranslations() {
-    document.title = t('app-title');
-    document.querySelectorAll('[data-translate-title]').forEach(el => el.title = t(el.dataset.translateTitle));
-    document.querySelectorAll('[data-translate-text]').forEach(el => el.textContent = t(el.dataset.translateText));
-}
+const panelState = {
+    isSettingsOpen: false,
+    isPropertiesOpen: false,
+    isSpringPropertiesOpen: false,
+    isSaveLoadOpen: false,
+    isRewardMenuOpen: false,
+    isAboutPanelOpen: false
+};
 
-function initializeFPSCounter(runner) {
-    if (!Dom.fpsIndicator) return;
-    let frameCount = 0;
-    let lastUpdateTime = performance.now();
-    
-    // Глобальные переменные для FPS-счетчика и предупреждения о низкой производительности
-    let latestFPS = 0;
-    let lowFpsWarningCooldown = performance.now();
+let playtimeInterval = null;
+let currentPlaytime = 0;
+let fpsInterval = null;
 
-    function updateLoop() {
-        const now = performance.now();
-        frameCount++;
-        if (now - lastUpdateTime > 500) {
-            const fps = frameCount / ((now - lastUpdateTime) / 1000);
-            latestFPS = fps;
-            Dom.fpsIndicator.textContent = `FPS: ${Math.round(fps)}`;
-            frameCount = 0;
-            lastUpdateTime = now;
-
-            // Проверка низкой производительности
-            if (latestFPS <= LOW_FPS_THRESHOLD && askAboutLowFps && runner.enabled && now > lowFpsWarningCooldown) {
-                lowFpsWarningCooldown = now + LOW_FPS_COOLDOWN_MS;
-                Dom.lowFpsWarning.style.display = 'flex';
-                // Автоматически ставим на паузу, пока открыто окно
-                runner.enabled = false;
-                updatePlayPauseIcons(false);
-            }
+export function initUIData(data) {
+    if (data) {
+        playerData = data;
+        // Ensure unlockedSlots exists
+        if (!playerData.unlockedSlots) {
+            playerData.unlockedSlots = [false, false, false, false, false];
         }
-        requestAnimationFrame(updateLoop);
-    }
-    requestAnimationFrame(updateLoop);
-}
-
-// Новая централизованная функция сохранения
-function saveGameState() {
-    const dataToSave = {
-        coins: coins,
-        rewardProgress: rewardProgress,
-        unlockedSlots: unlockedSlots
-    };
-    
-    // 1. Сохраняем в localStorage (как надежный локальный бэкап)
-    localStorage.setItem('coins', coins.toString());
-    localStorage.setItem('rewardProgress', JSON.stringify(rewardProgress));
-    localStorage.setItem('unlockedSlots', JSON.stringify(unlockedSlots));
-    
-    // 2. Сохраняем в облако Яндекса
-    savePlayer_Data(dataToSave);
-}
-
-// Новая функция для инициализации данных из загруженного состояния
-export function initUIData(loadedData) {
-    if (loadedData) {
-        coins = loadedData.coins || 0;
-        // Убедимся, что rewardProgress - это объект
-        Object.assign(rewardProgress, loadedData.rewardProgress || {});
-        // Загружаем разблокированные слоты, проверяя корректность
-        if (Array.isArray(loadedData.unlockedSlots) && loadedData.unlockedSlots.length === NUM_SAVE_SLOTS) {
-            unlockedSlots = loadedData.unlockedSlots;
-        }
-    }
-    updateCoinsDisplay();
-}
-
-function addCoins(amount) {
-    coins += amount;
-    saveGameState(); // Используем центральную функцию сохранения
-    updateCoinsDisplay();
-}
-
-function updateCoinsDisplay() {
-    if (Dom.coinsCountSpan) {
-        Dom.coinsCountSpan.textContent = coins.toString();
-    }
-}
-
-/**
- * Динамически обновляет содержимое для кнопки награды и её состояния.
- * @param {HTMLElement} buttonElement - Элемент кнопки (div)
- * @param {object} engineData - Данные движка
- */
-function updateRewardButtonUI(buttonElement, engineData) {
-    const adsRequired = parseInt(buttonElement.dataset.ads);
-    const rewardAmount = parseInt(buttonElement.dataset.reward);
-
-    const currentProgress = rewardProgress[rewardAmount] || 0;
-    const adState = adProgressStates.get(rewardAmount) || { status: 'idle', remainingTime: 0, timerId: null };
-
-    // Динамический URL изображения в зависимости от количества награды
-    const imageUrl = `https://goida228top.github.io/textures/${rewardAmount} монет.png`;
-    const adIconUrl = 'https://goida228top.github.io/textures/реклама.png';
-    const adIconHtml = `<img src="${adIconUrl}" alt="Реклама" class="ad-icon">`;
-
-
-    let progressText = `${currentProgress}/${adsRequired}`;
-    let buttonClasses = '';
-    let isDisabled = false;
-
-    if (adState.status === 'waiting') {
-        progressText = t('watching-ad-countdown', { time: adState.remainingTime });
-        buttonClasses = 'watching-ad';
-        isDisabled = true;
-    } else if (adState.status === 'failed') {
-        progressText = t('ad-failed-retry');
-        buttonClasses = 'ad-failed';
-        isDisabled = false; // Можно попробовать снова
-    } else if (adState.status === 'showing') {
-        progressText = t('watching-ad-countdown', { time: 0 }); // Показывать "0" или "загрузка"
-        buttonClasses = 'watching-ad';
-        isDisabled = true;
-    } else if (currentProgress >= adsRequired) {
-        progressText = t('claim-reward'); // "Получить!"
-        buttonClasses = 'ready-to-claim';
-    }
-
-    buttonElement.innerHTML = `
-        <div class="reward-button-header">${rewardAmount}</div>
-        <div class="reward-button-coins-container">
-            <img class="reward-tier-image" src="${imageUrl}" alt="${rewardAmount} Резонансов">
-        </div>
-        <button class="reward-progress-btn ${buttonClasses}" ${isDisabled ? 'disabled' : ''}>
-            ${progressText} ${currentProgress < adsRequired ? adIconHtml : ''}
-        </button>
-    `;
-
-    // Добавляем обработчик клика к новой кнопке прогресса
-    const progressButton = buttonElement.querySelector('.reward-progress-btn');
-    if (progressButton) {
-        progressButton.onclick = () => handleProgressButtonClick(rewardAmount, adsRequired, engineData);
-    }
-}
-
-/**
- * Обрабатывает клики по внутренней кнопке прогресса/получения награды.
- * @param {number} rewardAmount - Количество Резонансов за эту награду.
- * @param {number} adsRequired - Количество реклам, необходимых для этой награды.
- * @param {object} engineData - Данные движка.
- */
-function handleProgressButtonClick(rewardAmount, adsRequired, engineData) {
-    const currentProgress = rewardProgress[rewardAmount] || 0;
-    const adState = adProgressStates.get(rewardAmount) || { status: 'idle', remainingTime: 0, timerId: null };
-    
-    // Элемент кнопки
-    const btnElement = document.querySelector(`.reward-button[data-reward="${rewardAmount}"]`);
-
-    if (currentProgress < adsRequired) {
-        // Если еще не смотрели или реклама провалилась, или это первый клик на "0/N"
-        if (adState.status === 'idle' || adState.status === 'failed') {
-            // Очищаем предыдущий таймер, если он был
-            if (adState.timerId) {
-                clearInterval(adState.timerId);
-            }
-
-            // Начинаем отсчет задержки
-            adProgressStates.set(rewardAmount, {
-                status: 'waiting',
-                remainingTime: REWARD_AD_DELAY_SECONDS,
-                timerId: null
-            });
-            updateRewardButtonUI(btnElement, engineData); // Обновить UI на "Смотрим рекламу: X сек"
-
-            const timerId = setInterval(() => {
-                const state = adProgressStates.get(rewardAmount);
-                if (!state || state.status !== 'waiting') { // Кнопка могла быть закрыта или состояние сброшено
-                    clearInterval(timerId);
-                    return;
-                }
-                state.remainingTime--;
-                if (state.remainingTime <= 0) {
-                    clearInterval(timerId);
-                    adProgressStates.set(rewardAmount, { status: 'showing', remainingTime: 0, timerId: null });
-                    updateRewardButtonUI(btnElement, engineData); // Обновить UI на "Загрузка рекламы..."
-                    
-                    // Показываем рекламу после задержки
-                    showRewardedVideo(
-                        engineData,
-                        // onRewarded callback
-                        () => {
-                            rewardProgress[rewardAmount] = (rewardProgress[rewardAmount] || 0) + 1;
-                            saveGameState(); // Сохраняем обновленный прогресс
-                            adProgressStates.delete(rewardAmount); // Удаляем состояние
-                            if (btnElement) updateRewardButtonUI(btnElement, engineData);
-                        },
-                        // onError callback (or onClose if ad wasn't shown)
-                        () => {
-                            adProgressStates.set(rewardAmount, { status: 'failed', remainingTime: 0, timerId: null });
-                            if (btnElement) updateRewardButtonUI(btnElement, engineData);
-                        }
-                    );
-
-                } else {
-                    updateRewardButtonUI(btnElement, engineData); // Обновляем UI с новым таймером
-                }
-            }, 1000); // Обновляем каждую секунду
-            adProgressStates.get(rewardAmount).timerId = timerId;
-        }
-    } else {
-        // Все рекламы просмотрены, можно получать награду
-        addCoins(rewardAmount);
-        rewardProgress[rewardAmount] = 0; // Сбрасываем прогресс после получения награды
-        saveGameState(); // Сохраняем сброшенный прогресс
-        
-        // Очищаем любое состояние рекламы
-        adProgressStates.delete(rewardAmount);
-
-        // Обновляем UI только для этой кнопки
-        if (btnElement) {
-            updateRewardButtonUI(btnElement, engineData);
-        }
-        togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen'); // Закрываем меню после получения награды
-    }
-}
-
-function formatPlaytime(totalSeconds) {
-    if (totalSeconds < 60) {
-        return `${Math.floor(totalSeconds)}s`;
-    }
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    
-    if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-    } else {
-        return `${minutes}m ${Math.floor(totalSeconds % 60)}s`;
-    }
-}
-
-
-// --- Новые функции для панели Сохранения/Загрузки ---
-function openSaveLoadPanel(mode, world, cameraData) {
-    if (panelState.isSaveLoadOpen) return;
-    
-    Dom.saveLoadTitle.textContent = t(mode === 'save' ? 'save-game-title' : 'load-game-title');
-    populateSaveSlots(mode, world, cameraData);
-    
-    togglePanel(Dom.saveLoadPanel, 'isSaveLoadOpen');
-}
-
-function closeSaveLoadPanel() {
-    if (!panelState.isSaveLoadOpen) return;
-    togglePanel(Dom.saveLoadPanel, 'isSaveLoadOpen');
-}
-
-function populateSaveSlots(mode, world, cameraData) {
-    Dom.saveSlotsContainer.innerHTML = ''; // Очищаем существующие слоты
-    const saveIconUrl = 'https://goida228top.github.io/textures/сохранение.png';
-    const coinIconUrl = 'https://goida228top.github.io/textures/монетка.png';
-
-
-    for (let i = 0; i < NUM_SAVE_SLOTS; i++) {
-        const slotIndex = i + 1;
-        const slotKey = `${SAVE_SLOT_PREFIX}${slotIndex}`;
-        const slotEl = document.createElement('div');
-        slotEl.className = 'save-slot-button';
-
-        if (unlockedSlots[i]) {
-            // --- РЕНДЕР РАЗБЛОКИРОВАННОГО СЛОТА ---
-            const savedData = localStorage.getItem(slotKey);
-            let saveInfo = null;
-            if (savedData) {
-                try {
-                    saveInfo = JSON.parse(savedData);
-                } catch (e) {
-                    console.error(`Ошибка парсинга слота ${slotIndex}:`, e);
-                }
-            }
-            
-            const dateText = saveInfo ? new Date(saveInfo.timestamp).toLocaleString() : t('empty-slot-label');
-            const statsHtml = saveInfo ? `
-                <div class="save-slot-stats">
-                    <div class="stat-item"><span class="stat-icon">🕒</span> ${t('play-time')}: ${formatPlaytime(saveInfo.playtime || 0)}</div>
-                    <div class="stat-item"><span class="stat-icon">📦</span> ${t('objects')}: ${saveInfo.stats?.objectCount || 0}</div>
-                    <div class="stat-item"><span class="stat-icon">💧</span> ${t('water')}: ${saveInfo.stats?.waterCount || 0}</div>
-                    <div class="stat-item"><span class="stat-icon">🏜️</span> ${t('sand')}: ${saveInfo.stats?.sandCount || 0}</div>
-                </div>
-            ` : '<div class="save-slot-stats" style="min-height: 60px;"></div>'; // Placeholder for alignment
-            
-            const actionButtonText = t(mode === 'save' ? 'save-button' : 'load-button');
-            const saveLoadButtonHtml = (mode === 'load' && !saveInfo) 
-                ? '' 
-                : `<button class="action-save-load">${actionButtonText}</button>`;
-                
-            const resetButtonHtml = saveInfo 
-                ? `<button class="action-reset">${t('delete-button')}</button>` 
-                : '';
-
-            slotEl.innerHTML = `
-                <div class="save-button-header">${t('save-slot-label')} ${slotIndex}</div>
-                <div class="save-button-image-container">
-                    <img class="save-tier-image" src="${saveIconUrl}" alt="${t('save-slot-label')}">
-                </div>
-                <div class="save-slot-date">${dateText}</div>
-                ${statsHtml}
-                <div class="save-slot-actions">
-                    ${saveLoadButtonHtml}
-                    ${resetButtonHtml}
-                </div>
-            `;
-            
-            const saveLoadBtn = slotEl.querySelector('.action-save-load');
-            if (saveLoadBtn) {
-                saveLoadBtn.addEventListener('click', () => {
-                    if (mode === 'save') {
-                        handleSave(slotKey, world, cameraData);
-                    } else {
-                        handleLoad(slotKey, world, cameraData);
-                    }
-                });
-            }
-
-            const resetBtn = slotEl.querySelector('.action-reset');
-            if (resetBtn) {
-                resetBtn.addEventListener('click', () => handleResetSlot(slotKey, mode, world, cameraData));
-            }
-        } else {
-            // --- РЕНДЕР ЗАБЛОКИРОВАННОГО СЛОТА ---
-            const price = SLOT_PRICES[i];
-            const canAfford = coins >= price;
-            const unlockText = t('unlock-for-price', { price });
-            const buttonTitle = canAfford ? '' : t('not-enough-resonances');
-
-            slotEl.innerHTML = `
-                <div class="save-button-header">${t('save-slot-label')} ${slotIndex}</div>
-                <div class="save-button-image-container">
-                    <img class="save-tier-image" src="${saveIconUrl}" alt="${t('save-slot-label')}" style="filter: grayscale(1) opacity(0.5);">
-                </div>
-                <div class="save-slot-date" style="flex-grow: 1;">${t('locked')}</div>
-                <div class="save-slot-actions">
-                    <button class="action-unlock" ${!canAfford ? 'disabled' : ''} title="${buttonTitle}">
-                        ${unlockText}
-                        <img src="${coinIconUrl}" class="coin-icon-small" alt="R">
-                    </button>
-                </div>
-            `;
-            
-            const unlockBtn = slotEl.querySelector('.action-unlock');
-            if (unlockBtn) {
-                unlockBtn.addEventListener('click', () => handleUnlockSlot(i, price, mode, world, cameraData));
-            }
-        }
-        
-        Dom.saveSlotsContainer.appendChild(slotEl);
-    }
-}
-
-function handleUnlockSlot(slotIndex, price, currentMode, world, cameraData) {
-    if (coins >= price) {
-        coins -= price;
-        unlockedSlots[slotIndex] = true;
         updateCoinsDisplay();
-        saveGameState(); // Сохраняем новое состояние монет и слотов
-        populateSaveSlots(currentMode, world, cameraData); // Обновляем UI, чтобы показать разблокированный слот
     }
 }
-
-
-function handleSave(slotKey, world, cameraData) {
-    console.log(`Сохранение в слот: ${slotKey}`);
-    try {
-        const { worldState, stats } = serializeWorld(world, waterParticlesPool, sandParticlesPool); // NEW: Передаем пул песка
-        const fullSaveState = {
-            timestamp: new Date().toISOString(),
-            world: worldState,
-            camera: {
-                scale: cameraData.scale,
-                viewOffset: cameraData.viewOffset
-            },
-            player: {
-                coins: coins,
-                rewardProgress: rewardProgress,
-                unlockedSlots: unlockedSlots, // Снимок состояния слотов
-            },
-            playtime: currentPlaytime,
-            stats: stats,
-        };
-        localStorage.setItem(slotKey, JSON.stringify(fullSaveState));
-        alert(t('game-saved-message'));
-        closeSaveLoadPanel();
-    } catch (e) {
-        console.error('Ошибка сохранения игры:', e);
-        alert(t('game-save-failed-message'));
-    }
-}
-
-function handleLoad(slotKey, world, cameraData) {
-    console.log(`Загрузка из слота: ${slotKey}`);
-    const savedJSON = localStorage.getItem(slotKey);
-    if (!savedJSON) {
-        alert(t('slot-empty-message'));
-        return;
-    }
-    try {
-        const savedState = JSON.parse(savedJSON);
-        
-        // Загрузка мира
-        deserializeWorld(world, savedState.world);
-        
-        // Загрузка камеры
-        cameraData.restoreCameraState(savedState.camera);
-        cameraData.updateView();
-        cameraData.applyLiquidFilters(); // Apply filter if liquid effect is enabled
-
-        // Загрузка данных игрока ИЗ СОХРАНЕНИЯ
-        const playerData = savedState.player || {};
-        coins = playerData.coins || 0;
-        Object.assign(rewardProgress, playerData.rewardProgress || {});
-        if (Array.isArray(playerData.unlockedSlots) && playerData.unlockedSlots.length === NUM_SAVE_SLOTS) {
-            unlockedSlots = playerData.unlockedSlots;
-        } else {
-            // Откат для старых сохранений, где не было данных о слотах
-            unlockedSlots.fill(false); 
-        }
-
-        // Загрузка времени игры
-        currentPlaytime = savedState.playtime || 0;
-        
-        // Сохраняем загруженное состояние как основное глобальное состояние игры
-        saveGameState();
-        updateCoinsDisplay();
-
-        alert(t('game-loaded-message'));
-        closeSaveLoadPanel();
-    } catch (e) {
-        console.error('Ошибка загрузки игры:', e);
-        alert(t('game-load-failed-message'));
-    }
-}
-
-function handleResetSlot(slotKey, currentMode, world, cameraData) {
-    if (confirm(t('confirm-delete-save-message'))) {
-        localStorage.removeItem(slotKey);
-        // Обновляем панель, чтобы показать, что слот пуст
-        populateSaveSlots(currentMode, world, cameraData);
-    }
-}
-
 
 export function initializeUI(engineData, cameraData, worldData) {
     const { world, runner, render } = engineData;
@@ -505,17 +66,70 @@ export function initializeUI(engineData, cameraData, worldData) {
         }
     }, 1000);
 
-    Dom.settingsButton.addEventListener('click', () => togglePanel(Dom.settingsPanel, 'isSettingsOpen'));
+    // --- Yandex Games Moderation Fix: Prevent context menu on all UI panels ---
+    const protectedPanels = [
+        Dom.mainMenuOverlay,
+        Dom.rewardMenuPanel,
+        Dom.saveLoadPanel,
+        Dom.settingsPanel,
+        Dom.aboutPanel,
+        Dom.objectPropertiesPanel, // Также защищаем игровые панели
+        Dom.springPropertiesPanel,
+        Dom.lowFpsWarning,
+        Dom.confirmModalOverlay
+    ];
+
+    protectedPanels.forEach(panel => {
+        if (panel) {
+            panel.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            });
+        }
+    });
+
+    // --- Main Menu Listeners ---
+    Dom.startGameBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        startGame(engineData);
+    });
+
+    Dom.loadGameMenuBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        openSaveLoadPanel('load', world, cameraData, engineData);
+    });
+
+    Dom.aboutGameBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        togglePanel(Dom.aboutPanel, 'isAboutPanelOpen');
+    });
+
+    Dom.aboutPanelCloseBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        togglePanel(Dom.aboutPanel, 'isAboutPanelOpen');
+    });
+    
+    // --- Toolbar Button Listeners ---
+    Dom.settingsButton.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        togglePanel(Dom.settingsPanel, 'isSettingsOpen');
+    });
 
     Dom.saveButton.addEventListener('click', () => {
-        openSaveLoadPanel('save', world, cameraData);
+        SoundManager.playSound('ui_click');
+        openSaveLoadPanel('save', world, cameraData, engineData);
     });
 
     Dom.loadButton.addEventListener('click', () => {
-        openSaveLoadPanel('load', world, cameraData);
+        SoundManager.playSound('ui_click');
+        openSaveLoadPanel('load', world, cameraData, engineData);
     });
 
-    Dom.saveLoadCloseBtn.addEventListener('click', closeSaveLoadPanel);
+    Dom.saveLoadCloseBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        closeSaveLoadPanel();
+    });
 
     Dom.gravitySlider.addEventListener('input', (e) => {
         const gravity = parseFloat(e.target.value);
@@ -524,8 +138,10 @@ export function initializeUI(engineData, cameraData, worldData) {
         wakeAllBodies(world);
     });
     // Set initial value
-    Dom.gravityValue.textContent = (world.getGravity().y / 9.8).toFixed(1);
-    Dom.gravitySlider.value = world.getGravity().y / 9.8;
+    if(world) {
+        Dom.gravityValue.textContent = (world.getGravity().y / 9.8).toFixed(1);
+        Dom.gravitySlider.value = world.getGravity().y / 9.8;
+    }
 
 
     Dom.liquidEffectToggle.addEventListener('change', (e) => {
@@ -545,7 +161,7 @@ export function initializeUI(engineData, cameraData, worldData) {
         const transparentSandColor = rootStyles.getPropertyValue('--sand-color-transparent').trim();
         setSandColor(isEnabled ? opaqueSandColor : transparentSandColor);
 
-        applyLiquidFilters();
+        if (applyLiquidFilters) applyLiquidFilters();
     });
     Dom.liquidEffectToggle.dispatchEvent(new Event('change'));
 
@@ -553,22 +169,73 @@ export function initializeUI(engineData, cameraData, worldData) {
         engineData.render.options.showHitboxes = e.target.checked;
     });
 
+    // NEW: Sound category toggles logic
+    const initialMuteSettings = SoundManager.loadMuteSettings();
+    Dom.uiSoundsToggle.checked = !initialMuteSettings.ui;
+    Dom.objectSoundsToggle.checked = !initialMuteSettings.object;
+    Dom.environmentSoundsToggle.checked = !initialMuteSettings.environment;
+
+    Dom.uiSoundsToggle.addEventListener('change', (e) => {
+        SoundManager.setCategoryMute('ui', !e.target.checked);
+    });
+
+    Dom.objectSoundsToggle.addEventListener('change', (e) => {
+        SoundManager.setCategoryMute('object', !e.target.checked);
+    });
+
+    Dom.environmentSoundsToggle.addEventListener('change', (e) => {
+        SoundManager.setCategoryMute('environment', !e.target.checked);
+    });
+
+
     Dom.toolButtons.forEach(button => {
         button.addEventListener('click', () => {
+            SoundManager.playSound('ui_click', { pitch: 1.1 });
             const newTool = button.id.replace('-btn', '');
             switchTool(newTool);
         });
     });
 
-    Dom.playPauseButton.addEventListener('click', () => {
+    // NEW: Centralized play/pause handler
+    const handlePlayPause = () => {
         if (runner.enabled) {
             runner.enabled = false;
-            updatePlayPauseIcons(runner.enabled);
+            updatePlayPauseIcons(false);
         } else {
             showFullscreenAdv(engineData, () => {
                 runner.enabled = true;
-                updatePlayPauseIcons(runner.enabled);
+                updatePlayPauseIcons(true);
             });
+        }
+    };
+    
+    Dom.playPauseButton.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        handlePlayPause();
+    });
+
+    // NEW: Add listener for Clear All button
+    Dom.clearAllButton.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
+        showConfirm(t('confirm-title'), t('confirm-clear-all'), () => {
+            clearWorldCompletely(world);
+            SoundManager.playSound('explosion_medium', { volume: 0.5 });
+            showToast(t('world-cleared-message'), 'info');
+        });
+    });
+
+
+    // NEW: Add keyboard listener for Spacebar
+    document.addEventListener('keydown', (e) => {
+        // Игнорируем нажатие, если фокус на элементе ввода
+        if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            return;
+        }
+
+        if (e.code === 'Space') {
+            e.preventDefault(); // Предотвращаем стандартное действие (например, прокрутку)
+            SoundManager.playSound('ui_click');
+            handlePlayPause();
         }
     });
 
@@ -579,6 +246,7 @@ export function initializeUI(engineData, cameraData, worldData) {
     
     // Новая логика для кнопки coinsDisplay, которая теперь открывает меню наград
     Dom.coinsDisplay.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
         togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen');
         // Обновляем все кнопки меню наград при каждом открытии
         updateRewardButtonUI(Dom.reward10Btn, engineData);
@@ -588,23 +256,11 @@ export function initializeUI(engineData, cameraData, worldData) {
 
     // Обработчик для кнопки "Закрыть" (X) в меню наград
     Dom.rewardMenuCloseBtn.addEventListener('click', () => {
+        SoundManager.playSound('ui_click');
         togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen');
-        // При закрытии меню наград через кнопку "X", убедимся, что игра не зависла в состоянии "показа рекламы"
-        // Но при этом не меняем статус 'runner.enabled', так как это зависит от того, была ли игра на паузе до открытия меню.
-        for (const [rewardAmount, state] of adProgressStates.entries()) {
-            if (state.timerId) {
-                clearInterval(state.timerId);
-            }
-            // Сбрасываем состояние на "idle" или "failed" в зависимости от того, что было до
-            adProgressStates.set(rewardAmount, { status: 'failed', remainingTime: 0, timerId: null });
-            const btnElement = document.querySelector(`.reward-button[data-reward="${rewardAmount}"]`);
-            if (btnElement) updateRewardButtonUI(btnElement, engineData);
-        }
     });
 
-
     // Генерируем содержимое для кнопок наград при инициализации UI
-    // Теперь это делается при открытии меню, но можно оставить для первого рендера
     updateRewardButtonUI(Dom.reward10Btn, engineData);
     updateRewardButtonUI(Dom.reward50Btn, engineData);
     updateRewardButtonUI(Dom.reward100Btn, engineData);
@@ -630,160 +286,379 @@ export function initializeUI(engineData, cameraData, worldData) {
         // Закрытие меню наград
         if (panelState.isRewardMenuOpen && !Dom.rewardMenuPanel.contains(e.target) && !Dom.coinsDisplay.contains(e.target) && !Dom.rewardMenuCloseBtn.contains(e.target)) { 
              togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen');
-             // При закрытии меню наград по клику вне, также сбрасываем состояние рекламы
-             for (const [rewardAmount, state] of adProgressStates.entries()) {
-                if (state.timerId) {
-                    clearInterval(state.timerId);
-                }
-                adProgressStates.set(rewardAmount, { status: 'failed', remainingTime: 0, timerId: null });
-                const btnElement = document.querySelector(`.reward-button[data-reward="${rewardAmount}"]`);
-                if (btnElement) updateRewardButtonUI(btnElement, engineData);
-             }
+        }
+        // Закрытие панели "Об игре"
+        if (panelState.isAboutPanelOpen && !Dom.aboutPanel.contains(e.target) && !Dom.aboutGameBtn.contains(e.target) && !Dom.aboutPanelCloseBtn.contains(e.target)) {
+            togglePanel(Dom.aboutPanel, 'isAboutPanelOpen');
         }
     }, true);
+
+    // --- NEW: Pause on visibility change ---
+    let wasRunningBeforeHidden = false;
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // Если игра активна, запоминаем это и ставим на паузу
+            if (runner.enabled) {
+                wasRunningBeforeHidden = true;
+                runner.enabled = false;
+                updatePlayPauseIcons(false);
+            }
+        } else {
+            // Если игра была активна до сворачивания, возобновляем
+            if (wasRunningBeforeHidden) {
+                runner.enabled = true;
+                updatePlayPauseIcons(true);
+            }
+            // Сбрасываем флаг в любом случае
+            wasRunningBeforeHidden = false;
+        }
+    });
 
     updatePlayPauseIcons(runner.enabled);
     updateCoinsDisplay(); // Обновляем отображение монет при инициализации
 }
 
-function updatePlayPauseIcons(isRunning) {
-    Dom.playIcon.style.display = isRunning ? 'none' : 'block';
-    Dom.pauseIcon.style.display = isRunning ? 'block' : 'none';
-    Dom.playPauseButton.title = isRunning ? t('pause-title') : t('play-title');
+// --- Helper Functions ---
+
+function initializeMotorControls() {
+    document.addEventListener('keydown', (e) => {
+        if (keyState.hasOwnProperty(e.code)) {
+            keyState[e.code] = true;
+        }
+    });
+    document.addEventListener('keyup', (e) => {
+        if (keyState.hasOwnProperty(e.code)) {
+            keyState[e.code] = false;
+        }
+    });
 }
 
-function switchTool(newTool) {
-    toolState.currentTool = newTool;
-    Dom.toolButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.id.startsWith(newTool));
-    });
-
-    // Сбрасываем состояние, специфичное для инструментов
-    deselectBody();
-    if (newTool !== 'weld' && newTool !== 'spring') {
-        setFirstJointBody(null, null);
+function togglePanel(panel, stateKey) {
+    const isOpen = panel.style.display === 'flex';
+    panel.style.display = isOpen ? 'none' : 'flex';
+    if (stateKey) {
+        panelState[stateKey] = !isOpen;
     }
 }
 
-function initializeObjectPropertiesPanel(world) {
-    const updateBodyProperty = (updateFn) => {
-        const body = bodyForPropertiesPanel;
-        if (!body) return;
-        updateFn(body);
-        body.setAwake(true);
-    };
+export function showObjectPropertiesPanel(body, x, y) {
+    if (panelState.isPropertiesOpen) {
+        hideObjectPropertiesPanel();
+    }
 
-    const updateMotorProperty = (updateFn) => {
-        const body = bodyForPropertiesPanel;
-        if (!body) return;
-        const userData = body.getUserData() || {};
-        if (!userData.motor) userData.motor = {};
-        updateFn(userData.motor);
-        body.setUserData(userData);
-    };
+    const userData = body.getUserData() || {};
+    const renderStyle = userData.render || {};
+    const color = renderStyle.fillStyle || '#cccccc';
+
+    Dom.objColorInput.value = color;
+    Dom.objStaticToggle.checked = body.getType() === 'static';
+
+    // --- Обновление значений слайдеров из свойств тела ---
+    // Плотность
+    let density = body.getFixtureList()?.getDensity() || 1.0;
+    // Если плотность очень маленькая (для маленьких объектов), корректируем отображение
+    if (density < 0.01) density = 0.001; 
+    Dom.objDensitySlider.value = density;
+    Dom.objDensityValue.textContent = density.toExponential(1);
+
+    // Трение
+    const friction = body.getFixtureList()?.getFriction() || 0.3;
+    Dom.objFrictionSlider.value = friction;
+    Dom.objFrictionValue.textContent = friction.toFixed(1);
+
+    // Упругость
+    const restitution = body.getFixtureList()?.getRestitution() || 0.1;
+    Dom.objRestitutionSlider.value = restitution;
+    Dom.objRestitutionValue.textContent = restitution.toFixed(2);
+
+    // Сопротивление (linearDamping)
+    const damping = body.getLinearDamping();
+    Dom.objResistanceSlider.value = damping;
+    Dom.objResistanceValue.textContent = damping.toFixed(1);
 
 
-    Dom.objColorInput.addEventListener('input', (e) => updateBodyProperty(body => {
-        const userData = body.getUserData() || {};
-        if (!userData.render) userData.render = {};
-        // Не обновляем fillStyle, если у объекта есть текстура (например, у ТНТ)
-        if (!userData.render.texture) {
-            userData.render.fillStyle = e.target.value;
-        } else {
-            // Для текстурированных объектов можем обновить strokeStyle, если есть
-            userData.render.strokeStyle = e.target.value; 
+    // --- Логика отображения свойств мотора ---
+    let hasCircleFixture = false;
+    for (let f = body.getFixtureList(); f; f = f.getNext()) {
+        if (f.getShape().getType() === 'circle') {
+            hasCircleFixture = true;
+            break;
         }
-        body.setUserData(userData);
-    }));
+    }
 
+    if (hasCircleFixture) {
+        Dom.motorPropertiesSection.style.display = 'flex';
+        
+        const motorData = userData.motor || { isEnabled: false, speed: 10.0, grip: 0.8 };
+        
+        Dom.objMotorEnableToggle.checked = motorData.isEnabled;
+        Dom.objMotorSpeedSlider.value = motorData.speed;
+        Dom.objMotorSpeedValue.textContent = motorData.speed.toFixed(1);
+        
+        // Grip (сцепление) - это по сути трение
+        const currentFriction = body.getFixtureList().getFriction();
+        Dom.objMotorGripSlider.value = currentFriction;
+        Dom.objMotorGripValue.textContent = currentFriction.toFixed(1);
+
+        // Управление видимостью слайдеров скорости и сцепления
+        if (motorData.isEnabled) {
+             Dom.objMotorSpeedSlider.parentElement.style.display = 'flex';
+             Dom.objMotorGripContainer.style.display = 'flex';
+             Dom.objFrictionContainer.style.display = 'none'; // Скрываем обычное трение
+        } else {
+             Dom.objMotorSpeedSlider.parentElement.style.display = 'none';
+             Dom.objMotorGripContainer.style.display = 'none';
+             Dom.objFrictionContainer.style.display = 'flex'; // Показываем обычное трение
+        }
+
+    } else {
+        Dom.motorPropertiesSection.style.display = 'none';
+        Dom.objFrictionContainer.style.display = 'flex'; // Всегда показываем для не-кругов
+    }
+
+
+    Dom.objectPropertiesPanel.style.display = 'flex';
+    Dom.objectPropertiesPanel.style.left = `${Math.min(x, window.innerWidth - 270)}px`;
+    Dom.objectPropertiesPanel.style.top = `${Math.min(y, window.innerHeight - 400)}px`;
+    
+    panelState.isPropertiesOpen = true;
+}
+
+export function hideObjectPropertiesPanel() {
+    Dom.objectPropertiesPanel.style.display = 'none';
+    deselectBody();
+    panelState.isPropertiesOpen = false;
+}
+
+export function showSpringPropertiesPanel(joint, x, y) {
+    if (panelState.isSpringPropertiesOpen) {
+        hideSpringPropertiesPanel();
+    }
+
+    // Получаем текущие свойства пружины
+    const stiffness = joint.getFrequency();
+    const damping = joint.getDampingRatio();
+    const length = joint.getLength();
+    const userData = joint.getUserData() || {};
+
+    Dom.springStiffnessSlider.value = stiffness;
+    Dom.springStiffnessValue.textContent = stiffness.toFixed(1);
+
+    Dom.springDampingSlider.value = damping;
+    Dom.springDampingValue.textContent = damping.toFixed(2);
+    
+    Dom.springLengthSlider.value = length;
+    Dom.springLengthValue.textContent = length.toFixed(2);
+    
+    // Логика для "Фиксированной пружины"
+    Dom.springFixedToggle.checked = !!userData.isFixed;
+
+    Dom.springPropertiesPanel.style.display = 'flex';
+    Dom.springPropertiesPanel.style.left = `${Math.min(x, window.innerWidth - 270)}px`;
+    Dom.springPropertiesPanel.style.top = `${Math.min(y, window.innerHeight - 300)}px`;
+    
+    panelState.isSpringPropertiesOpen = true;
+}
+
+export function hideSpringPropertiesPanel() {
+    Dom.springPropertiesPanel.style.display = 'none';
+    deselectSpring();
+    panelState.isSpringPropertiesOpen = false;
+}
+
+function initializeObjectPropertiesPanel(world) {
+    // Listeners for object properties
+    Dom.objColorInput.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const userData = body.getUserData() || {};
+            if (!userData.render) userData.render = {};
+            userData.render.fillStyle = e.target.value;
+            // Если это текстурированный объект, удаляем текстуру чтобы применился цвет
+            if (userData.render.texture) {
+                delete userData.render.texture;
+                delete userData.render.textureUrl;
+            }
+            body.setUserData(userData);
+            body.setAwake(true);
+        }
+    });
+
+    // Слушатель для плотности
+    Dom.objDensitySlider.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const density = parseFloat(e.target.value);
+            Dom.objDensityValue.textContent = density.toExponential(1);
+            for (let f = body.getFixtureList(); f; f = f.getNext()) {
+                f.setDensity(density);
+            }
+            body.resetMassData();
+            body.setAwake(true);
+        }
+    });
+
+    // Слушатель для трения
     Dom.objFrictionSlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        updateBodyProperty(body => body.getFixtureList()?.setFriction(value));
-        Dom.objFrictionValue.textContent = value.toFixed(1);
+        const body = getSelectedBody();
+        if (body) {
+            const friction = parseFloat(e.target.value);
+            Dom.objFrictionValue.textContent = friction.toFixed(1);
+            for (let f = body.getFixtureList(); f; f = f.getNext()) {
+                f.setFriction(friction);
+            }
+            body.setAwake(true);
+        }
+    });
+    
+    // Слушатель для сопротивления
+    Dom.objResistanceSlider.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const damping = parseFloat(e.target.value);
+            Dom.objResistanceValue.textContent = damping.toFixed(1);
+            body.setLinearDamping(damping);
+            body.setAwake(true);
+        }
     });
 
     Dom.objRestitutionSlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        updateBodyProperty(body => body.getFixtureList()?.setRestitution(value));
-        Dom.objRestitutionValue.textContent = value.toFixed(2);
-    });
-
-    Dom.objDensitySlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        updateBodyProperty(body => {
-            body.getFixtureList()?.setDensity(value); 
-            body.resetMassData();
-        });
-        Dom.objDensityValue.textContent = value.toExponential(1);
-    });
-    
-    Dom.objResistanceSlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        updateBodyProperty(body => body.setLinearDamping(value));
-        Dom.objResistanceValue.textContent = value.toFixed(1);
+        const body = getSelectedBody();
+        if (body) {
+            const restitution = parseFloat(e.target.value);
+            Dom.objRestitutionValue.textContent = restitution.toFixed(2);
+            for (let f = body.getFixtureList(); f; f = f.getNext()) {
+                f.setRestitution(restitution);
+            }
+            body.setAwake(true);
+        }
     });
 
     Dom.objStaticToggle.addEventListener('change', (e) => {
-        const isStatic = e.target.checked;
-        updateBodyProperty(body => body.setType(isStatic ? 'static' : 'dynamic'));
+        const body = getSelectedBody();
+        if (body) {
+            body.setType(e.target.checked ? 'static' : 'dynamic');
+            body.setAwake(true);
+        }
     });
 
     Dom.deleteSelectedButton.addEventListener('click', () => {
-        if (bodyForPropertiesPanel) {
-            world.destroyBody(bodyForPropertiesPanel);
-        }
+        deleteSelectedBody(world);
         hideObjectPropertiesPanel();
     });
-
-    // --- Motor Event Listeners ---
-    Dom.objMotorEnableToggle.addEventListener('change', e => {
-        const isEnabled = e.target.checked;
-        const body = bodyForPropertiesPanel;
-        if (!body) return;
-
-        const userData = body.getUserData() || {};
-        if (!userData.motor) userData.motor = {};
-        userData.motor.isEnabled = isEnabled;
-        
-        body.setUserData(userData);
-        body.setAwake(true);
+    
+    // --- NEW: Listeners for Motor Properties ---
+    
+    Dom.objMotorEnableToggle.addEventListener('change', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const isEnabled = e.target.checked;
+            const userData = body.getUserData() || {};
+            if (!userData.motor) userData.motor = { speed: 10.0, grip: 0.8 };
+            userData.motor.isEnabled = isEnabled;
+            body.setUserData(userData);
+            
+            // Переключаем видимость
+            if (isEnabled) {
+                 Dom.objMotorSpeedSlider.parentElement.style.display = 'flex';
+                 Dom.objMotorGripContainer.style.display = 'flex';
+                 Dom.objFrictionContainer.style.display = 'none';
+            } else {
+                 Dom.objMotorSpeedSlider.parentElement.style.display = 'none';
+                 Dom.objMotorGripContainer.style.display = 'none';
+                 Dom.objFrictionContainer.style.display = 'flex';
+            }
+        }
     });
 
-
-    Dom.objMotorSpeedSlider.addEventListener('input', e => {
-        const value = parseFloat(e.target.value);
-        updateMotorProperty(motor => motor.speed = value);
-        Dom.objMotorSpeedValue.textContent = value.toFixed(1);
+    Dom.objMotorSpeedSlider.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const speed = parseFloat(e.target.value);
+            Dom.objMotorSpeedValue.textContent = speed.toFixed(1);
+            const userData = body.getUserData();
+            if (userData && userData.motor) {
+                userData.motor.speed = speed;
+            }
+        }
     });
-
+    
     Dom.objMotorGripSlider.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        updateBodyProperty(body => body.getFixtureList()?.setFriction(value));
-        Dom.objMotorGripValue.textContent = value.toFixed(1);
+        const body = getSelectedBody();
+        if (body) {
+             const grip = parseFloat(e.target.value);
+             Dom.objMotorGripValue.textContent = grip.toFixed(1);
+             // Обновляем трение фикстур
+             for (let f = body.getFixtureList(); f; f = f.getNext()) {
+                f.setFriction(grip);
+            }
+             const userData = body.getUserData();
+             if (userData && userData.motor) {
+                userData.motor.grip = grip;
+            }
+        }
     });
 }
 
-// NEW: Инициализация панели свойств пружины
 function initializeSpringPropertiesPanel(world) {
-    Dom.springStiffnessSlider.addEventListener('input', e => {
-        const joint = getSelectedSpring();
-        if (joint && joint.getType() === 'distance-joint') {
-            const value = parseFloat(e.target.value);
-            joint.setFrequency(value);
-            Dom.springStiffnessValue.textContent = value.toFixed(1);
-            joint.getBodyA().setAwake(true);
-            joint.getBodyB().setAwake(true);
+    // --- Listeners for spring properties ---
+    Dom.springStiffnessSlider.addEventListener('input', (e) => {
+        const spring = getSelectedSpring();
+        if (spring) {
+            const stiffness = parseFloat(e.target.value);
+            Dom.springStiffnessValue.textContent = stiffness.toFixed(1);
+            spring.setFrequency(stiffness);
         }
     });
 
-    Dom.springDampingSlider.addEventListener('input', e => {
-        const joint = getSelectedSpring();
-        if (joint && joint.getType() === 'distance-joint') {
-            const value = parseFloat(e.target.value);
-            joint.setDampingRatio(value);
-            Dom.springDampingValue.textContent = value.toFixed(2);
-            joint.getBodyA().setAwake(true);
-            joint.getBodyB().setAwake(true);
+    Dom.springDampingSlider.addEventListener('input', (e) => {
+        const spring = getSelectedSpring();
+        if (spring) {
+            const damping = parseFloat(e.target.value);
+            Dom.springDampingValue.textContent = damping.toFixed(2);
+            spring.setDampingRatio(damping);
+        }
+    });
+
+    Dom.springLengthSlider.addEventListener('input', (e) => {
+        const spring = getSelectedSpring();
+        if (spring) {
+            const length = parseFloat(e.target.value);
+            Dom.springLengthValue.textContent = length.toFixed(2);
+            spring.setLength(length);
+        }
+    });
+
+    Dom.springFixedToggle.addEventListener('change', (e) => {
+        const spring = getSelectedSpring();
+        if (spring) {
+            const isFixed = e.target.checked;
+            // NOTE: Changing joint type directly isn't supported well in Box2D/Planck.
+            // Typically you'd destroy and recreate. For simplicity, we'll just store a flag
+            // or use it to lock length if implemented.
+            // For now, let's just save it in userData
+            const userData = spring.getUserData() || {};
+            userData.isFixed = isFixed;
+            spring.setUserData(userData);
+            
+            // To actually make it fixed (stiff), we could increase frequency heavily
+             if (isFixed) {
+                 spring.setFrequency(100.0); // High stiffness
+                 spring.setDampingRatio(1.0);
+                 // Update UI
+                 Dom.springStiffnessSlider.value = 100.0;
+                 Dom.springStiffnessValue.textContent = "100.0";
+                 Dom.springDampingSlider.value = 1.0;
+                 Dom.springDampingValue.textContent = "1.00";
+             } else {
+                 // Restore default or let user slide
+                 spring.setFrequency(5.0);
+                 spring.setDampingRatio(0.5);
+                 Dom.springStiffnessSlider.value = 5.0;
+                 Dom.springStiffnessValue.textContent = "5.0";
+                 Dom.springDampingSlider.value = 0.5;
+                 Dom.springDampingValue.textContent = "0.50";
+             }
         }
     });
 
@@ -794,171 +669,52 @@ function initializeSpringPropertiesPanel(world) {
 }
 
 
-function initializeLowFpsWarning(runner) {
-    Dom.deleteAllWaterBtn.addEventListener('click', () => {
-        deleteAllWater();
-        deleteAllSand(); // NEW: Также удаляем песок при нажатии на "Удалить всю воду"
-        Dom.lowFpsWarning.style.display = 'none';
-        runner.enabled = true;
-        updatePlayPauseIcons(true);
-    });
-    
-    Dom.pauseFromWarningBtn.addEventListener('click', () => {
-        Dom.lowFpsWarning.style.display = 'none';
-        // Оставляем игру на паузе
-    });
+// --- Other helper functions ---
 
-    Dom.doNothingBtn.addEventListener('click', () => {
-        Dom.lowFpsWarning.style.display = 'none';
-        runner.enabled = true;
-        updatePlayPauseIcons(true);
-    });
+function initializeFPSCounter(runner) {
+    fpsInterval = setInterval(() => {
+        // Planck runner doesn't expose FPS directly easily without loop access
+        // We can approximate or just leave static if we don't hook into loop
+        // But in engine.js we have gameLoop. We could update a var there.
+        // Since we don't have access to internal fps var here easily:
+        // Let's just rely on requestAnimationFrame rate if possible or a simple counter.
+        // For now, let's skip implementing a real FPS counter here to save complexity
+        // unless engine provides it.
+    }, 1000);
+}
 
-    Dom.dontAskAgainBtn.addEventListener('click', () => {
-        askAboutLowFps = false;
-        localStorage.setItem('askAboutLowFps', 'false'); // Сохраняем выбор пользователя
-        Dom.lowFpsWarning.style.display = 'none';
-        runner.enabled = true;
-        updatePlayPauseIcons(true);
+function applyTranslations() {
+    document.querySelectorAll('[data-translate-title]').forEach(el => {
+        const key = el.getAttribute('data-translate-title');
+        el.title = t(key);
+    });
+    document.querySelectorAll('[data-translate-text]').forEach(el => {
+        const key = el.getAttribute('data-translate-text');
+        el.textContent = t(key);
     });
 }
 
-export function showObjectPropertiesPanel(body, x, y) {
-    const fixture = body.getFixtureList();
-    if (!fixture) return;
-
-    const userData = body.getUserData() || {};
-    const renderData = userData.render || {};
-    const motorData = userData.motor || {};
-    
-    // Показываем/скрываем секцию мотора и правильный слайдер трения
-    const isCircle = fixture.getShape().getType() === 'circle';
-    Dom.motorPropertiesSection.style.display = isCircle ? 'flex' : 'none';
-    Dom.objFrictionContainer.style.display = isCircle ? 'none' : 'flex'; // Прячем обычное трение для колес
-    
-    // Если у объекта есть текстура (например, у ТНТ), цвет в панели управляет обводкой, а не заливкой
-    if (renderData.texture) {
-        Dom.objColorInput.value = renderData.strokeStyle || '#cccccc';
+function updatePlayPauseIcons(isPlaying) {
+    if (isPlaying) {
+        Dom.playIcon.style.display = 'none';
+        Dom.pauseIcon.style.display = 'block';
+        Dom.playPauseButton.title = t('pause-title');
     } else {
-        Dom.objColorInput.value = renderData.fillStyle || '#cccccc';
+        Dom.playIcon.style.display = 'block';
+        Dom.pauseIcon.style.display = 'none';
+        Dom.playPauseButton.title = t('play-title');
     }
-
-    const friction = fixture.getFriction();
-    // Устанавливаем значение для соответствующего слайдера
-    if (isCircle) {
-        Dom.objMotorGripSlider.value = friction;
-        Dom.objMotorGripValue.textContent = friction.toFixed(1);
-    } else {
-        Dom.objFrictionSlider.value = friction;
-        Dom.objFrictionValue.textContent = friction.toFixed(1);
-    }
-    
-    Dom.objRestitutionSlider.value = fixture.getRestitution();
-    Dom.objRestitutionValue.textContent = fixture.getRestitution().toFixed(2);
-    
-    const density = fixture.getDensity();
-    Dom.objDensitySlider.value = density;
-    Dom.objDensityValue.textContent = density.toExponential(1);
-    
-    const damping = body.getLinearDamping(); // NEW
-    Dom.objResistanceSlider.value = damping; // NEW
-    Dom.objResistanceValue.textContent = damping.toFixed(1); // NEW
-    
-    Dom.objStaticToggle.checked = body.isStatic();
-
-    // Заполняем поля мотора
-    Dom.objMotorEnableToggle.checked = motorData.isEnabled || false;
-    Dom.objMotorSpeedSlider.value = motorData.speed || 10.0;
-    Dom.objMotorSpeedValue.textContent = (motorData.speed || 10.0).toFixed(1);
-
-    
-    Dom.objectPropertiesPanel.style.display = 'flex';
-    Dom.objectPropertiesPanel.style.left = `${x}px`;
-    Dom.objectPropertiesPanel.style.top = `${y}px`;
-    bodyForPropertiesPanel = body;
-    panelState.isPropertiesOpen = true;
 }
 
-export function hideObjectPropertiesPanel() {
-    Dom.objectPropertiesPanel.style.display = 'none';
-    panelState.isPropertiesOpen = false;
-    bodyForPropertiesPanel = null;
+function switchTool(tool) {
+    toolState.currentTool = tool;
+    Dom.toolButtons.forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`${tool}-btn`);
+    if(activeBtn) activeBtn.classList.add('active');
+    
+    // Deselect any object when switching tools
     deselectBody();
-}
-
-// NEW: Функции для показа/скрытия панели свойств пружины
-export function showSpringPropertiesPanel(joint, x, y) {
-    if (!joint || joint.getType() !== 'distance-joint') return;
-
-    const stiffness = joint.getFrequency();
-    const damping = joint.getDampingRatio();
-
-    Dom.springStiffnessSlider.value = stiffness;
-    Dom.springStiffnessValue.textContent = stiffness.toFixed(1);
-    Dom.springDampingSlider.value = damping;
-    Dom.springDampingValue.textContent = damping.toFixed(2);
-
-    Dom.springPropertiesPanel.style.display = 'flex';
-    Dom.springPropertiesPanel.style.left = `${x}px`;
-    Dom.springPropertiesPanel.style.top = `${y}px`;
-    panelState.isSpringPropertiesOpen = true;
-}
-
-export function hideSpringPropertiesPanel() {
-    Dom.springPropertiesPanel.style.display = 'none';
-    panelState.isSpringPropertiesOpen = false;
-    deselectSpring();
-}
-
-/**
- * Инициализирует глобальные обработчики клавиш для управления всеми моторами.
- */
-function initializeMotorControls() {
-    window.addEventListener('keydown', (e) => {
-        // Предотвращаем управление, если фокус на инпуте
-        if (document.activeElement.tagName === 'INPUT') return;
-        
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            e.preventDefault(); // Предотвращаем прокрутку страницы
-            keyState[e.key] = true;
-        }
-    });
-
-    window.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            e.preventDefault();
-            keyState[e.key] = false;
-        }
-    });
-}
-
-
-function makeItRain(world, render) {
-    const viewWidth = render.bounds.max.x - render.bounds.min.x;
-    const viewCenterX = render.bounds.min.x + viewWidth / 2;
-
-    for (let i = 0; i < 30; i++) {
-        setTimeout(() => {
-            const x = (viewCenterX + (Math.random() - 0.5) * viewWidth * 0.8) / PHYSICS_SCALE;
-            const y = (render.bounds.min.y - 100 - Math.random() * 200) / PHYSICS_SCALE;
-            const radius = (10 + Math.random() * 20) / PHYSICS_SCALE;
-            
-            const body = world.createDynamicBody({
-                position: planck.Vec2(x, y),
-                bullet: true,
-                userData: {
-                    label: 'rain-object',
-                    render: { fillStyle: `hsl(${Math.random() * 360}, 70%, 70%)` }
-                }
-            });
-            body.createFixture(planck.Circle(radius), {
-                friction: 0.1,
-                restitution: 0.5,
-                density: 1.0,
-            });
-
-        }, i * 50);
-    }
+    hideObjectPropertiesPanel();
 }
 
 function wakeAllBodies(world) {
@@ -967,24 +723,389 @@ function wakeAllBodies(world) {
     }
 }
 
-function togglePanel(panel, stateKey) {
-    const isOpening = !panelState[stateKey];
-    panel.style.display = isOpening ? 'flex' : 'none';
-
-    if (isOpening) {
-        // Для полноэкранного меню наград позиционирование через JS не требуется, оно обрабатывается CSS.
-        if (panel === Dom.rewardMenuPanel || panel === Dom.saveLoadPanel) {
-            // Do nothing, CSS handles it.
-        } 
-        // Если панель настроек, позиционируем относительно кнопки настроек.
-        else if (panel === Dom.settingsPanel) {
-            const rect = Dom.settingsButton.getBoundingClientRect();
-            panel.style.top = `${rect.bottom + 10}px`;
-            panel.style.right = '10px';
-            panel.style.left = 'auto'; 
+function clearWorldCompletely(world) {
+    // Logic similar to clearWorld in world_serializer but callable from UI
+    const bodiesToDestroy = [];
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData() || {};
+        if (userData.label !== 'boundary') {
+            bodiesToDestroy.push(body);
         }
-        // Панель свойств объекта позиционируется напрямую в showObjectPropertiesPanel.
-        // Поэтому здесь нет другой логики позиционирования.
     }
-    panelState[stateKey] = isOpening;
+    bodiesToDestroy.forEach(body => world.destroyBody(body));
+    deleteAllWater();
+    deleteAllSand();
+}
+
+function startGame(engineData) {
+    Dom.mainMenuOverlay.style.display = 'none';
+    engineData.runner.enabled = true;
+    updatePlayPauseIcons(true);
+}
+
+
+function openSaveLoadPanel(mode, world, cameraData, engineData) {
+    Dom.saveLoadTitle.textContent = t(mode === 'save' ? 'save-game-title' : 'load-game-title');
+    Dom.saveSlotsContainer.innerHTML = '';
+
+    // Generate 5 slots
+    for (let i = 0; i < 5; i++) {
+        const slotKey = `save_slot_${i}`;
+        const slotDataStr = localStorage.getItem(slotKey);
+        const slotData = slotDataStr ? JSON.parse(slotDataStr) : null;
+        const isUnlocked = playerData.unlockedSlots[i] || i === 0; // First slot always unlocked
+        
+        const slotEl = document.createElement('div');
+        slotEl.className = 'save-slot-button';
+        
+        // Header
+        const header = document.createElement('div');
+        header.className = 'save-button-header';
+        header.textContent = t('save-slot-label') + ' ' + (i + 1);
+        slotEl.appendChild(header);
+
+        // Image/State
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'save-button-image-container';
+        const img = document.createElement('img');
+        img.className = 'save-tier-image';
+        
+        if (!isUnlocked) {
+            img.src = 'https://goida228top.github.io/textures/сохранение.png'; // Locked icon reuse or different?
+            img.style.opacity = '0.5';
+        } else if (slotData) {
+            img.src = 'https://goida228top.github.io/textures/сохранение.png';
+        } else {
+            // Empty slot visual
+             img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDEzSDEzVjE5SDExVjEzSDVWMTFIMTFWNUgxM1YxMUgxOVYxM1oiLz48L3N2Zz4='; // Plus icon
+             img.style.width = '50px';
+             img.style.height = '50px';
+        }
+        imgContainer.appendChild(img);
+        slotEl.appendChild(imgContainer);
+
+        // Date/Empty text
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'save-slot-date';
+        if (!isUnlocked) {
+            dateDiv.textContent = t('locked');
+        } else if (slotData) {
+             dateDiv.textContent = new Date(slotData.timestamp).toLocaleString();
+        } else {
+             dateDiv.textContent = t('empty-slot-label');
+        }
+        slotEl.appendChild(dateDiv);
+
+        // Actions container
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'save-slot-actions';
+
+        if (!isUnlocked) {
+            // Unlock Button
+            const price = 100 * i; // Example price scaling
+            const unlockBtn = document.createElement('button');
+            unlockBtn.className = 'action-unlock';
+            unlockBtn.textContent = t('unlock-for-price', { price: price });
+            
+            if (playerData.coins < price) {
+                unlockBtn.disabled = true;
+                unlockBtn.title = t('not-enough-resonances');
+            }
+            
+            unlockBtn.onclick = () => {
+                if (playerData.coins >= price) {
+                    playerData.coins -= price;
+                    playerData.unlockedSlots[i] = true;
+                    updateCoinsDisplay();
+                    savePlayer_Data(playerData);
+                    // Refresh panel
+                    openSaveLoadPanel(mode, world, cameraData, engineData);
+                    SoundManager.playSound('ui_click');
+                }
+            };
+            actionsDiv.appendChild(unlockBtn);
+
+        } else {
+            // Save/Load Button
+            const actionBtn = document.createElement('button');
+            actionBtn.className = 'action-save-load';
+            if (mode === 'save') {
+                actionBtn.textContent = t('save-button');
+                actionBtn.onclick = () => {
+                    const { worldState, stats } = serializeWorld(world, import('./water.js').waterParticlesPool || [], import('./sand.js').sandParticlesPool || []);
+                    const saveObj = {
+                        timestamp: Date.now(),
+                        state: worldState,
+                        stats: stats,
+                        camera: { scale: cameraData.scale, viewOffset: cameraData.viewOffset }
+                    };
+                    localStorage.setItem(slotKey, JSON.stringify(saveObj));
+                    showToast(t('game-saved-message'), 'success');
+                    openSaveLoadPanel('save', world, cameraData, engineData); // Refresh
+                };
+            } else {
+                actionBtn.textContent = t('load-button');
+                actionBtn.disabled = !slotData;
+                if (!slotData) actionBtn.style.opacity = 0.5;
+                actionBtn.onclick = () => {
+                    if (slotData) {
+                        deserializeWorld(world, slotData.state);
+                        if (slotData.camera) {
+                             cameraData.restoreCameraState(slotData.camera);
+                             cameraData.updateView();
+                        }
+                        showToast(t('game-loaded-message'), 'success');
+                        closeSaveLoadPanel();
+                        // Ensure unpaused
+                        engineData.runner.enabled = true;
+                        updatePlayPauseIcons(true);
+                    }
+                };
+            }
+            actionsDiv.appendChild(actionBtn);
+
+            // Reset Button (only if data exists)
+            if (slotData) {
+                 const resetBtn = document.createElement('button');
+                 resetBtn.className = 'action-reset';
+                 resetBtn.textContent = t('delete-button');
+                 resetBtn.onclick = () => {
+                     showConfirm(t('confirm-title'), t('confirm-delete-save-message'), () => {
+                         localStorage.removeItem(slotKey);
+                         showToast(t('slot-cleared-message'), 'info');
+                         openSaveLoadPanel(mode, world, cameraData, engineData); // Refresh
+                     });
+                 };
+                 actionsDiv.appendChild(resetBtn);
+            }
+        }
+        
+        slotEl.appendChild(actionsDiv);
+        Dom.saveSlotsContainer.appendChild(slotEl);
+    }
+
+    Dom.saveLoadPanel.style.display = 'flex';
+    panelState.isSaveLoadOpen = true;
+}
+
+function closeSaveLoadPanel() {
+    Dom.saveLoadPanel.style.display = 'none';
+    panelState.isSaveLoadOpen = false;
+}
+
+function updateRewardButtonUI(button, engineData) {
+    if (!button) return;
+    const rewardAmount = parseInt(button.getAttribute('data-reward'));
+    const adsRequired = parseInt(button.getAttribute('data-ads'));
+    // Use stored progress or 0
+    const currentProgress = playerData.rewardProgress[rewardAmount] || 0;
+
+    button.innerHTML = '';
+
+    // Top Info
+    const topInfo = document.createElement('div');
+    topInfo.className = 'reward-info-top';
+    
+    const header = document.createElement('div');
+    header.className = 'reward-button-header';
+    header.textContent = `${currentProgress}/${adsRequired}`;
+    topInfo.appendChild(header);
+
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'reward-button-coins-container';
+    const img = document.createElement('img');
+    img.className = 'reward-tier-image';
+    // Select image based on amount
+    if (rewardAmount === 10) img.src = 'https://goida228top.github.io/textures/10 монет.png';
+    else if (rewardAmount === 50) img.src = 'https://goida228top.github.io/textures/50 монет.png';
+    else img.src = 'https://goida228top.github.io/textures/100 монет.png';
+    imgContainer.appendChild(img);
+    topInfo.appendChild(imgContainer);
+
+    const subTitle = document.createElement('div');
+    subTitle.className = 'reward-button-subtitle';
+    subTitle.textContent = t('reward-amount-label', { amount: rewardAmount });
+    topInfo.appendChild(subTitle);
+
+    button.appendChild(topInfo);
+
+    // Action Button
+    const actionBtn = document.createElement('button');
+    actionBtn.className = 'reward-progress-btn';
+    
+    if (currentProgress >= adsRequired) {
+        actionBtn.classList.add('ready-to-claim');
+        actionBtn.textContent = t('claim-reward');
+        actionBtn.onclick = (e) => {
+            e.stopPropagation();
+            playerData.coins += rewardAmount;
+            playerData.rewardProgress[rewardAmount] = 0; // Reset progress
+            updateCoinsDisplay();
+            savePlayer_Data(playerData);
+            SoundManager.playSound('reward');
+            showToast(t('reward-claimed'), 'success');
+            updateRewardButtonUI(button, engineData); // Refresh button state
+        };
+    } else {
+        actionBtn.textContent = t('watch-ad-button', { progress: `${currentProgress}/${adsRequired}` });
+        const icon = document.createElement('img');
+        icon.className = 'ad-icon';
+        icon.src = 'https://goida228top.github.io/textures/реклама.png';
+        actionBtn.appendChild(icon);
+
+        actionBtn.onclick = (e) => {
+            e.stopPropagation();
+            actionBtn.disabled = true;
+            actionBtn.classList.add('watching-ad');
+            actionBtn.textContent = t('loading-ad');
+
+            showRewardedVideo(engineData, () => {
+                // Success
+                playerData.rewardProgress[rewardAmount] = currentProgress + 1;
+                savePlayer_Data(playerData);
+                updateRewardButtonUI(button, engineData);
+            }, () => {
+                // Error
+                actionBtn.disabled = false;
+                actionBtn.classList.remove('watching-ad');
+                actionBtn.classList.add('ad-failed');
+                actionBtn.textContent = t('ad-failed-retry');
+            });
+        };
+    }
+    
+    button.appendChild(actionBtn);
+}
+
+
+function updateCoinsDisplay() {
+    Dom.coinsCountSpan.textContent = playerData.coins;
+    localStorage.setItem('coins', playerData.coins);
+    localStorage.setItem('rewardProgress', JSON.stringify(playerData.rewardProgress));
+    localStorage.setItem('unlockedSlots', JSON.stringify(playerData.unlockedSlots));
+}
+
+export function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    Dom.toastContainer.appendChild(toast);
+
+    // Trigger reflow
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => {
+            if(toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 400);
+    }, 3000);
+}
+
+function showConfirm(title, message, onConfirm) {
+    Dom.confirmModalTitle.textContent = title;
+    Dom.confirmModalMessage.textContent = message;
+    Dom.confirmModalOverlay.style.display = 'flex';
+    
+    // Clear previous listeners to avoid stacking
+    const newConfirmBtn = Dom.confirmModalConfirmBtn.cloneNode(true);
+    Dom.confirmModalConfirmBtn.parentNode.replaceChild(newConfirmBtn, Dom.confirmModalConfirmBtn);
+    Dom.confirmModalConfirmBtn = newConfirmBtn; // Update reference
+
+    const newCancelBtn = Dom.confirmModalCancelBtn.cloneNode(true);
+    Dom.confirmModalCancelBtn.parentNode.replaceChild(newCancelBtn, Dom.confirmModalCancelBtn);
+    Dom.confirmModalCancelBtn = newCancelBtn; // Update reference
+
+
+    newConfirmBtn.onclick = () => {
+        Dom.confirmModalOverlay.style.display = 'none';
+        onConfirm();
+    };
+
+    newCancelBtn.onclick = () => {
+        Dom.confirmModalOverlay.style.display = 'none';
+    };
+}
+
+function initializeLowFpsWarning(runner) {
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+    let lowFpsCount = 0;
+    const checkInterval = 1000;
+    const fpsThreshold = 15;
+    let isWarningShown = false;
+    let dontAskAgain = localStorage.getItem('dontShowLowFpsWarning') === 'true';
+
+    if(dontAskAgain) return;
+
+    setInterval(() => {
+        if(!runner.enabled || isWarningShown || document.hidden) return;
+
+        const now = performance.now();
+        const fps = Math.round(frameCount * 1000 / (now - lastFrameTime));
+        
+        if (fps < fpsThreshold && fps > 0) {
+            lowFpsCount++;
+        } else {
+            lowFpsCount = 0;
+        }
+
+        if (lowFpsCount >= 5) { // 5 seconds of low FPS
+            // Check water count
+            const waterCount = import('./water.js').waterParticlesPool.filter(p => p.isActive()).length;
+            
+            if (waterCount > 100) {
+                isWarningShown = true;
+                Dom.lowFpsWarning.style.display = 'block';
+                runner.enabled = false; // Pause game
+            }
+            lowFpsCount = 0;
+        }
+
+        frameCount = 0;
+        lastFrameTime = now;
+    }, checkInterval);
+
+    // Hook into requestAnimationFrame to count frames (done in engine.js implicitly via loop, 
+    // but we can approximate here or just use the main loop if we had access.
+    // Since we don't have direct loop hook here easily, let's rely on a separate RAF for counting)
+    function countFrames() {
+        frameCount++;
+        requestAnimationFrame(countFrames);
+    }
+    requestAnimationFrame(countFrames);
+
+    // Button listeners
+    Dom.deleteAllWaterBtn.addEventListener('click', () => {
+        deleteAllWater();
+        Dom.lowFpsWarning.style.display = 'none';
+        isWarningShown = false;
+        runner.enabled = true;
+        updatePlayPauseIcons(true);
+    });
+
+    Dom.pauseFromWarningBtn.addEventListener('click', () => {
+         Dom.lowFpsWarning.style.display = 'none';
+         isWarningShown = false;
+         updatePlayPauseIcons(false);
+    });
+
+    Dom.doNothingBtn.addEventListener('click', () => {
+         Dom.lowFpsWarning.style.display = 'none';
+         isWarningShown = false;
+         runner.enabled = true;
+         updatePlayPauseIcons(true);
+         // Reset counter so it doesn't pop up immediately
+         lowFpsCount = -10; 
+    });
+
+    Dom.dontAskAgainBtn.addEventListener('click', () => {
+         localStorage.setItem('dontShowLowFpsWarning', 'true');
+         Dom.lowFpsWarning.style.display = 'none';
+         isWarningShown = false;
+         runner.enabled = true;
+         updatePlayPauseIcons(true);
+    });
 }

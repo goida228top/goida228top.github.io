@@ -97,9 +97,6 @@ export const YANDEX_INIT_TIMEOUT = 5000; // 5 секунд
 export const LOW_FPS_THRESHOLD = 5; // Порог FPS для предупреждения
 export const LOW_FPS_COOLDOWN_MS = 30000; // 30 секунд
 
-// --- Настройки наград за рекламу ---
-export const REWARD_AD_DELAY_SECONDS = 10; // Задержка перед показом рекламы (в секундах)
-
 // --- URL-адреса всех изображений для предварительной загрузки ---
 export const ALL_IMAGE_URLS = [
     'https://goida228top.github.io/textures/монетка.png',
@@ -111,4 +108,18 @@ export const ALL_IMAGE_URLS = [
     'https://goida228top.github.io/textures/жел.png', // Large TNT
     'https://goida228top.github.io/textures/реклама.png', // Ad icon
     'https://goida228top.github.io/textures/сохранение.png', // Save icon
+];
+
+// --- URL-адреса всех звуков для предварительной загрузки ---
+export const ALL_SOUND_URLS = [
+    { name: 'ui_click', url: 'https://goida228top.github.io/sounds/click.wav' },
+    { name: 'create_object', url: 'https://goida228top.github.io/sounds/create.wav' },
+    { name: 'explosion_small', url: 'https://goida228top.github.io/sounds/explosion_small.wav' },
+    { name: 'explosion_medium', url: 'https://goida228top.github.io/sounds/explosion_medium.wav' },
+    { name: 'explosion_large', url: 'https://goida228top.github.io/sounds/explosion_large.wav' },
+    { name: 'water_pour', url: 'https://goida228top.github.io/sounds/water_pour.wav' },
+    { name: 'sand_pour', url: 'https://goida228top.github.io/sounds/sand_pour.wav' },
+    { name: 'collision_light', url: 'https://goida228top.github.io/sounds/impact_light.wav' },
+    { name: 'collision_heavy', url: 'https://goida228top.github.io/sounds/impact_heavy.wav' },
+    { name: 'reward', url: 'https://goida228top.github.io/sounds/reward.wav' },
 ];

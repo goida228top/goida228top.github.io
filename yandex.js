@@ -125,14 +125,27 @@ export function showFullscreenAdv(engineData, onCloseCallback) {
 export function showRewardedVideo(engineData, onRewarded, onError) {
     if (!window.ysdk) {
         console.warn('Yandex SDK not available. Simulating successful ad reward for testing.');
-        onRewarded(); 
+        onRewarded();
         return;
     }
 
-    hideStickyAdv(); // Скрываем баннер перед показом видео
+    hideStickyAdv();
     const { runner } = engineData;
     const wasRunning = runner.enabled;
-    runner.enabled = false; 
+    runner.enabled = false;
+    
+    let isRewarded = false;
+    let errorHandled = false;
+
+    const handleError = (error) => {
+        if (!errorHandled) {
+            errorHandled = true;
+            if (error) console.error('Rewarded video error:', error);
+            if (onError) onError();
+            if (wasRunning) runner.enabled = true;
+            showStickyAdv();
+        }
+    };
 
     window.ysdk.adv.showRewardedVideo({
         callbacks: {
@@ -141,29 +154,20 @@ export function showRewardedVideo(engineData, onRewarded, onError) {
             },
             onRewarded: () => {
                 console.log('User was rewarded!');
+                isRewarded = true;
                 onRewarded();
             },
-            onClose: (wasShown) => {
-                console.log(`Rewarded video ad closed. Was shown: ${wasShown}`);
-                if (!wasShown && onError) {
-                    // Если реклама не была показана, вызываем onError
-                    onError();
+            onClose: () => {
+                console.log('Rewarded video ad closed.');
+                if (!isRewarded) {
+                    handleError(); // Closed without reward
+                } else {
+                    // Ad was successful, just restore state
+                    if (wasRunning) runner.enabled = true;
+                    showStickyAdv();
                 }
-                if (wasRunning) {
-                    runner.enabled = true;
-                }
-                showStickyAdv(); // Показываем баннер снова
             },
-            onError: (error) => {
-                console.error('Rewarded video error:', error);
-                if (onError) {
-                    onError(error);
-                }
-                if (wasRunning) {
-                    runner.enabled = true;
-                }
-                showStickyAdv(); // Показываем баннер снова
-            },
+            onError: handleError,
         },
     });
 }

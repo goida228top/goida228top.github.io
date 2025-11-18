@@ -12,7 +12,7 @@ import {
 } from './selection.js';
 import { spawnWaterParticle } from './water.js';
 import { spawnSandParticle } from './sand.js'; // NEW: Импортируем спавнер песка
-import { showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel } from './ui.js';
+import { showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel, showToast } from './ui.js';
 import { addExplosionEffect } from './engine.js';
 import { tntTypes } from './tnt_textures.js'; // Импортируем tntTypes из нового файла
 import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
@@ -26,6 +26,7 @@ import {
     SAND_PHYSICAL_RADIUS_FACTOR, // NEW: Физический радиус песка
 } from './game_config.js';
 import { t } from './lang.js';
+import { SoundManager } from './sound.js';
 
 // Состояния инструментов
 let mouseJoint = null;
@@ -84,7 +85,7 @@ detonateTNT = function(world, body) {
         return;
     }
     // Создаем взрыв на месте ТНТ
-    createExplosion(world, explosionCenter, explosionRadius, explosionPower);
+    createExplosion(world, explosionCenter, explosionRadius, explosionPower, type);
 };
 
 /**
@@ -93,9 +94,11 @@ detonateTNT = function(world, body) {
  * @param {import('planock-js').Vec2} center - Центр взрыва в метрах.
  * @param {number} radius - Радиус взрыва в метрах.
  * @param {number} power - Сила взрыва.
+ * @param {string} type - Тип ТНТ ('small', 'medium', 'large').
  */
-createExplosion = function(world, center, radius, power) {
+createExplosion = function(world, center, radius, power, type) {
     addExplosionEffect(center, radius, 400);
+    SoundManager.playSound(`explosion_${type}`, { volume: 0.8 });
 
     const aabb = new planck.AABB(
         center.clone().sub(planck.Vec2(radius, radius)),
@@ -205,7 +208,8 @@ export async function initializeTools(engineData, cameraData, worldData) {
             case 'spring':
             case 'rod':
                 const firstBody = getBodyAt(world, startPoint, true);
-                if (firstBody) {
+                const firstBodyUserData = firstBody ? firstBody.getUserData() || {} : {};
+                if (firstBody && firstBodyUserData.label !== 'water' && firstBodyUserData.label !== 'sand') {
                     let anchorPoint = startPoint;
                     const firstFixture = firstBody.getFixtureList();
                     if (firstFixture && firstFixture.getShape().getType() === 'circle') {
@@ -231,14 +235,16 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 if (waterSpawnInterval) clearInterval(waterSpawnInterval);
                 waterSpawnInterval = setInterval(() => {
                     spawnWaterCluster(world, lastMousePos.x, lastMousePos.y);
-                }, 30);
+                    SoundManager.playSound('water_pour', { volume: 0.2, pitch: 1.0 + Math.random() * 0.2 });
+                }, 40);
                 break;
             case 'sand':
                 spawnSandCluster(world, startPoint.x, startPoint.y);
                 if (sandSpawnInterval) clearInterval(sandSpawnInterval);
                 sandSpawnInterval = setInterval(() => {
                     spawnSandCluster(world, lastMousePos.x, lastMousePos.y);
-                }, 30);
+                    SoundManager.playSound('sand_pour', { volume: 0.3, pitch: 1.0 + Math.random() * 0.2 });
+                }, 40);
                 break;
             case 'eraser':
                 eraseAt(world, startPoint);
@@ -353,7 +359,8 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 const { body: firstBody, anchor: firstAnchor } = getFirstJointBody();
                 if (firstBody) {
                     const secondBody = getBodyAt(world, endPoint, true);
-                    if (secondBody && secondBody !== firstBody) {
+                    const secondBodyUserData = secondBody ? secondBody.getUserData() || {} : {};
+                    if (secondBody && secondBodyUserData.label !== 'water' && secondBodyUserData.label !== 'sand' && secondBody !== firstBody) {
                         let secondAnchor = endPoint;
                         const secondFixture = secondBody.getFixtureList();
                         if (secondFixture && secondFixture.getShape().getType() === 'circle') {
@@ -479,21 +486,32 @@ function getDistanceJointAt(world, worldPoint) {
     const clickRadius = 0.5; // в метрах
 
     for (let joint = world.getJointList(); joint; joint = joint.getNext()) {
-        if (joint.getType() !== 'distance-joint') continue;
+        const type = joint.getType();
+        const userData = joint.getUserData() || {};
+        
+        // Проверяем только DistanceJoint (для пружин/стержней) и WheelJoint (для фиксированных пружин)
+        if (type !== 'distance-joint' && (type !== 'wheel-joint' || !userData.isFixed)) {
+            continue;
+        }
 
-        const p1 = joint.getAnchorA();
-        const p2 = joint.getAnchorB();
+        const bodyA = joint.getBodyA();
+        const bodyB = joint.getBodyB();
+        const p1 = bodyA.getWorldPoint(joint.getLocalAnchorA());
+        const p2 = bodyB.getWorldPoint(joint.getLocalAnchorB());
 
         const d = planck.Vec2.distance(worldPoint, p1) + planck.Vec2.distance(worldPoint, p2);
         const len = planck.Vec2.distance(p1, p2);
 
         if (Math.abs(d - len) < clickRadius) {
+            if (userData.tool === 'rod') continue; // Стержни не выбираются
+            
             selectedJoint = joint;
             break;
         }
     }
     return selectedJoint;
 }
+
 
 function createBox(world, start, end) {
     const minX = Math.min(start.x, end.x);
@@ -506,6 +524,7 @@ function createBox(world, start, end) {
 
     if (width < 0.1 || height < 0.1) return;
 
+    SoundManager.playSound('create_object', { volume: 0.7 });
     const body = world.createDynamicBody({
         position: planck.Vec2(minX + width / 2, minY + height / 2),
         linearDamping: 0.1,
@@ -527,6 +546,7 @@ function createCircle(world, center, edge) {
 
     if (radius < 0.25) return;
 
+    SoundManager.playSound('create_object', { volume: 0.7 });
     const body = world.createDynamicBody({
         position: center,
         linearDamping: 0.1,
@@ -652,7 +672,7 @@ function triangulate(vertices) {
 function createPolygon(world, vertices) {
     if (vertices.length < 3) return;
     if (isSelfIntersecting(vertices)) {
-        alert(t('polygon-self-intersection-error'));
+        showToast(t('polygon-self-intersection-error'), 'error');
         return;
     }
     const triangles = triangulate(vertices);
@@ -660,6 +680,7 @@ function createPolygon(world, vertices) {
         console.warn("Polygon triangulation failed. Body not created.");
         return;
     }
+    SoundManager.playSound('create_object', { volume: 0.7 });
     const body = world.createDynamicBody({ linearDamping: 0.1 });
     try {
         triangles.forEach(triangle => {
@@ -681,6 +702,7 @@ function createBrushStroke(world, p1, p2, thickness) {
      const dist = planck.Vec2.distance(p1, p2);
      if (dist < 0.01) return;
 
+     SoundManager.playSound('create_object', { volume: 0.5, pitch: 1.2 });
      const center = planck.Vec2.mid(p1, p2);
      const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
 
@@ -701,6 +723,7 @@ function createBrushStroke(world, p1, p2, thickness) {
 }
 
 function createWeld(world, bodyA, bodyB, point) {
+    SoundManager.playSound('create_object', { volume: 0.6, pitch: 0.9 });
     const worldAnchor = point;
     world.createJoint(planck.WeldJoint({
         bodyA: bodyA,
@@ -712,6 +735,7 @@ function createWeld(world, bodyA, bodyB, point) {
 }
 
 function createSpring(world, bodyA, bodyB, anchorA, anchorB) {
+    SoundManager.playSound('create_object', { volume: 0.6, pitch: 1.1 });
     const length = planck.Vec2.distance(anchorA, anchorB);
     const joint = planck.DistanceJoint({
         bodyA: bodyA,
@@ -722,11 +746,12 @@ function createSpring(world, bodyA, bodyB, anchorA, anchorB) {
         frequencyHz: TOOL_SETTINGS.spring.defaultStiffness,
         dampingRatio: TOOL_SETTINGS.spring.defaultDamping,
     });
-    joint.setUserData({ tool: 'spring' });
+    joint.setUserData({ tool: 'spring', isFixed: false });
     world.createJoint(joint);
 }
 
 function createRod(world, bodyA, bodyB, anchorA, anchorB) {
+    SoundManager.playSound('create_object', { volume: 0.6, pitch: 0.8 });
     const length = planck.Vec2.distance(anchorA, anchorB);
     const joint = planck.DistanceJoint({
         bodyA: bodyA,
@@ -743,6 +768,7 @@ function createRod(world, bodyA, bodyB, anchorA, anchorB) {
 
 
 function createTNT(world, position, type = 'small') {
+    SoundManager.playSound('create_object', { volume: 0.7 });
     const tntConfig = TOOL_SETTINGS.tnt[type];
     const textureUrl = tntTypes[type].textureUrl;
     const texture = ImageLoader.getImage(textureUrl);
@@ -822,6 +848,9 @@ function eraseAt(world, point) {
         return true;
     });
 
+    if (bodiesToDestroy.length > 0) {
+         SoundManager.playSound('create_object', { volume: 0.4, pitch: 0.7 });
+    }
     bodiesToDestroy.forEach(body => {
         if (body.getWorld()) {
             const userData = body.getUserData() || {};

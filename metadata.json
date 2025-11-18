@@ -1,5 +1,5 @@
 {
-  "description": "Физическая песочница 2D",
+  "description": "Физическая песочница",
   "requestFramePermissions": [],
   "name": "App",
   "contentSecurityPolicy": {

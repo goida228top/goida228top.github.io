@@ -8,6 +8,7 @@ import { PHYSICS_SCALE } from './game_config.js';
 import { renderWater, updateWaterPhysics } from './water.js'; // Импортируем новую функцию физики воды
 import { renderSand } from './sand.js'; // Импортируем функции для песка, но updateSandPhysics больше не нужна
 import { keyState } from './ui.js'; // Импортируем состояние клавиш для моторов
+import { SoundManager } from './sound.js'; // Импорт менеджера звуков
 
 let isPaused = false;
 let cameraData = null;
@@ -348,8 +349,9 @@ function renderWorld(world, render, camera) {
     const isJointToolActive = toolState.currentTool === 'spring' || toolState.currentTool === 'rod';
     if (isJointToolActive) {
         for (let body = world.getBodyList(); body; body = body.getNext()) {
+            const userData = body.getUserData() || {};
             const firstFixture = body.getFixtureList();
-            if (body.isActive() && firstFixture && firstFixture.getShape().getType() === 'circle') {
+            if (body.isActive() && userData.label !== 'water' && userData.label !== 'sand' && firstFixture && firstFixture.getShape().getType() === 'circle') {
                 const center = body.getPosition();
                 // --- MODIFIED: Динамический радиус подсказки ---
                 const circleRadius = firstFixture.getShape().m_radius;
@@ -471,6 +473,46 @@ export function initializeEngine() {
         gravity: planck.Vec2(0, 9.8), // Реалистичная гравитация
     });
     
+    // --- NEW: Обработчик столкновений для звуков ---
+    world.on('post-solve', (contact, impulse) => {
+        // Суммируем нормальные импульсы (основная сила удара)
+        const totalImpulse = impulse.normalImpulses[0] + (impulse.normalImpulses[1] || 0);
+
+        // Порог, чтобы игнорировать очень слабые контакты (качение, лежание)
+        if (totalImpulse < 0.2) return;
+
+        const now = performance.now();
+        const bodyA = contact.getFixtureA().getBody();
+        const bodyB = contact.getFixtureB().getBody();
+        
+        // Получаем userData, инициализируя, если его нет
+        const userDataA = bodyA.getUserData() || {};
+        const userDataB = bodyB.getUserData() || {};
+        
+        // Пропускаем столкновения с частицами воды и песка
+        if (userDataA.label === 'water' || userDataA.label === 'sand' || userDataB.label === 'water' || userDataB.label === 'sand') {
+            return;
+        }
+
+        const lastSoundA = userDataA.lastCollisionSound || 0;
+        const lastSoundB = userDataB.lastCollisionSound || 0;
+
+        // "Остывание", чтобы предотвратить спам звуками от одного и того же объекта
+        if (now - lastSoundA < 100 || now - lastSoundB < 100) return;
+
+        userDataA.lastCollisionSound = now;
+        userDataB.lastCollisionSound = now;
+        bodyA.setUserData(userDataA);
+        bodyB.setUserData(userDataB);
+        
+        // Нормализуем громкость и выбираем звук в зависимости от силы удара
+        const volume = Math.min(1.0, totalImpulse / 8.0); // Уменьшена громкость (было / 5.0)
+        const soundName = totalImpulse > 2.5 ? 'collision_heavy' : 'collision_light';
+        
+        SoundManager.playSound(soundName, { volume });
+    });
+
+
     const canvas = document.getElementById('physics-canvas');
     if (!canvas) {
         throw new Error('Canvas with id "physics-canvas" not found.');
