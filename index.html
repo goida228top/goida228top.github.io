@@ -3,7 +3,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Физическая песочница</title>
     <!-- Заменяем Matter.js на более мощный Planck.js -->
     <script src="https://cdn.jsdelivr.net/npm/planck@latest/dist/planck.min.js"></script>
@@ -71,6 +71,7 @@
             -ms-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
+            touch-action: none; /* Важно для отключения жестов браузера */
         }
         
         /* Prevent context menu on images */
@@ -165,6 +166,8 @@
             color: white;
             text-shadow: 0 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(58, 123, 213, 0.8);
             margin-bottom: 40px;
+            text-align: center;
+            padding: 0 20px;
         }
         #main-menu-container {
             text-align: center;
@@ -172,6 +175,10 @@
             flex-direction: column;
             gap: 20px;
             opacity: 0; /* Hidden initially, shown by animation */
+            width: 100%;
+            max-width: 400px;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
         
         /* Smoke entrance animation for menu */
@@ -227,13 +234,18 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
-            min-width: 300px;
+            width: 100%;
             transition: background-color 0.2s, transform 0.2s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
         }
         .main-menu-btn:hover {
             background-color: var(--button-hover-bg);
             transform: scale(1.05);
+        }
+        .main-menu-btn:active {
+            transform: scale(0.95);
+            background-color: var(--button-active-bg);
         }
 
         /* Initially hide toolbars */
@@ -251,7 +263,19 @@
             height: var(--toolbar-height);
             box-sizing: border-box;
             z-index: 10;
+            overflow-x: auto; /* Горизонтальный скролл */
+            white-space: nowrap; /* Запрет переноса */
+            -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
         }
+        /* Скрываем скроллбар, но оставляем функционал */
+        #toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        #toolbar::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 2px;
+        }
+        
         #toolbar button {
             width: 40px;
             height: 40px;
@@ -262,9 +286,10 @@
             color: var(--text-color);
             border-radius: 5px;
             transition: background-color 0.2s, border-color 0.2s;
-            display: flex;
+            display: inline-flex; /* Inline-flex для скролла */
             align-items: center;
             justify-content: center;
+            flex-shrink: 0; /* Запрет сжатия */
         }
         #toolbar button svg {
             width: 100%;
@@ -279,11 +304,12 @@
             border-color: var(--button-active-bg);
         }
         .tool-group {
-            display: flex;
+            display: inline-flex; /* Inline для скролла */
             gap: 2px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             padding: 2px;
+            margin-right: 5px;
         }
         .tool-group button {
             border: none;
@@ -302,7 +328,9 @@
             transition: transform 0.2s;
         }
         #toolbar-separator {
-            flex-grow: 1;
+            display: inline-block;
+            width: 10px;
+            flex-shrink: 0;
         }
         
         /* Стиль для отображения монет */
@@ -313,13 +341,14 @@
             background-color: var(--button-bg);
             color: var(--text-color);
             border-radius: 5px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             cursor: pointer;
             white-space: nowrap;
             transition: background-color 0.2s, border-color 0.2s;
+            flex-shrink: 0;
         }
         .coins-display #coins-count {
             color: #FF8C00;
@@ -1165,6 +1194,98 @@
         #exit-game-btn:hover {
             background-color: #c0392b;
             transform: scale(1.02);
+        }
+
+        /* =========================================
+           MOBILE STYLES (Adaptive Layout)
+           ========================================= */
+        @media (max-width: 768px) {
+            .main-menu-title {
+                font-size: 2.5em; /* Меньше шрифт заголовка */
+                margin-bottom: 20px;
+            }
+            .main-menu-btn {
+                font-size: 1.2em; /* Меньше шрифт кнопок */
+                padding: 12px 20px;
+                min-width: unset; /* Убираем жесткую ширину */
+            }
+            #main-menu-container {
+                width: 90%;
+            }
+            
+            /* Toolbar: скролл и уменьшенные кнопки */
+            #toolbar {
+                justify-content: flex-start;
+                padding: 4px;
+                gap: 5px;
+            }
+            #toolbar button {
+                width: 36px;
+                height: 36px;
+                min-width: 36px; /* Чтобы не сжимались */
+                padding: 6px;
+            }
+            .tool-group button {
+                width: 32px;
+                height: 32px;
+            }
+            .coins-display {
+                height: 36px;
+                padding: 0 8px;
+                font-size: 0.9em;
+            }
+            .coins-display img.coin-icon {
+                width: 20px;
+                height: 20px;
+            }
+
+            /* Popups adaptation */
+            .popup {
+                padding: 10px;
+                min-width: 200px;
+            }
+            .settings-panel-content, 
+            .about-panel-content,
+            .save-load-content,
+            .reward-menu-content {
+                width: 95%;
+                padding: 15px;
+            }
+            .settings-panel-content h2,
+            #save-load-panel h3,
+            #reward-menu-panel h3 {
+                font-size: 1.5em;
+            }
+            
+            .panel-close-btn {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 1.2em;
+            }
+
+            /* Save/Load slots adaptation */
+            .save-slot-button {
+                width: 180px;
+                min-height: 350px;
+                padding: 10px;
+            }
+            .save-tier-image {
+                width: 100px;
+                height: 100px;
+            }
+            
+            /* Reward buttons adaptation */
+            .reward-button {
+                width: 220px;
+                height: 450px;
+                padding: 15px;
+            }
+            .reward-tier-image {
+                width: 150px;
+                height: 150px;
+            }
         }
     </style>
 <script type="importmap">

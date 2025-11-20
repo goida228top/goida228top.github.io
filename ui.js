@@ -94,6 +94,23 @@ function updateLiquidColors() {
     Dom.sandButton.style.color = opaqueSandColor;
 }
 
+// Вспомогательная функция для надежной обработки кликов на мобильных
+function addTapListener(element, callback) {
+    if (!element) return;
+    
+    element.addEventListener('click', (e) => {
+        callback(e);
+    });
+    
+    // Добавляем touchend для быстрой реакции на мобильных
+    // Но предотвращаем двойное срабатывание, если браузер посылает и touchend и click
+    element.addEventListener('touchend', (e) => {
+        if (e.cancelable) e.preventDefault(); // Предотвращаем генерацию мышиного клика
+        callback(e);
+    });
+}
+
+
 export function initializeUI(engineData, cameraData, worldData) {
     const { world, runner, render } = engineData;
     const { applyLiquidFilters } = cameraData;
@@ -132,44 +149,44 @@ export function initializeUI(engineData, cameraData, worldData) {
     });
 
     // --- Main Menu Listeners ---
-    Dom.startGameBtn.addEventListener('click', () => {
+    addTapListener(Dom.startGameBtn, () => {
         SoundManager.playSound('ui_click');
         startGame(engineData);
     });
 
-    Dom.loadGameMenuBtn.addEventListener('click', () => {
+    addTapListener(Dom.loadGameMenuBtn, () => {
         SoundManager.playSound('ui_click');
         openSaveLoadPanel('load', world, cameraData, engineData);
     });
 
-    Dom.aboutGameBtn.addEventListener('click', () => {
+    addTapListener(Dom.aboutGameBtn, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.aboutPanel, 'isAboutPanelOpen');
     });
 
-    Dom.aboutPanelCloseBtn.addEventListener('click', () => {
+    addTapListener(Dom.aboutPanelCloseBtn, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.aboutPanel, 'isAboutPanelOpen');
     });
     
     // --- Toolbar Button Listeners ---
-    Dom.saveButton.addEventListener('click', () => {
+    addTapListener(Dom.saveButton, () => {
         SoundManager.playSound('ui_click');
         openSaveLoadPanel('save', world, cameraData, engineData);
     });
 
-    Dom.loadButton.addEventListener('click', () => {
+    addTapListener(Dom.loadButton, () => {
         SoundManager.playSound('ui_click');
         openSaveLoadPanel('load', world, cameraData, engineData);
     });
 
-    Dom.saveLoadCloseBtn.addEventListener('click', () => {
+    addTapListener(Dom.saveLoadCloseBtn, () => {
         SoundManager.playSound('ui_click');
         closeSaveLoadPanel();
     });
 
     Dom.toolButtons.forEach(button => {
-        button.addEventListener('click', () => {
+        addTapListener(button, () => {
             SoundManager.playSound('ui_click', { pitch: 1.1 });
             const newTool = button.id.replace('-btn', '');
             switchTool(newTool);
@@ -192,12 +209,12 @@ export function initializeUI(engineData, cameraData, worldData) {
         }
     };
     
-    Dom.playPauseButton.addEventListener('click', () => {
+    addTapListener(Dom.playPauseButton, () => {
         SoundManager.playSound('ui_click');
         handlePlayPause();
     });
 
-    Dom.clearAllButton.addEventListener('click', () => {
+    addTapListener(Dom.clearAllButton, () => {
         SoundManager.playSound('ui_click');
         showConfirm(t('confirm-title'), t('confirm-clear-all'), () => {
             clearWorldCompletely(world);
@@ -228,7 +245,7 @@ export function initializeUI(engineData, cameraData, worldData) {
     initializeLowFpsWarning(runner);
     initializeMotorControls();
     
-    Dom.coinsDisplay.addEventListener('click', () => {
+    addTapListener(Dom.coinsDisplay, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen');
         updateRewardButtonUI(Dom.reward10Btn, engineData);
@@ -236,7 +253,7 @@ export function initializeUI(engineData, cameraData, worldData) {
         updateRewardButtonUI(Dom.reward100Btn, engineData);
     });
 
-    Dom.rewardMenuCloseBtn.addEventListener('click', () => {
+    addTapListener(Dom.rewardMenuCloseBtn, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.rewardMenuPanel, 'isRewardMenuOpen');
     });
@@ -292,19 +309,19 @@ function initializeNewSettingsPanel(engineData, cameraData) {
     const { world, render } = engineData;
     const { applyLiquidFilters } = cameraData;
 
-    Dom.settingsButton.addEventListener('click', () => {
+    addTapListener(Dom.settingsButton, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.newSettingsPanel, 'isNewSettingsOpen');
     });
 
-    Dom.newSettingsCloseBtn.addEventListener('click', () => {
+    addTapListener(Dom.newSettingsCloseBtn, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.newSettingsPanel, 'isNewSettingsOpen');
     });
 
     // Accordion Logic
     document.querySelectorAll('.settings-category-header').forEach(header => {
-        header.addEventListener('click', () => {
+        addTapListener(header, () => {
             SoundManager.playSound('ui_click', { pitch: 1.2 });
             const category = header.parentElement;
             category.classList.toggle('expanded');
@@ -389,7 +406,7 @@ function initializeNewSettingsPanel(engineData, cameraData) {
 
     // --- Exit Game Button Logic ---
     if (Dom.exitGameBtn) {
-        Dom.exitGameBtn.addEventListener('click', () => {
+        addTapListener(Dom.exitGameBtn, () => {
             SoundManager.playSound('ui_click');
             showConfirm(t('confirm-title'), t('confirm-exit-game'), () => {
                 // Explicitly close settings panel
@@ -611,7 +628,7 @@ function initializeObjectPropertiesPanel(world) {
         }
     });
 
-    Dom.deleteSelectedButton.addEventListener('click', () => {
+    addTapListener(Dom.deleteSelectedButton, () => {
         deleteSelectedBody(world);
         hideObjectPropertiesPanel();
     });
@@ -711,7 +728,7 @@ function initializeSpringPropertiesPanel(world) {
         }
     });
 
-    Dom.deleteSelectedSpringButton.addEventListener('click', () => {
+    addTapListener(Dom.deleteSelectedSpringButton, () => {
         deleteSelectedSpring(world);
         hideSpringPropertiesPanel();
     });
@@ -1080,7 +1097,7 @@ function initializeLowFpsWarning(runner) {
 
     setInterval(fpsChecker, 1000);
 
-    Dom.deleteAllWaterBtn.addEventListener('click', () => {
+    addTapListener(Dom.deleteAllWaterBtn, () => {
         deleteAllWater();
         Dom.lowFpsWarning.style.display = 'none';
         isWarningShown = false;
@@ -1088,13 +1105,13 @@ function initializeLowFpsWarning(runner) {
         updatePlayPauseIcons(true);
     });
 
-    Dom.pauseFromWarningBtn.addEventListener('click', () => {
+    addTapListener(Dom.pauseFromWarningBtn, () => {
          Dom.lowFpsWarning.style.display = 'none';
          isWarningShown = false;
          updatePlayPauseIcons(false);
     });
 
-    Dom.doNothingBtn.addEventListener('click', () => {
+    addTapListener(Dom.doNothingBtn, () => {
          Dom.lowFpsWarning.style.display = 'none';
          isWarningShown = false;
          runner.enabled = true;
@@ -1102,7 +1119,7 @@ function initializeLowFpsWarning(runner) {
          lowFpsCount = -10; 
     });
 
-    Dom.dontAskAgainBtn.addEventListener('click', () => {
+    addTapListener(Dom.dontAskAgainBtn, () => {
          localStorage.setItem('dontShowLowFpsWarning', 'true');
          Dom.lowFpsWarning.style.display = 'none';
          isWarningShown = false;
