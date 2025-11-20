@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 import * as Dom from './dom.js';
 import { initializeEngine } from './engine.js';
@@ -185,6 +186,10 @@ async function main() {
         
         setTimeout(() => {
             loadingOverlay.style.display = 'none';
+            // Start menu "smoke" animation
+            if(Dom.mainMenuContainer) {
+                Dom.mainMenuContainer.classList.add('smoke-animation');
+            }
             gameReady();
         }, 500);
 

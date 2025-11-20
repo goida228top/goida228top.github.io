@@ -1,3 +1,4 @@
+
 // Этот файл централизует все обращения к DOM дереву.
 
 export const container = document.getElementById('simulation-container');
@@ -12,6 +13,7 @@ export const bottomToolbar = document.getElementById('bottom-toolbar');
 
 // Main Menu
 export const mainMenuOverlay = document.getElementById('main-menu-overlay');
+export const mainMenuContainer = document.getElementById('main-menu-container'); // NEW
 export const startGameBtn = document.getElementById('start-game-btn');
 export const loadGameMenuBtn = document.getElementById('load-game-menu-btn');
 export const aboutGameBtn = document.getElementById('about-game-btn');
@@ -138,6 +140,7 @@ export const confirmModalCancelBtn = document.getElementById('confirm-modal-canc
 // --- Новые элементы панели настроек ---
 export const newSettingsPanel = document.getElementById('new-settings-panel');
 export const newSettingsCloseBtn = document.getElementById('new-settings-close-btn');
+export const exitGameBtn = document.getElementById('exit-game-btn'); // Кнопка выхода в меню
 
 // Physics Settings
 export const newGravitySlider = document.getElementById('new-gravity-slider');

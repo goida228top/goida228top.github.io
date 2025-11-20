@@ -1,3 +1,4 @@
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -102,6 +103,8 @@ const translations = {
         'master-volume-label': 'Общая громкость:',
         'category-interface': 'Интерфейс',
         'show-debug-label': 'Показывать FPS и коорд.:',
+        'exit-game-button': 'Выйти в меню',
+        'confirm-exit-game': 'Вы уверены, что хотите выйти в главное меню? Несохраненный прогресс будет потерян.',
     },
     en: {
         'app-title': 'Physics Sandbox',
@@ -206,6 +209,8 @@ const translations = {
         'master-volume-label': 'Master Volume:',
         'category-interface': 'Interface',
         'show-debug-label': 'Show FPS & Coords:',
+        'exit-game-button': 'Exit to Menu',
+        'confirm-exit-game': 'Are you sure you want to exit to the main menu? Unsaved progress will be lost.',
     },
     tr: {
         'app-title': 'Fizik Sandbox',
@@ -310,6 +315,8 @@ const translations = {
         'master-volume-label': 'Ana Ses Seviyesi:',
         'category-interface': 'Arayüz',
         'show-debug-label': 'FPS ve Koor. Göster:',
+        'exit-game-button': 'Menüye Dön',
+        'confirm-exit-game': 'Ana menüye dönmek istediğinizden emin misiniz? Kaydedilmemiş ilerleme kaybolacak.',
     }
 };
 

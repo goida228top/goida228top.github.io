@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 
 
@@ -11,68 +12,52 @@ import {
     setPreview, clearPreview 
 } from './selection.js';
 import { spawnWaterParticle } from './water.js';
-import { spawnSandParticle } from './sand.js'; // NEW: Импортируем спавнер песка
+import { spawnSandParticle } from './sand.js';
 import { showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel, showToast } from './ui.js';
 import { addExplosionEffect } from './engine.js';
-import { tntTypes } from './tnt_textures.js'; // Импортируем tntTypes из нового файла
-import { ImageLoader } from './image_loader.js'; // Импортируем ImageLoader
+import { tntTypes } from './tnt_textures.js';
+import { ImageLoader } from './image_loader.js';
 import { 
     PHYSICS_SCALE,
     TOOL_SETTINGS,
     WATER_VISUAL_RADIUS,
     WATER_PHYSICAL_RADIUS_FACTOR,
-    // WATER_INTERACTION_RADIUS_FACTOR, // Добавлен импорт, хотя используется только в water.js
-    SAND_VISUAL_RADIUS, // NEW: Визуальный радиус песка
-    SAND_PHYSICAL_RADIUS_FACTOR, // NEW: Физический радиус песка
+    SAND_VISUAL_RADIUS,
+    SAND_PHYSICAL_RADIUS_FACTOR,
 } from './game_config.js';
 import { t } from './lang.js';
 import { SoundManager } from './sound.js';
 
-// Состояния инструментов
 let mouseJoint = null;
-let ground = null; // Тело для привязки MouseJoint
-let draggedBody = null; // Для инструмента "Переместить"
+let ground = null;
+let draggedBody = null;
 
 let isDrawing = false;
 let startPoint = planck.Vec2(0, 0);
 let lastMousePos = planck.Vec2(0, 0);
 
-// Для полигонов
 let polygonVertices = [];
 let polygonMouseDownTime = 0;
-const POLYGON_HOLD_DURATION = 400; // мс для удержания ЛКМ
+const POLYGON_HOLD_DURATION = 400;
 
-// Для кисти
 let lastBrushPoint = null;
-const BRUSH_RADIUS = TOOL_SETTINGS.brush.radius; // Радиус кисти в пикселях
+const BRUSH_RADIUS = TOOL_SETTINGS.brush.radius;
 
 let waterSpawnInterval = null;
-let sandSpawnInterval = null; // NEW: Интервал для спавна песка
+let sandSpawnInterval = null;
 
-// Константы для спавна воды, дублируют значения из water.js для согласованности
 const WATER_PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
-const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE; // NEW: Физический радиус песка
+const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 
-// --- Объявляем функции взрыва заранее для корректной работы ---
 let createExplosion;
 let detonateTNT;
 
-// --- Логика взрывов ---
-
-/**
- * Безопасно детонирует один блок ТНТ.
- * @param {import('planck-js').World} world
- * @param {import('planock-js').Body} body
- */
+// --- Explosion Logic (Keeping existing logic) ---
 detonateTNT = function(world, body) {
-    // Проверяем, существует ли тело в мире, чтобы избежать ошибок при цепной реакции
-    if (!body || !body.getWorld()) {
-        return;
-    }
+    if (!body || !body.getWorld()) return;
     const userData = body.getUserData() || {};
-    const type = userData.tntType || 'small'; // По умолчанию - малый ТНТ
+    const type = userData.tntType || 'small';
     
-    // Получаем параметры ТНТ из TOOL_SETTINGS
     const tntConfig = TOOL_SETTINGS.tnt[type];
     const explosionPower = tntConfig.power; 
     const explosionRadius = tntConfig.explosionRadius;
@@ -84,18 +69,9 @@ detonateTNT = function(world, body) {
         console.warn("Попытка уничтожить уже уничтоженное тело.");
         return;
     }
-    // Создаем взрыв на месте ТНТ
     createExplosion(world, explosionCenter, explosionRadius, explosionPower, type);
 };
 
-/**
- * Создает визуальный и физический эффект взрыва.
- * @param {import('planck-js').World} world
- * @param {import('planock-js').Vec2} center - Центр взрыва в метрах.
- * @param {number} radius - Радиус взрыва в метрах.
- * @param {number} power - Сила взрыва.
- * @param {string} type - Тип ТНТ ('small', 'medium', 'large').
- */
 createExplosion = function(world, center, radius, power, type) {
     addExplosionEffect(center, radius, 400);
     SoundManager.playSound(`explosion_${type}`, { volume: 0.8 });
@@ -105,44 +81,37 @@ createExplosion = function(world, center, radius, power, type) {
         center.clone().add(planck.Vec2(radius, radius))
     );
     
-    // Используем Set, чтобы избежать повторной детонации одного и того же ТНТ
     const tntsToDetonate = new Set();
 
     world.queryAABB(aabb, (fixture) => {
         const body = fixture.getBody();
         const userData = body.getUserData() || {};
 
-        // Если это другой ТНТ, добавляем его в очередь на детонацию
         if (userData.label === 'tnt') {
             tntsToDetonate.add(body);
-            return true; // Продолжаем поиск
+            return true;
         }
 
-        if (!body.isDynamic()) {
-            return true; // Пропускаем статические объекты
-        }
+        if (!body.isDynamic()) return true;
 
         const bodyPos = body.getPosition();
         const direction = planck.Vec2.sub(bodyPos, center);
         const distance = direction.length();
 
-        if (distance < 0.1 || distance > radius) {
-            return true; // Слишком близко или слишком далеко
-        }
+        if (distance < 0.1 || distance > radius) return true;
 
         direction.normalize();
 
-        const falloff = 1 - (distance / radius); // Сила уменьшается с расстоянием
+        const falloff = 1 - (distance / radius);
         const impulseMagnitude = power * falloff; 
         
         const impulse = direction.mul(impulseMagnitude);
         body.applyLinearImpulse(impulse, bodyPos, true);
         body.setAwake(true);
 
-        return true; // Продолжаем поиск
+        return true;
     });
     
-    // Детонируем все найденные ТНТ с небольшой задержкой для эффекта каскада
     tntsToDetonate.forEach(bodyToDetonate => {
         setTimeout(() => detonateTNT(world, bodyToDetonate), 50 + Math.random() * 100);
     });
@@ -155,6 +124,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
     ground = world.createBody();
 
+    // --- Mouse Listeners ---
     Dom.container.addEventListener('mousedown', handleMouseDown);
     Dom.container.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -162,14 +132,25 @@ export async function initializeTools(engineData, cameraData, worldData) {
     Dom.container.addEventListener('dblclick', handleDoubleClick);
     Dom.container.addEventListener('mouseleave', stopAllActions);
 
-    function handleMouseDown(e) {
-        if (isPanning() || e.target !== render.canvas) return;
-        
-        // --- Обработка только левого клика (e.button === 0) ---
-        if (e.button !== 0) return;
+    // --- Touch Listeners (NEW) ---
+    Dom.container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+
+
+    // --- Unified Action Handlers (Used by both Mouse and Touch) ---
+
+    function startAction(pos, isTouch = false) {
+        // Если камера занята (например, мультитач зум), не начинаем действие инструмента
+        if (isPanning()) {
+            stopAllActions();
+            return;
+        }
 
         isDrawing = true;
-        startPoint = getMousePos(e); // в метрах
+        // Преобразуем pos в planck.Vec2, если это еще не он
+        startPoint = planck.Vec2(pos.x, pos.y); 
         lastMousePos = startPoint;
 
         switch (toolState.currentTool) {
@@ -188,7 +169,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
                             dampingRatio: 0.9,
                         };
                         mouseJoint = world.createJoint(planck.MouseJoint(jointDef));
-                    } else { // 'move' tool
+                    } else {
                         draggedBody = bodyToDrag;
                     }
                 }
@@ -252,14 +233,14 @@ export async function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleMouseMove(e) {
-        lastMousePos = getMousePos(e);
+    function moveAction(pos) {
+        lastMousePos = planck.Vec2(pos.x, pos.y);
 
         if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
             setPreview('polygon', polygonVertices, lastMousePos);
         }
 
-        if (isPanning() || !isDrawing) return;
+        if (!isDrawing) return;
 
         switch (toolState.currentTool) {
             case 'move':
@@ -296,11 +277,11 @@ export async function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
-    function handleMouseUp(e) {
-        if (e.button !== 0) return;
+    function endAction(pos) {
+        // Для тач-устройств pos может быть undefined при touchend, используем lastMousePos
+        const endPoint = pos ? planck.Vec2(pos.x, pos.y) : lastMousePos;
+
         if (!isDrawing && toolState.currentTool !== 'polygon') return;
-        
-        const endPoint = getMousePos(e);
 
         if (toolState.currentTool === 'polygon') {
             const duration = Date.now() - polygonMouseDownTime;
@@ -319,14 +300,18 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 setPreview('polygon', polygonVertices, clickPoint);
             }
 
-            if (duration > POLYGON_HOLD_DURATION) {
+            // Для завершения полигона на тач: долгое нажатие или замыкание
+            // На десктопе было удержание. На мобилках лучше 3+ точек и замыкание.
+            // Оставим логику времени для совместимости.
+            if (duration > POLYGON_HOLD_DURATION || (polygonVertices.length >= 3 && planck.Vec2.distance(clickPoint, polygonVertices[0]) < 0.5)) {
                 if (polygonVertices.length >= 3) {
                     createPolygon(world, polygonVertices);
                 }
                 polygonVertices = [];
                 clearPreview();
+                isDrawing = false;
             }
-            isDrawing = false;
+            // При полигоне isDrawing сбрасывается только при завершении фигуры
             return;
         }
         
@@ -395,6 +380,55 @@ export async function initializeTools(engineData, cameraData, worldData) {
         }
     }
 
+    // --- Event Handler Wrappers ---
+
+    function handleMouseDown(e) {
+        if (e.button !== 0) return; // Только левая кнопка
+        const pos = getMousePos(e);
+        startAction(pos, false);
+    }
+
+    function handleMouseMove(e) {
+        const pos = getMousePos(e);
+        moveAction(pos);
+    }
+
+    function handleMouseUp(e) {
+        if (e.button !== 0) return;
+        const pos = getMousePos(e);
+        endAction(pos);
+    }
+
+    // --- Touch Handlers Implementation ---
+
+    function handleTouchStart(e) {
+        // Обрабатываем только касание ОДНИМ пальцем.
+        // Если пальцев 2 и более - это зум/пан камеры, инструменты не должны работать.
+        if (e.touches.length > 1) {
+            stopAllActions(); // Если рисовали - прерываем
+            return;
+        }
+        e.preventDefault(); // Блокируем прокрутку страницы
+        const pos = getMousePos(e);
+        startAction(pos, true);
+    }
+
+    function handleTouchMove(e) {
+        if (e.touches.length > 1) return;
+        e.preventDefault();
+        const pos = getMousePos(e);
+        moveAction(pos);
+    }
+
+    function handleTouchEnd(e) {
+        // Здесь touches.length будет 0, если убрали последний палец.
+        // Проверяем changedTouches.
+        e.preventDefault();
+        endAction(null); // Используем lastMousePos внутри
+    }
+
+    // --- Other Handlers ---
+
     function handleContextMenu(e) {
         e.preventDefault();
         
@@ -460,6 +494,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
     }
 }
 
+// ... (Keep helper functions like getBodyAt, getDistanceJointAt, createBox, etc. exactly as they were) ...
 function getBodyAt(world, worldPoint, onlyDynamic = false) {
     let selectedBody = null;
     const aabb = new planck.AABB(
@@ -470,11 +505,11 @@ function getBodyAt(world, worldPoint, onlyDynamic = false) {
     world.queryAABB(aabb, (fixture) => {
         const body = fixture.getBody();
         if (onlyDynamic && !body.isDynamic()) {
-            return true; // continue searching
+            return true;
         }
         if (fixture.testPoint(worldPoint)) {
             selectedBody = body;
-            return false; // stop searching
+            return false;
         }
         return true;
     });
@@ -483,13 +518,12 @@ function getBodyAt(world, worldPoint, onlyDynamic = false) {
 
 function getDistanceJointAt(world, worldPoint) {
     let selectedJoint = null;
-    const clickRadius = 0.5; // в метрах
+    const clickRadius = 0.5;
 
     for (let joint = world.getJointList(); joint; joint = joint.getNext()) {
         const type = joint.getType();
         const userData = joint.getUserData() || {};
         
-        // Проверяем только DistanceJoint (для пружин/стержней) и WheelJoint (для фиксированных пружин)
         if (type !== 'distance-joint' && (type !== 'wheel-joint' || !userData.isFixed)) {
             continue;
         }
@@ -503,7 +537,7 @@ function getDistanceJointAt(world, worldPoint) {
         const len = planck.Vec2.distance(p1, p2);
 
         if (Math.abs(d - len) < clickRadius) {
-            if (userData.tool === 'rod') continue; // Стержни не выбираются
+            if (userData.tool === 'rod') continue;
             
             selectedJoint = joint;
             break;
@@ -668,7 +702,7 @@ function triangulate(vertices) {
     return triangles;
 }
 
-// --- REWRITTEN createPolygon ---
+
 function createPolygon(world, vertices) {
     if (vertices.length < 3) return;
     if (isSelfIntersecting(vertices)) {

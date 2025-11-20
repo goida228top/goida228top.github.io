@@ -4,8 +4,8 @@ import { t } from './lang.js';
 import { savePlayer_Data, loadPlayer_Data, showRewardedVideo, showFullscreenAdv } from './yandex.js';
 import { serializeWorld, deserializeWorld } from './world_serializer.js';
 import { PHYSICS_SCALE, TOOL_SETTINGS } from './game_config.js';
-import { deleteAllWater, setWaterColor, setMaxWaterParticles } from './water.js';
-import { deleteAllSand, setSandColor, setMaxSandParticles } from './sand.js';
+import { deleteAllWater, setWaterColor, setMaxWaterParticles, waterParticlesPool } from './water.js';
+import { deleteAllSand, setSandColor, setMaxSandParticles, sandParticlesPool } from './sand.js';
 import { 
     selectBody, deselectBody, getSelectedBody, deleteSelectedBody, 
     selectSpring, deselectSpring, getSelectedSpring, deleteSelectedSpring, 
@@ -25,6 +25,9 @@ export let playerData = {
     rewardProgress: {},
     unlockedSlots: [false, false, false, false, false]
 };
+
+// Флаг, отслеживающий, началась ли игра (пройдено ли главное меню)
+export let isGameStarted = false;
 
 const panelState = {
     isSettingsOpen: false,
@@ -98,6 +101,11 @@ export function initializeUI(engineData, cameraData, worldData) {
     applyTranslations();
     initializeFPSCounter(runner);
     
+    // Explicitly hide game UI on init to ensure clean menu look
+    Dom.toolbar.style.display = 'none';
+    Dom.bottomToolbar.style.display = 'none';
+    Dom.debugInfo.style.display = 'none';
+    
     // Запускаем таймер времени игры
     if (playtimeInterval) clearInterval(playtimeInterval);
     playtimeInterval = setInterval(() => {
@@ -170,6 +178,9 @@ export function initializeUI(engineData, cameraData, worldData) {
 
     // --- Centralized play/pause handler ---
     const handlePlayPause = () => {
+        // Блокируем паузу, если игра еще не началась (в главном меню)
+        if (!isGameStarted) return;
+
         if (runner.enabled) {
             runner.enabled = false;
             updatePlayPauseIcons(false);
@@ -199,10 +210,13 @@ export function initializeUI(engineData, cameraData, worldData) {
         if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
             return;
         }
+        // Блокируем пробел в меню
         if (e.code === 'Space') {
             e.preventDefault();
-            SoundManager.playSound('ui_click');
-            handlePlayPause();
+            if (isGameStarted) {
+                SoundManager.playSound('ui_click');
+                handlePlayPause();
+            }
         }
     });
 
@@ -368,8 +382,39 @@ function initializeNewSettingsPanel(engineData, cameraData) {
 
     // --- Interface Settings ---
     Dom.showDebugToggle.addEventListener('change', (e) => {
-        Dom.debugInfo.style.display = e.target.checked ? 'flex' : 'none';
+        if (isGameStarted) {
+            Dom.debugInfo.style.display = e.target.checked ? 'flex' : 'none';
+        }
     });
+
+    // --- Exit Game Button Logic ---
+    if (Dom.exitGameBtn) {
+        Dom.exitGameBtn.addEventListener('click', () => {
+            SoundManager.playSound('ui_click');
+            showConfirm(t('confirm-title'), t('confirm-exit-game'), () => {
+                // Explicitly close settings panel
+                Dom.newSettingsPanel.style.display = 'none';
+                panelState.isNewSettingsOpen = false;
+                
+                // Show main menu
+                Dom.mainMenuOverlay.style.display = 'flex';
+                if (Dom.mainMenuContainer) {
+                    Dom.mainMenuContainer.classList.remove('fade-out-menu');
+                    Dom.mainMenuContainer.classList.add('smoke-animation');
+                }
+
+                // Hide UI
+                Dom.toolbar.style.display = 'none';
+                Dom.bottomToolbar.style.display = 'none';
+                Dom.debugInfo.style.display = 'none';
+
+                // Stop game
+                engineData.runner.enabled = false;
+                isGameStarted = false;
+                updatePlayPauseIcons(false);
+            });
+        });
+    }
 }
 
 
@@ -741,11 +786,42 @@ function clearWorldCompletely(world) {
 }
 
 function startGame(engineData) {
-    Dom.mainMenuOverlay.style.display = 'none';
-    Dom.toolbar.style.display = 'flex';
-    Dom.bottomToolbar.style.display = 'flex';
-    engineData.runner.enabled = true;
-    updatePlayPauseIcons(true);
+    // 1. Анимация исчезновения меню
+    const menuContainer = document.getElementById('main-menu-container');
+    if (menuContainer) {
+        menuContainer.classList.remove('smoke-animation'); // remove entrance animation
+        menuContainer.classList.add('fade-out-menu');
+    }
+    
+    // 2. Анимация приближения игрового мира (эффект входа в мир)
+    const simContainer = document.getElementById('simulation-container');
+    if (simContainer) {
+        simContainer.classList.add('game-start-zoom');
+        setTimeout(() => {
+            simContainer.classList.remove('game-start-zoom');
+        }, 1000);
+    }
+
+    // 3. Через 500мс (время анимации) скрываем меню и показываем интерфейс игры
+    setTimeout(() => {
+        Dom.mainMenuOverlay.style.display = 'none';
+        
+        // Показываем панели интерфейса с анимацией появления
+        Dom.toolbar.style.display = 'flex';
+        Dom.toolbar.classList.add('ui-fade-in');
+        
+        Dom.bottomToolbar.style.display = 'flex';
+        Dom.bottomToolbar.classList.add('ui-fade-in');
+        
+        if (Dom.showDebugToggle.checked) {
+             Dom.debugInfo.style.display = 'flex';
+             Dom.debugInfo.classList.add('ui-fade-in');
+        }
+
+        engineData.runner.enabled = true;
+        isGameStarted = true; // Разблокируем управление и паузу
+        updatePlayPauseIcons(true);
+    }, 500);
 }
 
 function openSaveLoadPanel(mode, world, cameraData, engineData) {
@@ -766,16 +842,14 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
         imgContainer.className = 'save-button-image-container';
         const img = document.createElement('img');
         img.className = 'save-tier-image';
+        img.src = 'https://goida228top.github.io/textures/сохранение.png';
+
         if (!isUnlocked) {
-            img.src = 'https://goida228top.github.io/textures/сохранение.png';
             img.style.opacity = '0.5';
-        } else if (slotData) {
-            img.src = 'https://goida228top.github.io/textures/сохранение.png';
-        } else {
-             img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDEzSDEzVjE5SDExVjEzSDVWMTFIMTFWNUgxM1YxMUgxOVYxM1oiLz48L3N2Zz4=';
-             img.style.width = '50px';
-             img.style.height = '50px';
+        } else if (!slotData) {
+             img.style.opacity = '0.7';
         }
+        
         imgContainer.appendChild(img);
         slotEl.appendChild(imgContainer);
         const dateDiv = document.createElement('div');
@@ -813,7 +887,7 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
             if (mode === 'save') {
                 actionBtn.textContent = t('save-button');
                 actionBtn.onclick = () => {
-                    const { worldState } = serializeWorld(world, import('./water.js').waterParticlesPool || [], import('./sand.js').sandParticlesPool || []);
+                    const { worldState } = serializeWorld(world, waterParticlesPool, sandParticlesPool);
                     const saveObj = {
                         timestamp: Date.now(),
                         state: worldState,
@@ -821,7 +895,7 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
                     };
                     localStorage.setItem(slotKey, JSON.stringify(saveObj));
                     showToast(t('game-saved-message'), 'success');
-                    openSaveLoadPanel('save', world, cameraData, engineData);
+                    openSaveLoadPanel(mode, world, cameraData, engineData);
                 };
             } else {
                 actionBtn.textContent = t('load-button');
