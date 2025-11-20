@@ -71,7 +71,12 @@
             -ms-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
-            touch-action: none; /* Важно для отключения жестов браузера */
+            touch-action: none; /* Важно для отключения жестов браузера в игре */
+        }
+        
+        /* Разрешаем скролл и тач-действия в меню и попапах */
+        .popup, .settings-panel-content, .about-panel-content, .save-load-content, .reward-menu-content, .reward-buttons-container, .save-slots-container {
+            touch-action: pan-y; /* Разрешить вертикальный скролл */
         }
         
         /* Prevent context menu on images */
@@ -146,7 +151,7 @@
             background-color: var(--button-hover-bg);
         }
 
-        /* NEW: Main Menu Styles */
+        /* NEW: Main Menu Styles (DESKTOP DEFAULT) */
         #main-menu-overlay {
             position: fixed;
             top: 0;
@@ -158,11 +163,10 @@
             justify-content: center;
             align-items: center;
             z-index: 900;
-            /* transparent background for photo mode */
         }
         
         .main-menu-title {
-            font-size: 4em;
+            font-size: 4em; /* Крупный шрифт для ПК */
             color: white;
             text-shadow: 0 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(58, 123, 213, 0.8);
             margin-bottom: 40px;
@@ -199,7 +203,6 @@
             }
         }
 
-        /* Класс для анимации исчезновения меню */
         .fade-out-menu {
             animation: fadeOutUp 0.5s forwards cubic-bezier(0.4, 0.0, 0.2, 1);
             pointer-events: none;
@@ -216,7 +219,6 @@
             }
         }
         
-        /* Fade in for game UI */
         .ui-fade-in {
             animation: uiFadeIn 0.8s ease-out forwards;
         }
@@ -228,7 +230,7 @@
 
         .main-menu-btn {
             padding: 15px 30px;
-            font-size: 1.5em;
+            font-size: 1.5em; /* Крупный шрифт для ПК */
             background-color: var(--button-bg);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -257,17 +259,16 @@
             padding: 8px;
             background-color: var(--toolbar-bg);
             color: var(--text-color);
-            display: none; /* Hidden in menu */
+            display: none; 
             align-items: center;
             gap: 10px;
             height: var(--toolbar-height);
             box-sizing: border-box;
             z-index: 10;
-            overflow-x: auto; /* Горизонтальный скролл */
-            white-space: nowrap; /* Запрет переноса */
-            -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+            overflow-x: auto; 
+            white-space: nowrap; 
+            -webkit-overflow-scrolling: touch; 
         }
-        /* Скрываем скроллбар, но оставляем функционал */
         #toolbar::-webkit-scrollbar {
             height: 4px;
         }
@@ -286,10 +287,10 @@
             color: var(--text-color);
             border-radius: 5px;
             transition: background-color 0.2s, border-color 0.2s;
-            display: inline-flex; /* Inline-flex для скролла */
+            display: inline-flex; 
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Запрет сжатия */
+            flex-shrink: 0;
         }
         #toolbar button svg {
             width: 100%;
@@ -304,7 +305,7 @@
             border-color: var(--button-active-bg);
         }
         .tool-group {
-            display: inline-flex; /* Inline для скролла */
+            display: inline-flex; 
             gap: 2px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -333,7 +334,6 @@
             flex-shrink: 0;
         }
         
-        /* Стиль для отображения монет */
         .coins-display {
             height: 40px;
             padding: 0 10px;
@@ -376,7 +376,6 @@
             transform-origin: center center;
         }
         
-        /* Класс для анимации приближения мира при старте */
         .game-start-zoom {
             animation: zoomInWorld 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         }
@@ -386,7 +385,7 @@
             to { transform: scale(1.0); filter: blur(0); }
         }
         
-        #water-effect-container {
+        #water-effect-container, #sand-effect-container {
             position: absolute;
             top: 0;
             left: 0;
@@ -395,23 +394,9 @@
             pointer-events: none;
             z-index: 1;
         }
+        #sand-effect-container { z-index: 2; }
 
-        #water-effect-container.liquid-effect-enabled {
-            mix-blend-mode: multiply;
-            isolation: isolate;
-        }
-        
-        #sand-effect-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        #sand-effect-container.liquid-effect-enabled {
+        .liquid-effect-enabled {
             mix-blend-mode: multiply;
             isolation: isolate;
         }
@@ -422,15 +407,8 @@
             top: 0;
             left: 0;
         }
-        
-        #background-canvas {
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        #physics-canvas {
-            z-index: 3;
-        }
+        #background-canvas { z-index: 0; pointer-events: none; }
+        #physics-canvas { z-index: 3; }
         
         #debug-info {
             position: absolute;
@@ -441,7 +419,7 @@
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 12px;
-            display: none; /* Hidden in menu */
+            display: none; 
             gap: 15px;
             z-index: 5;
             pointer-events: none;
@@ -461,7 +439,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             min-width: 250px;
         }
-        .popup-slider-container, .popup-color-container, .popup-input-container {
+        .popup-slider-container, .popup-color-container, .popup-input-container, .popup-toggle-container {
              display: flex;
             justify-content: space-between;
             align-items: center;
@@ -471,12 +449,6 @@
          .popup-slider-container .label-value {
             display: flex;
             justify-content: space-between;
-            width: 100%;
-        }
-        .popup-toggle-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             width: 100%;
         }
         #object-properties-panel .delete-button,
@@ -500,30 +472,8 @@
             padding: 0;
             background: none;
         }
-        input[type="number"] {
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 5px;
-            width: 80px;
-            text-align: right;
-        }
-        input[type="number"]:focus {
-            outline: 1px solid var(--button-active-bg);
-            border-color: var(--button-active-bg);
-        }
-        input[type="text"] {
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 5px;
-            text-transform: lowercase;
-        }
-        input[type="text"]:focus {
-            outline: 1px solid var(--button-active-bg);
-            border-color: var(--button-active-bg);
+        input[type="range"] {
+            cursor: pointer;
         }
         
         #low-fps-warning {
@@ -533,9 +483,6 @@
             width: 90%;
             max-width: 350px;
             text-align: center;
-        }
-        #low-fps-warning h3 {
-            margin-top: 0;
         }
         .low-fps-actions {
             display: flex;
@@ -549,21 +496,7 @@
             cursor: pointer;
             background-color: var(--button-bg);
             color: var(--text-color);
-            transition: background-color 0.2s;
         }
-        .low-fps-actions button:hover {
-            background-color: var(--button-hover-bg);
-        }
-        #dont-ask-again-btn {
-            background: none;
-            border: none;
-            color: #aaa;
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 0.8em;
-            margin-top: 10px;
-        }
-
 
         #bottom-toolbar {
             position: absolute;
@@ -573,7 +506,7 @@
             padding: 8px;
             background-color: var(--toolbar-bg);
             border-radius: 8px;
-            display: none; /* Hidden in menu */
+            display: none; 
             gap: 10px;
             z-index: 10;
             border: 1px solid var(--border-color);
@@ -587,21 +520,12 @@
             background-color: var(--button-bg);
             color: var(--text-color);
             border-radius: 5px;
-            transition: background-color 0.2s, border-color 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        #bottom-toolbar button svg {
-            width: 100%;
-            height: 100%;
-            fill: currentColor;
-        }
-        #bottom-toolbar button:hover {
-            background-color: var(--button-hover-bg);
-        }
 
-        /* Styles for the new reward menu */
+        /* Reward Menu */
         #reward-menu-panel {
             position: fixed;
             top: 0;
@@ -690,20 +614,18 @@
             text-align: center;
             box-sizing: border-box;
         }
-
+        
         .reward-info-top {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 15px;
         }
-        
         .reward-button-subtitle {
             font-size: 1.1em;
             font-weight: 500;
             color: #ddd;
         }
-
         .reward-button-header {
             font-size: 3em;
             font-weight: bold;
@@ -711,21 +633,12 @@
             line-height: 1;
             margin-bottom: 5px;
         }
-
-        .reward-button-coins-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
         .reward-tier-image {
             width: 220px;
             height: 220px;
             object-fit: contain;
             vertical-align: middle;
         }
-
         .reward-progress-btn {
             width: 100%;
             padding: 12px 10px;
@@ -743,62 +656,12 @@
             align-items: center;
             gap: 5px;
         }
+        .reward-progress-btn.watching-ad { background-color: #5cb85c; color: white; border-color: #4cae4c; cursor: default; }
+        .reward-progress-btn.ad-failed { background-color: #d9534f; color: white; border-color: #d43f3a; }
+        .reward-progress-btn.claimed { background-color: #28a745; color: white; border-color: #218838; cursor: default; opacity: 0.8; }
+        .ad-icon { width: 20px; height: 20px; margin-left: 5px; }
 
-        .reward-progress-btn:hover:not(:disabled) {
-            background-color: #e07b00;
-            border-color: #e07b00;
-        }
-        
-        .reward-progress-btn.ready-to-claim {
-            background-color: #FF8C00;
-            color: #333;
-            border-color: #e07b00;
-        }
-        .reward-progress-btn.ready-to-claim:hover:not(:disabled) {
-            background-color: #e07b00;
-            border-color: #e07b00;
-        }
-        
-        .reward-progress-btn.watching-ad {
-            background-color: #5cb85c;
-            color: white;
-            border-color: #4cae4c;
-            cursor: default;
-        }
-
-        .reward-progress-btn.ad-failed {
-            background-color: #d9534f;
-            color: white;
-            border-color: #d43f3a;
-        }
-        .reward-progress-btn.ad-failed:hover:not(:disabled) {
-            background-color: #c9302c;
-            border-color: #ac2925;
-        }
-
-
-        .reward-progress-btn.claimed {
-            background-color: #28a745;
-            color: white;
-            border-color: #218838;
-            cursor: default;
-            opacity: 0.8;
-        }
-
-        .reward-progress-btn:disabled {
-            background-color: var(--button-bg);
-            color: #888;
-            border-color: #666;
-            cursor: not-allowed;
-        }
-
-        .ad-icon {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-            margin-left: 5px;
-        }
-
+        /* Save/Load Panel */
         #save-load-panel {
             position: fixed;
             top: 0;
@@ -830,7 +693,6 @@
             text-align: center;
             font-size: 2.8em;
         }
-
         #save-slots-container {
             display: flex;
             flex-wrap: nowrap;
@@ -840,7 +702,6 @@
             overflow-x: auto;
             padding-bottom: 10px;
         }
-
         .save-slot-button {
             flex-shrink: 0;
             width: 220px;
@@ -859,63 +720,23 @@
             text-align: center;
             box-sizing: border-box;
         }
-
         .save-button-header {
             font-size: 2em;
             font-weight: bold;
             color: var(--selection-color);
-            line-height: 1;
             margin-bottom: 10px;
-        }
-
-        .save-button-image-container {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 10px;
-            width: 100%;
         }
         .save-tier-image {
             width: 150px;
             height: 150px;
             object-fit: contain;
         }
-        .save-slot-date {
-            font-size: 0.9em;
-            color: #ccc;
-            margin-bottom: 5px;
-            min-height: 1.2em;
-        }
-
-        .save-slot-stats {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
-            margin: 5px 0 10px 0;
-            font-size: 0.9em;
-            width: 100%;
-            text-align: left;
-            color: #ddd;
-            flex-grow: 1;
-        }
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .stat-item .stat-icon {
-            font-weight: bold;
-        }
-
         .save-slot-actions {
             display: flex;
             flex-direction: column;
             gap: 8px;
             width: 100%;
         }
-
         .save-slot-actions button {
             width: 100%;
             padding: 12px 10px;
@@ -924,51 +745,13 @@
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s, color 0.2s, border-color 0.2s;
             box-sizing: border-box;
         }
+        .save-slot-actions .action-save-load { background-color: #28a745; color: white; border-color: #218838; }
+        .save-slot-actions .action-reset { background-color: #c0392b; color: white; border-color: #a03024; }
+        .save-slot-actions .action-unlock { background-color: #FF8C00; color: #333; border-color: #e07b00; }
 
-        .save-slot-actions .action-save-load {
-            background-color: #28a745;
-            color: white;
-            border-color: #218838;
-        }
-        .save-slot-actions .action-save-load:hover {
-            background-color: #218838;
-        }
-
-        .save-slot-actions .action-reset {
-            background-color: #c0392b;
-            color: white;
-            border-color: #a03024;
-        }
-        .save-slot-actions .action-reset:hover {
-            background-color: #a03024;
-        }
-
-        .save-slot-actions .action-unlock {
-            background-color: #FF8C00;
-            color: #333;
-            border-color: #e07b00;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-        .save-slot-actions .action-unlock:hover:not(:disabled) {
-            background-color: #e07b00;
-        }
-        .save-slot-actions .action-unlock:disabled {
-            background-color: var(--button-bg);
-            color: #888;
-            border-color: #666;
-            cursor: not-allowed;
-        }
-        .coin-icon-small {
-            width: 16px;
-            height: 16px;
-        }
-
+        /* About Panel */
         #about-panel {
             position: fixed;
             top: 0;
@@ -993,25 +776,8 @@
             border: 1px solid var(--border-color);
             line-height: 1.6;
         }
-        .about-panel-content h2 {
-            margin-top: 0;
-            font-size: 2em;
-            color: var(--sky-top);
-            text-align: center;
-        }
-        .about-panel-content h3 {
-            margin-top: 30px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-        .about-panel-content ul {
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-        .about-panel-content li {
-            margin-bottom: 10px;
-        }
 
+        /* Toast */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -1033,18 +799,13 @@
             transform: translateX(100%);
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        .toast.hide {
-            opacity: 0;
-            transform: translateX(100%);
-        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.hide { opacity: 0; transform: translateX(100%); }
         .toast.success { border-color: #28a745; }
         .toast.error { border-color: #dc3545; }
         .toast.info { border-color: #17a2b8; }
 
+        /* Confirm Modal */
         #confirm-modal-overlay {
             position: fixed;
             top: 0;
@@ -1068,23 +829,6 @@
             width: 450px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
         }
-        .confirm-modal-title {
-            font-size: 1.8em;
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: var(--text-color);
-        }
-        .confirm-modal-message {
-            font-size: 1.1em;
-            margin-bottom: 25px;
-            color: #ddd;
-            line-height: 1.5;
-        }
-        .confirm-modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
         .confirm-modal-buttons button {
             padding: 12px 25px;
             border: none;
@@ -1092,25 +836,11 @@
             cursor: pointer;
             font-size: 1em;
             font-weight: bold;
-            transition: background-color 0.2s;
         }
-        #confirm-modal-confirm-btn {
-            background-color: #dc3545;
-            color: white;
-            border: 1px solid #c0392b;
-        }
-        #confirm-modal-confirm-btn:hover {
-            background-color: #c0392b;
-        }
-        #confirm-modal-cancel-btn {
-            background-color: var(--button-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-        #confirm-modal-cancel-btn:hover {
-            background-color: var(--button-hover-bg);
-        }
+        #confirm-modal-confirm-btn { background-color: #dc3545; color: white; }
+        #confirm-modal-cancel-btn { background-color: var(--button-bg); color: var(--text-color); }
         
+        /* Settings Panel */
         #new-settings-panel {
             position: fixed;
             top: 0;
@@ -1134,20 +864,6 @@
             color: var(--text-color);
             border: 1px solid var(--border-color);
         }
-        .settings-panel-content h2 {
-            margin-top: 0;
-            font-size: 2em;
-            color: var(--text-color);
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .settings-category {
-            margin-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .settings-category:last-child {
-            border-bottom: none;
-        }
         .settings-category-header {
             display: flex;
             justify-content: space-between;
@@ -1157,13 +873,8 @@
             font-size: 1.3em;
             font-weight: 500;
         }
-        .category-arrow {
-            transition: transform 0.3s ease-out;
-            transform: rotate(-90deg);
-        }
-        .settings-category.expanded .category-arrow {
-            transform: rotate(0deg);
-        }
+        .category-arrow { transition: transform 0.3s ease-out; transform: rotate(-90deg); }
+        .settings-category.expanded .category-arrow { transform: rotate(0deg); }
         .settings-category-content {
             max-height: 0;
             overflow: hidden;
@@ -1172,12 +883,7 @@
             flex-direction: column;
             gap: 15px;
         }
-        .settings-category.expanded .settings-category-content {
-            max-height: 600px; 
-            padding: 10px 5px 20px 5px;
-        }
-
-        /* New Exit Button Style */
+        .settings-category.expanded .settings-category-content { max-height: 600px; padding: 10px 5px 20px 5px; }
         #exit-game-btn {
             background-color: #dc3545;
             color: white;
@@ -1189,15 +895,10 @@
             border-radius: 8px;
             cursor: pointer;
             margin-top: 30px;
-            transition: background-color 0.2s, transform 0.2s;
-        }
-        #exit-game-btn:hover {
-            background-color: #c0392b;
-            transform: scale(1.02);
         }
 
         /* =========================================
-           MOBILE STYLES (Adaptive Layout)
+           MOBILE STYLES (Strictly Adaptive)
            ========================================= */
         @media (max-width: 768px) {
             .main-menu-title {

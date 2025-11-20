@@ -49,6 +49,10 @@ let sandSpawnInterval = null;
 const WATER_PHYSICAL_RADIUS = (WATER_VISUAL_RADIUS * WATER_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) / PHYSICS_SCALE;
 
+// Переменная для отслеживания двойного тапа на мобильных
+let lastTouchEndTime = 0;
+let lastTouchEndPos = null;
+
 let createExplosion;
 let detonateTNT;
 
@@ -421,9 +425,19 @@ export async function initializeTools(engineData, cameraData, worldData) {
     }
 
     function handleTouchEnd(e) {
-        // Здесь touches.length будет 0, если убрали последний палец.
-        // Проверяем changedTouches.
         e.preventDefault();
+        const now = Date.now();
+        // Проверка на двойной тап для ТНТ
+        // Если прошло меньше 300мс с прошлого тапа и позиция не сильно изменилась
+        if (now - lastTouchEndTime < 300 && lastMousePos) {
+            // Используем lastMousePos, так как это последнее известное положение пальца
+            const body = getBodyAt(world, lastMousePos);
+            if (body && (body.getUserData()?.label === 'tnt')) {
+                 detonateTNT(world, body);
+            }
+        }
+        
+        lastTouchEndTime = now;
         endAction(null); // Используем lastMousePos внутри
     }
 

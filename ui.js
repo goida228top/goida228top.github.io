@@ -1,3 +1,4 @@
+
 import * as Dom from './dom.js';
 import { SoundManager } from './sound.js';
 import { t } from './lang.js';
@@ -98,15 +99,23 @@ function updateLiquidColors() {
 function addTapListener(element, callback) {
     if (!element) return;
     
-    element.addEventListener('click', (e) => {
-        callback(e);
-    });
+    // Используем onclick как основной метод, так как touch-action: manipulation/none 
+    // на элементах интерфейса должен позволять кликам работать без задержки 300мс на современных браузерах.
+    // Однако, если есть проблемы с event propagation, добавим touchend с осторожностью.
     
-    // Добавляем touchend для быстрой реакции на мобильных
-    // Но предотвращаем двойное срабатывание, если браузер посылает и touchend и click
-    element.addEventListener('touchend', (e) => {
-        if (e.cancelable) e.preventDefault(); // Предотвращаем генерацию мышиного клика
+    element.onclick = (e) => {
         callback(e);
+    };
+
+    // Дополнительная страховка для мобильных, если click съедается
+    // Но важно не вызвать callback дважды.
+    element.addEventListener('touchend', (e) => {
+        // Если это простое нажатие без скролла
+        // (браузеры обычно не шлют touchend если был скролл, а шлют touchcancel, но лучше перебдеть)
+        if (e.cancelable) {
+            e.preventDefault(); // Предотвращаем генерацию click, чтобы не было дубля
+            callback(e);
+        }
     });
 }
 
@@ -887,7 +896,8 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
                 unlockBtn.disabled = true;
                 unlockBtn.title = t('not-enough-resonances');
             }
-            unlockBtn.onclick = () => {
+            // Используем addTapListener для динамических кнопок
+            addTapListener(unlockBtn, () => {
                 if (playerData.coins >= price) {
                     playerData.coins -= price;
                     playerData.unlockedSlots[i] = true;
@@ -896,14 +906,15 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
                     openSaveLoadPanel(mode, world, cameraData, engineData);
                     SoundManager.playSound('ui_click');
                 }
-            };
+            });
             actionsDiv.appendChild(unlockBtn);
         } else {
             const actionBtn = document.createElement('button');
             actionBtn.className = 'action-save-load';
             if (mode === 'save') {
                 actionBtn.textContent = t('save-button');
-                actionBtn.onclick = () => {
+                // Используем addTapListener
+                addTapListener(actionBtn, () => {
                     const { worldState } = serializeWorld(world, waterParticlesPool, sandParticlesPool);
                     const saveObj = {
                         timestamp: Date.now(),
@@ -913,12 +924,13 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
                     localStorage.setItem(slotKey, JSON.stringify(saveObj));
                     showToast(t('game-saved-message'), 'success');
                     openSaveLoadPanel(mode, world, cameraData, engineData);
-                };
+                });
             } else {
                 actionBtn.textContent = t('load-button');
                 actionBtn.disabled = !slotData;
                 if (!slotData) actionBtn.style.opacity = 0.5;
-                actionBtn.onclick = () => {
+                // Используем addTapListener
+                addTapListener(actionBtn, () => {
                     if (slotData) {
                         deserializeWorld(world, slotData.state);
                         if (slotData.camera) {
@@ -933,20 +945,21 @@ function openSaveLoadPanel(mode, world, cameraData, engineData) {
                         engineData.runner.enabled = true;
                         updatePlayPauseIcons(true);
                     }
-                };
+                });
             }
             actionsDiv.appendChild(actionBtn);
             if (slotData) {
                  const resetBtn = document.createElement('button');
                  resetBtn.className = 'action-reset';
                  resetBtn.textContent = t('delete-button');
-                 resetBtn.onclick = () => {
+                 // Используем addTapListener
+                 addTapListener(resetBtn, () => {
                      showConfirm(t('confirm-title'), t('confirm-delete-save-message'), () => {
                          localStorage.removeItem(slotKey);
                          showToast(t('slot-cleared-message'), 'info');
                          openSaveLoadPanel(mode, world, cameraData, engineData);
                      });
-                 };
+                 });
                  actionsDiv.appendChild(resetBtn);
             }
         }
@@ -995,7 +1008,8 @@ function updateRewardButtonUI(button, engineData) {
     if (currentProgress >= adsRequired) {
         actionBtn.classList.add('ready-to-claim');
         actionBtn.textContent = t('claim-reward');
-        actionBtn.onclick = (e) => {
+        // Используем addTapListener вместо onclick
+        addTapListener(actionBtn, (e) => {
             e.stopPropagation();
             playerData.coins += rewardAmount;
             playerData.rewardProgress[rewardAmount] = 0;
@@ -1004,14 +1018,15 @@ function updateRewardButtonUI(button, engineData) {
             SoundManager.playSound('reward');
             showToast(t('reward-claimed'), 'success');
             updateRewardButtonUI(button, engineData);
-        };
+        });
     } else {
         actionBtn.textContent = t('watch-ad-button', { progress: `${currentProgress}/${adsRequired}` });
         const icon = document.createElement('img');
         icon.className = 'ad-icon';
         icon.src = 'https://goida228top.github.io/textures/реклама.png';
         actionBtn.appendChild(icon);
-        actionBtn.onclick = (e) => {
+        // Используем addTapListener вместо onclick
+        addTapListener(actionBtn, (e) => {
             e.stopPropagation();
             actionBtn.disabled = true;
             actionBtn.classList.add('watching-ad');
@@ -1026,7 +1041,7 @@ function updateRewardButtonUI(button, engineData) {
                 actionBtn.classList.add('ad-failed');
                 actionBtn.textContent = t('ad-failed-retry');
             });
-        };
+        });
     }
     button.appendChild(actionBtn);
 }
@@ -1058,15 +1073,26 @@ function showConfirm(title, message, onConfirm) {
     Dom.confirmModalTitle.textContent = title;
     Dom.confirmModalMessage.textContent = message;
     Dom.confirmModalOverlay.style.display = 'flex';
-    if (currentConfirmHandler) Dom.confirmModalConfirmBtn.removeEventListener('click', currentConfirmHandler);
-    if (currentCancelHandler) Dom.confirmModalCancelBtn.removeEventListener('click', currentCancelHandler);
-    currentConfirmHandler = () => {
+    
+    // Удаляем старые слушатели
+    if (currentConfirmHandler) {
+        Dom.confirmModalConfirmBtn.onclick = null;
+        Dom.confirmModalConfirmBtn.removeEventListener('touchend', currentConfirmHandler); // на всякий случай
+    }
+    if (currentCancelHandler) {
+        Dom.confirmModalCancelBtn.onclick = null;
+        Dom.confirmModalCancelBtn.removeEventListener('touchend', currentCancelHandler);
+    }
+    
+    // Используем addTapListener для новых
+    addTapListener(Dom.confirmModalConfirmBtn, () => {
         Dom.confirmModalOverlay.style.display = 'none';
         onConfirm();
-    };
-    currentCancelHandler = () => Dom.confirmModalOverlay.style.display = 'none';
-    Dom.confirmModalConfirmBtn.addEventListener('click', currentConfirmHandler);
-    Dom.confirmModalCancelBtn.addEventListener('click', currentCancelHandler);
+    });
+    
+    addTapListener(Dom.confirmModalCancelBtn, () => {
+        Dom.confirmModalOverlay.style.display = 'none';
+    });
 }
 
 function initializeLowFpsWarning(runner) {
