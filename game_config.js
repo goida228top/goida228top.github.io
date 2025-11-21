@@ -1,3 +1,4 @@
+
 // Этот файл содержит все глобальные настройки игры и константы.
 
 // --- Глобальные физические настройки ---
@@ -19,8 +20,8 @@ export const WORLD_BOTTOM_Y = GROUND_Y + GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIG
 // --- Настройки камеры ---
 export const CAMERA_MIN_SCALE = 0.1; // Минимальный зум
 export const CAMERA_MAX_SCALE = 7.0; // Максимальный зум
-export const CAMERA_INITIAL_SCALE = 0.6; // Начальный зум (-40%)
-export const CAMERA_PAN_START_OFFSET_Y = 900; // Начальное смещение Y для камеры
+export const CAMERA_INITIAL_SCALE = 1.43; // Начальный зум (~70% по индикатору)
+export const CAMERA_PAN_START_OFFSET_Y = 1000; // Начальное смещение Y для камеры (20 метров * 50 = 1000px)
 
 // --- Настройки инструментов ---
 export const TOOL_SETTINGS = {
