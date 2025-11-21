@@ -34,11 +34,34 @@ export function initUIData(data) {
     }
 }
 
+// Безопасная очистка мира, которая не убивает пул воды/песка
+function clearWorldCompletely(world) {
+    // Собираем тела для удаления
+    const bodiesToDestroy = [];
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData() || {};
+        // Не удаляем границы, воду и песок (их просто деактивируем)
+        if (userData.label !== 'boundary' && userData.label !== 'water' && userData.label !== 'sand') {
+            bodiesToDestroy.push(body);
+        }
+    }
+    
+    // Удаляем обычные объекты
+    bodiesToDestroy.forEach(body => world.destroyBody(body));
+    
+    // Деактивируем (прячем) воду и песок вместо удаления
+    deleteAllWater();
+    deleteAllSand();
+    
+    deselectBody();
+    deselectSpring();
+}
+
 export function initializeUI(engineData, cameraData, worldData) {
     const { world, runner } = engineData;
     
-    applyTranslations();
-    initializeFPSCounter(runner);
+    initializeObjectPropertiesPanel(world);
+    initializeSpringPropertiesPanel(world);
     
     // Explicitly hide game UI on init to ensure clean menu look
     Dom.toolbar.style.display = 'none';
@@ -111,12 +134,6 @@ export function initializeUI(engineData, cameraData, worldData) {
         addTapListener(button, () => {
             SoundManager.playSound('ui_click', { pitch: 1.1 });
             const newTool = button.id.replace('-btn', '');
-            // We need to import switchTool from tools.js or selection.js? 
-            // Actually tools.js imports selection.js, UI just triggers it. 
-            // But since switchTool is inside tools.js closure, we need to access it.
-            // For now, tools.js initializes listeners. But we need to switch active state.
-            // Let's do it via custom event or export.
-            // Better: tools.js exports switchTool
             import('./tools.js').then(module => {
                 module.switchTool(newTool);
             });
@@ -146,7 +163,7 @@ export function initializeUI(engineData, cameraData, worldData) {
     addTapListener(Dom.clearAllButton, () => {
         SoundManager.playSound('ui_click');
         showConfirm(t('confirm-title'), t('confirm-clear-all'), () => {
-            clearWorldCompletely(world);
+            clearWorldCompletely(world); // Теперь эта функция определена выше
             SoundManager.playSound('explosion_medium', { volume: 0.5 });
             showToast(t('world-cleared-message'), 'info');
         });
@@ -168,233 +185,108 @@ export function initializeUI(engineData, cameraData, worldData) {
 
     // --- New Settings Panel Logic ---
     initializeNewSettingsPanel(engineData, cameraData, setGameStarted);
-
-    initializeObjectPropertiesPanel(world);
-    initializeSpringPropertiesPanel(world);
-    initializeLowFpsWarning(runner);
-    initializeMotorControls();
     
+    // --- Low FPS Warning Logic ---
+    Dom.deleteAllWaterBtn.onclick = () => {
+        deleteAllWater();
+        Dom.lowFpsWarning.style.display = 'none';
+    };
+    Dom.pauseFromWarningBtn.onclick = () => {
+        runner.enabled = false;
+        updatePlayPauseIcons(false);
+        Dom.lowFpsWarning.style.display = 'none';
+    };
+    Dom.doNothingBtn.onclick = () => Dom.lowFpsWarning.style.display = 'none';
+    Dom.dontAskAgainBtn.onclick = () => {
+        localStorage.setItem('suppressLowFpsWarning', 'true');
+        Dom.lowFpsWarning.style.display = 'none';
+    };
+
+    // Reward Menu Logic
     addTapListener(Dom.coinsDisplay, () => {
         SoundManager.playSound('ui_click');
-        togglePanel(Dom.rewardMenuPanel, rewardState, 'isOpen');
         updateRewardButtonUI(Dom.reward10Btn, engineData);
         updateRewardButtonUI(Dom.reward50Btn, engineData);
         updateRewardButtonUI(Dom.reward100Btn, engineData);
-    });
-
-    addTapListener(Dom.rewardMenuCloseBtn, () => {
-        SoundManager.playSound('ui_click');
         togglePanel(Dom.rewardMenuPanel, rewardState, 'isOpen');
     });
-
-    updateRewardButtonUI(Dom.reward10Btn, engineData);
-    updateRewardButtonUI(Dom.reward50Btn, engineData);
-    updateRewardButtonUI(Dom.reward100Btn, engineData);
-
-
-    document.addEventListener('mousedown', (e) => {
-        if (propsState.isPropertiesOpen && !Dom.objectPropertiesPanel.contains(e.target)) {
-            hideObjectPropertiesPanel();
-        }
-        if (propsState.isSpringPropertiesOpen && !Dom.springPropertiesPanel.contains(e.target)) {
-            hideSpringPropertiesPanel();
-        }
-        if (settingsState.isOpen && !Dom.newSettingsPanel.contains(e.target) && !Dom.settingsButton.contains(e.target)) {
-            togglePanel(Dom.newSettingsPanel, settingsState, 'isOpen');
-        }
-        if (saveLoadState.isOpen && !Dom.saveLoadPanel.contains(e.target) && !Dom.saveButton.contains(e.target) && !Dom.loadButton.contains(e.target)) {
-             closeSaveLoadPanel();
-        }
-        if (rewardState.isOpen && !Dom.rewardMenuPanel.contains(e.target) && !Dom.coinsDisplay.contains(e.target) && !Dom.rewardMenuCloseBtn.contains(e.target)) { 
-             togglePanel(Dom.rewardMenuPanel, rewardState, 'isOpen');
-        }
-        if (aboutState.isOpen && !Dom.aboutPanel.contains(e.target) && !Dom.aboutGameBtn.contains(e.target) && !Dom.aboutPanelCloseBtn.contains(e.target)) {
-            togglePanel(Dom.aboutPanel, aboutState, 'isOpen');
-        }
-    }, true);
-
-    let wasRunningBeforeHidden = false;
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (runner.enabled) {
-                wasRunningBeforeHidden = true;
-                runner.enabled = false;
-                updatePlayPauseIcons(false);
-            }
-        } else {
-            if (wasRunningBeforeHidden) {
-                runner.enabled = true;
-                updatePlayPauseIcons(true);
-            }
-            wasRunningBeforeHidden = false;
-        }
-    });
-
-    updatePlayPauseIcons(runner.enabled);
-    updateCoinsDisplay();
-}
-
-
-function initializeMotorControls() {
-    document.addEventListener('keydown', (e) => {
-        if (keyState.hasOwnProperty(e.code)) {
-            keyState[e.code] = true;
-        }
-    });
-    document.addEventListener('keyup', (e) => {
-        if (keyState.hasOwnProperty(e.code)) {
-            keyState[e.code] = false;
-        }
+    
+    addTapListener(Dom.rewardMenuCloseBtn, () => {
+         SoundManager.playSound('ui_click');
+         togglePanel(Dom.rewardMenuPanel, rewardState, 'isOpen');
     });
 }
 
-function initializeFPSCounter(runner) {
-    let lastTime = performance.now();
-    let frameCount = 0;
-    function update() {
-        frameCount++;
-        const now = performance.now();
-        const delta = now - lastTime;
-        if (delta >= 1000) {
-            const fps = Math.round((frameCount * 1000) / delta);
-            Dom.fpsIndicator.textContent = `FPS: ${fps}`;
-            frameCount = 0;
-            lastTime = now;
-        }
-        requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
-}
+export function startGame(engineData) {
+    if (isGameStarted) return;
+    
+    // Animation for UI entrance
+    Dom.mainMenuContainer.classList.remove('smoke-animation');
+    Dom.mainMenuContainer.classList.add('fade-out-menu');
+    
+    setTimeout(() => {
+        Dom.mainMenuOverlay.style.display = 'none';
+        Dom.toolbar.style.display = 'flex';
+        Dom.toolbar.classList.add('ui-fade-in');
+        Dom.bottomToolbar.style.display = 'flex';
+        Dom.bottomToolbar.classList.add('ui-fade-in');
+        if (Dom.showDebugToggle.checked) Dom.debugInfo.style.display = 'flex';
+        Dom.container.classList.add('game-start-zoom');
+        
+        setTimeout(() => {
+             Dom.container.classList.remove('game-start-zoom');
+        }, 800);
 
-
-function applyTranslations() {
-    document.querySelectorAll('[data-translate-title]').forEach(el => {
-        const key = el.getAttribute('data-translate-title');
-        el.title = t(key);
-    });
-    document.querySelectorAll('[data-translate-text]').forEach(el => {
-        const key = el.getAttribute('data-translate-text');
-        el.textContent = t(key);
-    });
+        engineData.runner.enabled = true;
+        setGameStarted(true);
+        updatePlayPauseIcons(true);
+        
+        // Show welcome toast or tip?
+        // showToast("Welcome to Physics Sandbox!", "info");
+    }, 400);
 }
 
 export function updatePlayPauseIcons(isPlaying) {
     if (isPlaying) {
         Dom.playIcon.style.display = 'none';
         Dom.pauseIcon.style.display = 'block';
-        Dom.playPauseButton.title = t('pause-title');
     } else {
         Dom.playIcon.style.display = 'block';
         Dom.pauseIcon.style.display = 'none';
-        Dom.playPauseButton.title = t('play-title');
     }
 }
 
-function clearWorldCompletely(world) {
-    const bodiesToDestroy = [];
-    for (let body = world.getBodyList(); body; body = body.getNext()) {
-        const userData = body.getUserData() || {};
-        if (userData.label !== 'boundary') bodiesToDestroy.push(body);
-    }
-    bodiesToDestroy.forEach(body => world.destroyBody(body));
-    deleteAllWater();
-    deleteAllSand();
+function applyTranslations() {
+    document.querySelectorAll('[data-translate-text]').forEach(el => {
+        const key = el.getAttribute('data-translate-text');
+        el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-translate-title]').forEach(el => {
+        const key = el.getAttribute('data-translate-title');
+        el.title = t(key);
+    });
 }
 
-export function startGame(engineData) {
-    // 1. Анимация исчезновения меню
-    const menuContainer = document.getElementById('main-menu-container');
-    if (menuContainer) {
-        menuContainer.classList.remove('smoke-animation'); // remove entrance animation
-        menuContainer.classList.add('fade-out-menu');
-    }
-    
-    // 2. Анимация приближения игрового мира (эффект входа в мир)
-    const simContainer = document.getElementById('simulation-container');
-    if (simContainer) {
-        simContainer.classList.add('game-start-zoom');
-        setTimeout(() => {
-            simContainer.classList.remove('game-start-zoom');
-        }, 1000);
-    }
+function initializeFPSCounter(runner) {
+    let frameCount = 0;
+    let lastTime = performance.now();
 
-    // 3. Через 500мс (время анимации) скрываем меню и показываем интерфейс игры
-    setTimeout(() => {
-        Dom.mainMenuOverlay.style.display = 'none';
-        
-        // Показываем панели интерфейса с анимацией появления
-        Dom.toolbar.style.display = 'flex';
-        Dom.toolbar.classList.add('ui-fade-in');
-        
-        Dom.bottomToolbar.style.display = 'flex';
-        Dom.bottomToolbar.classList.add('ui-fade-in');
-        
-        if (Dom.showDebugToggle.checked) {
-             Dom.debugInfo.style.display = 'flex';
-             Dom.debugInfo.classList.add('ui-fade-in');
+    function updateFPS() {
+        const now = performance.now();
+        frameCount++;
+        if (now - lastTime >= 1000) {
+            const fps = Math.round((frameCount * 1000) / (now - lastTime));
+            Dom.fpsIndicator.textContent = `FPS: ${fps}`;
+            frameCount = 0;
+            lastTime = now;
+            
+            // Check for Low FPS
+            // const waterCount = waterParticlesPool.filter(p => p.isActive()).length;
+            // if (fps < LOW_FPS_THRESHOLD && waterCount > 100 && !localStorage.getItem('suppressLowFpsWarning')) {
+                 // Check if warning is already shown?
+            // }
         }
-
-        engineData.runner.enabled = true;
-        setGameStarted(true);
-        updatePlayPauseIcons(true);
-    }, 500);
-}
-
-function initializeLowFpsWarning(runner) {
-    let lowFpsCount = 0;
-    let isWarningShown = false;
-    let dontAskAgain = localStorage.getItem('dontShowLowFpsWarning') === 'true';
-
-    if(dontAskAgain) return;
-
-    const fpsChecker = () => {
-        if (!runner.enabled || isWarningShown || document.hidden) return;
-        
-        const currentFps = parseInt(Dom.fpsIndicator.textContent.replace('FPS: ', ''), 10);
-
-        if (currentFps < 15 && currentFps > 0) lowFpsCount++;
-        else lowFpsCount = 0;
-
-        if (lowFpsCount >= 5) {
-            const waterCount = waterParticlesPool.filter(p => p.isActive()).length;
-            if (waterCount > 100) {
-                isWarningShown = true;
-                Dom.lowFpsWarning.style.display = 'block';
-                runner.enabled = false;
-            }
-            lowFpsCount = 0;
-        }
-    };
-
-    setInterval(fpsChecker, 1000);
-
-    addTapListener(Dom.deleteAllWaterBtn, () => {
-        deleteAllWater();
-        Dom.lowFpsWarning.style.display = 'none';
-        isWarningShown = false;
-        runner.enabled = true;
-        updatePlayPauseIcons(true);
-    });
-
-    addTapListener(Dom.pauseFromWarningBtn, () => {
-         Dom.lowFpsWarning.style.display = 'none';
-         isWarningShown = false;
-         updatePlayPauseIcons(false);
-    });
-
-    addTapListener(Dom.doNothingBtn, () => {
-         Dom.lowFpsWarning.style.display = 'none';
-         isWarningShown = false;
-         runner.enabled = true;
-         updatePlayPauseIcons(true);
-         lowFpsCount = -10; 
-    });
-
-    addTapListener(Dom.dontAskAgainBtn, () => {
-         localStorage.setItem('dontShowLowFpsWarning', 'true');
-         Dom.lowFpsWarning.style.display = 'none';
-         isWarningShown = false;
-         runner.enabled = true;
-         updatePlayPauseIcons(true);
-    });
+        requestAnimationFrame(updateFPS);
+    }
+    updateFPS();
 }

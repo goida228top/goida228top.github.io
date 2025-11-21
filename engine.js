@@ -19,6 +19,8 @@ let frameCounter = 0; // Для троттлинга
 
 // Новая функция для применения сил/импульсов от моторов
 function applyMotorForces(world) {
+    if (isPaused) return; // Оптимизация: не считать моторы на паузе
+    
     let moveDirection = 0;
     if (keyState.ArrowRight && !keyState.ArrowLeft) {
         moveDirection = 1;
