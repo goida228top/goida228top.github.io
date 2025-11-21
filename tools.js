@@ -137,10 +137,11 @@ export async function initializeTools(engineData, cameraData, worldData) {
     Dom.container.addEventListener('mouseleave', stopAllActions);
 
     // --- Touch Listeners (NEW) ---
+    // Используем Dom.container вместо window, чтобы не перехватывать касания на UI
     Dom.container.addEventListener('touchstart', handleTouchStart, { passive: false });
     Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
-    window.addEventListener('touchcancel', handleTouchEnd);
+    Dom.container.addEventListener('touchend', handleTouchEnd);
+    Dom.container.addEventListener('touchcancel', handleTouchEnd);
 
 
     // --- Unified Action Handlers (Used by both Mouse and Touch) ---
@@ -305,8 +306,6 @@ export async function initializeTools(engineData, cameraData, worldData) {
             }
 
             // Для завершения полигона на тач: долгое нажатие или замыкание
-            // На десктопе было удержание. На мобилках лучше 3+ точек и замыкание.
-            // Оставим логику времени для совместимости.
             if (duration > POLYGON_HOLD_DURATION || (polygonVertices.length >= 3 && planck.Vec2.distance(clickPoint, polygonVertices[0]) < 0.5)) {
                 if (polygonVertices.length >= 3) {
                     createPolygon(world, polygonVertices);

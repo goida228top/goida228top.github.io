@@ -56,10 +56,11 @@ export function initializeCamera(render) {
     window.addEventListener('mouseup', handleMouseUp);
     
     // --- Тач (Сенсор) ---
+    // Используем Dom.container вместо window, чтобы не перехватывать касания на UI
     Dom.container.addEventListener('touchstart', handleTouchStart, { passive: false });
     Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
-    window.addEventListener('touchcancel', handleTouchEnd);
+    Dom.container.addEventListener('touchend', handleTouchEnd);
+    Dom.container.addEventListener('touchcancel', handleTouchEnd);
 
     function applyLiquidFilters() {
         if (Dom.newLiquidEffectToggle && Dom.newLiquidEffectToggle.checked) {

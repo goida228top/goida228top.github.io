@@ -99,24 +99,20 @@ function updateLiquidColors() {
 function addTapListener(element, callback) {
     if (!element) return;
     
-    // Используем onclick как основной метод, так как touch-action: manipulation/none 
-    // на элементах интерфейса должен позволять кликам работать без задержки 300мс на современных браузерах.
-    // Однако, если есть проблемы с event propagation, добавим touchend с осторожностью.
-    
+    // Используем onclick как основной метод для ПК и надежности
     element.onclick = (e) => {
         callback(e);
     };
 
-    // Дополнительная страховка для мобильных, если click съедается
-    // Но важно не вызвать callback дважды.
+    // Дополнительная страховка для мобильных
     element.addEventListener('touchend', (e) => {
-        // Если это простое нажатие без скролла
-        // (браузеры обычно не шлют touchend если был скролл, а шлют touchcancel, но лучше перебдеть)
+        // Если событие можно отменить (значит, это не скролл и т.д.)
         if (e.cancelable) {
             e.preventDefault(); // Предотвращаем генерацию click, чтобы не было дубля
+            e.stopPropagation(); // ВАЖНО: Останавливаем всплытие, чтобы игра не перехватила событие
             callback(e);
         }
-    });
+    }, { passive: false }); // ВАЖНО: passive: false для работы preventDefault
 }
 
 
