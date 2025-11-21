@@ -1,4 +1,5 @@
 
+import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
     PHYSICS_SCALE, 
@@ -251,8 +252,8 @@ export function initializeCamera(render) {
             return { x: worldX, y: worldY }; // Простой объект, не planck.Vec2, чтобы не зависеть от библиотеки здесь
         }
         
-        // Возвращаем объект, совместимый с planck.Vec2 (имеет x и y)
-        return { x: worldX / PHYSICS_SCALE, y: worldY / PHYSICS_SCALE, clone: function() { return {x: this.x, y: this.y} } };
+        // ИСПРАВЛЕНО: Возвращаем настоящий экземпляр planck.Vec2, у которого есть методы clone() и sub()
+        return planck.Vec2(worldX / PHYSICS_SCALE, worldY / PHYSICS_SCALE);
     }
 
     return {

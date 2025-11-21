@@ -17,11 +17,22 @@ export const STONE_HEIGHT = DIRT_HEIGHT * 2;
 export const WORLD_WIDTH = WORLD_RIGHT_X - WORLD_LEFT_X; // Ширина мира в пикселях
 export const WORLD_BOTTOM_Y = GROUND_Y + GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT; // Нижняя граница мира в пикселях
 
+// --- Определение устройства ---
+// Простая проверка userAgent и ширины экрана
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
 // --- Настройки камеры ---
 export const CAMERA_MIN_SCALE = 0.1; // Минимальный зум
 export const CAMERA_MAX_SCALE = 7.0; // Максимальный зум
-export const CAMERA_INITIAL_SCALE = 1.43; // Начальный зум (~70% по индикатору)
-export const CAMERA_PAN_START_OFFSET_Y = 1000; // Начальное смещение Y для камеры (20 метров * 50 = 1000px)
+
+// Начальный зум:
+// Для мобильных: 1.43 (~70% по индикатору)
+// Для ПК: 1.0 (100% по индикатору)
+export const CAMERA_INITIAL_SCALE = isMobile ? 1.43 : 1.0;
+
+// Начальное смещение Y для камеры:
+// 20 метров * 50 = 1000px для всех устройств
+export const CAMERA_PAN_START_OFFSET_Y = 1000;
 
 // --- Настройки инструментов ---
 export const TOOL_SETTINGS = {
