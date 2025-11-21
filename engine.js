@@ -17,6 +17,10 @@ let beforeRenderCallback = () => {};
 let lastCameraState = { x: null, y: null, scale: null, width: null, height: null };
 let frameCounter = 0; // Для троттлинга
 
+// Для честного FPS
+let fpsFrameCount = 0;
+let fpsLastTime = 0;
+
 // Новая функция для применения сил/импульсов от моторов
 function applyMotorForces(world) {
     if (isPaused) return; // Оптимизация: не считать моторы на паузе
@@ -156,6 +160,17 @@ export function initializeEngine() {
         lastTime = time;
         frameCounter++;
 
+        // --- Честный FPS (Real FPS) ---
+        fpsFrameCount++;
+        if (time - fpsLastTime >= 500) { // Обновляем текст каждые 500мс
+            const fps = Math.round((fpsFrameCount * 1000) / (time - fpsLastTime));
+            if (Dom.fpsIndicator) {
+                Dom.fpsIndicator.textContent = `FPS: ${fps}`;
+            }
+            fpsFrameCount = 0;
+            fpsLastTime = time;
+        }
+
         // --- Смарт-Рендеринг: Проверка на необходимость отрисовки ---
         // Если пауза + камера не двигалась + нет ввода = пропускаем кадр
         let cameraMoved = false;
@@ -175,6 +190,8 @@ export function initializeEngine() {
         
         // Если игра на паузе, камера стоит и игрок ничего не делает -> полностью пропускаем отрисовку
         if (isPaused && !cameraMoved && !userInteracting) {
+            // Даже если мы пропускаем рендер, нужно обновлять время, чтобы при снятии с паузы не было скачка
+            accumulator = 0; 
             return;
         }
 
@@ -205,6 +222,15 @@ export function initializeEngine() {
 
         if (!isPaused) {
             accumulator += deltaTime;
+            
+            // --- Защита от Спирали Смерти (Spiral of Death) ---
+            // Если accumulator слишком большой (лагает физика), мы не пытаемся
+            // просчитать все пропущенные кадры, а ограничиваем их.
+            // Это замедлит время игры (слоу-мо), но спасет от 0 FPS.
+            if (accumulator > 0.1) {
+                accumulator = 0.1; // Ограничиваем накопленное время (максимум 6 шагов)
+            }
+
             while (accumulator >= timeStep) {
                 // Обновляем физику воды
                 if (hasActiveWater) {

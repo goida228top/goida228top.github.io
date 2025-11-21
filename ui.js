@@ -266,27 +266,3 @@ function applyTranslations() {
         el.title = t(key);
     });
 }
-
-function initializeFPSCounter(runner) {
-    let frameCount = 0;
-    let lastTime = performance.now();
-
-    function updateFPS() {
-        const now = performance.now();
-        frameCount++;
-        if (now - lastTime >= 1000) {
-            const fps = Math.round((frameCount * 1000) / (now - lastTime));
-            Dom.fpsIndicator.textContent = `FPS: ${fps}`;
-            frameCount = 0;
-            lastTime = now;
-            
-            // Check for Low FPS
-            // const waterCount = waterParticlesPool.filter(p => p.isActive()).length;
-            // if (fps < LOW_FPS_THRESHOLD && waterCount > 100 && !localStorage.getItem('suppressLowFpsWarning')) {
-                 // Check if warning is already shown?
-            // }
-        }
-        requestAnimationFrame(updateFPS);
-    }
-    updateFPS();
-}
