@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1055,21 +1054,33 @@
                 </svg>
             </button>
             
+             <button id="clear-all-btn" data-translate-title="clear-all-title">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V6H20V4H15V3H9M7,19V6H17V19H7Z"/></svg>
+            </button>
+
             <div id="toolbar-separator"></div>
 
-            <button id="move-btn" class="active" data-translate-title="move-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="3" x2="12" y2="21"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <polyline points="6 9 3 12 6 15"></polyline>
-                    <polyline points="18 9 21 12 18 15"></polyline>
-                    <polyline points="9 6 12 3 15 6"></polyline>
-                    <polyline points="9 18 12 21 15 18"></polyline>
-                </svg>
-            </button>
-            <button id="finger-btn" data-translate-title="finger-title">
-                <svg viewBox="0 0 24 24"><path d="m3.1 3.1l8.9 20.9l3.4-8.1l8.5-3.5L3.1 3.1Z" /></svg>
-            </button>
+            <div class="tool-group">
+                <button id="move-btn" class="active" data-translate-title="move-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="3" x2="12" y2="21"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <polyline points="6 9 3 12 6 15"></polyline>
+                        <polyline points="18 9 21 12 18 15"></polyline>
+                        <polyline points="9 6 12 3 15 6"></polyline>
+                        <polyline points="9 18 12 21 15 18"></polyline>
+                    </svg>
+                </button>
+                <button id="finger-btn" data-translate-title="finger-title">
+                    <svg viewBox="0 0 24 24"><path d="m3.1 3.1l8.9 20.9l3.4-8.1l8.5-3.5L3.1 3.1Z" /></svg>
+                </button>
+                 <button id="eraser-btn" data-translate-title="eraser-title">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20.56,7.44L16.56,3.44C16.17,3.05 15.54,3.05 15.15,3.44L9.5,9.09L3.44,15.15C3.05,15.54 3.05,16.17 3.44,16.56L7.44,20.56C7.83,20.95 8.46,20.95 8.85,20.56L20.56,8.85C20.95,8.46 20.95,7.83 20.56,7.44M8.14,19.85L4.14,15.85L9.14,10.85L13.14,14.85L8.14,19.85Z"/>
+                    </svg>
+                </button>
+            </div>
+
             <div class="tool-group">
                 <button id="box-btn" data-translate-title="box-title">
                     <svg viewBox="0 0 24 24"><path d="M3,3H21V21H3V3M5,5V19H19V5H5Z"/></svg>
@@ -1112,29 +1123,23 @@
                     <img src="https://goida228top.github.io/textures/жел.png" alt="Мощный ТНТ">
                 </button>
             </div>
-            <button id="water-btn" data-translate-title="water-title" style="color: var(--water-color-opaque);">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z" stroke="white" stroke-width="1.5" fill="currentColor"/>
-                </svg>
-            </button>
-            <button id="sand-btn" data-translate-title="sand-title" style="color: var(--sand-color-opaque);">
-                <svg viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z"/>
-                </svg>
-            </button>
-            <button id="eraser-btn" data-translate-title="eraser-title">
-                <svg viewBox="0 0 24 24">
-                    <path d="M20.56,7.44L16.56,3.44C16.17,3.05 15.54,3.05 15.15,3.44L9.5,9.09L3.44,15.15C3.05,15.54 3.05,16.17 3.44,16.56L7.44,20.56C7.83,20.95 8.46,20.95 8.85,20.56L20.56,8.85C20.95,8.46 20.95,7.83 20.56,7.44M8.14,19.85L4.14,15.85L9.14,10.85L13.14,14.85L8.14,19.85Z"/>
-                </svg>
-            </button>
+            
+            <div class="tool-group">
+                <button id="water-btn" data-translate-title="water-title" style="color: var(--water-color-opaque);">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z" stroke="white" stroke-width="1.5" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button id="sand-btn" data-translate-title="sand-title" style="color: var(--sand-color-opaque);">
+                    <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12,0C12,0 3,8 3,13C3,18.5 7,24 12,24C17,24 21,18.5 21,13C21,8 12,0 12,0Z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- FIXED RIGHT AREA -->
         <div id="toolbar-fixed-area">
-             <button id="clear-all-btn" data-translate-title="clear-all-title">
-                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,3V4H4V6H5V19C5,20.1 5.9,21 7,21H17C18.1,21 19,20.1 19,19V6H20V4H15V3H9M7,19V6H17V19H7Z"/></svg>
-            </button>
-            
             <div id="reward-btn" class="coins-display" data-translate-title="coins-label">
                 <img class="coin-icon" src="https://goida228top.github.io/textures/монетка.png" alt="Coin">
                 <span id="coins-count">0</span>
