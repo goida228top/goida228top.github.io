@@ -1,3 +1,4 @@
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -173,12 +174,31 @@ export function renderWater(cameraData) {
 
     Dom.waterContext.fillStyle = waterColor;
     Dom.waterContext.beginPath();
+    
+    // --- ОПТИМИЗАЦИЯ: Culling (Отсечение невидимого) ---
+    // Вычисляем видимые границы мира в пикселях
+    const viewMinX = cameraData.viewOffset.x;
+    const viewMinY = cameraData.viewOffset.y;
+    // Учитываем scale камеры при расчете нижней правой границы
+    const canvasW = Dom.waterCanvas.width * cameraData.scale;
+    const canvasH = Dom.waterCanvas.height * cameraData.scale;
+    const viewMaxX = viewMinX + canvasW;
+    const viewMaxY = viewMinY + canvasH;
+    const padding = VISUAL_RADIUS * 2; // Запас
+
     for (const particle of waterParticlesPool) {
         if (!particle.isActive()) continue;
 
         const pos = particle.getPosition();
         const px = pos.x * PHYSICS_SCALE;
         const py = pos.y * PHYSICS_SCALE;
+        
+        // Пропускаем частицу, если она за пределами экрана
+        if (px < viewMinX - padding || px > viewMaxX + padding ||
+            py < viewMinY - padding || py > viewMaxY + padding) {
+            continue;
+        }
+
         Dom.waterContext.moveTo(px + VISUAL_RADIUS, py);
         Dom.waterContext.arc(px, py, VISUAL_RADIUS, 0, Math.PI * 2);
     }

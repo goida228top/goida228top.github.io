@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 import planck from './planck.js';
 import * as Dom from './dom.js';
@@ -76,14 +77,30 @@ export function renderSand(cameraData) {
 
     Dom.sandContext.fillStyle = sandColor;
 
+    // --- ОПТИМИЗАЦИЯ: Culling (Отсечение невидимого) ---
+    const viewMinX = cameraData.viewOffset.x;
+    const viewMinY = cameraData.viewOffset.y;
+    const canvasW = Dom.sandCanvas.width * cameraData.scale;
+    const canvasH = Dom.sandCanvas.height * cameraData.scale;
+    const viewMaxX = viewMinX + canvasW;
+    const viewMaxY = viewMinY + canvasH;
+    const padding = VISUAL_RADIUS * 2;
+
     // Рендерим квадраты, учитывая вращение
     for (const particle of sandParticlesPool) {
         if (!particle.isActive()) continue;
 
         const pos = particle.getPosition();
-        const angle = particle.getAngle();
         const px = pos.x * PHYSICS_SCALE;
         const py = pos.y * PHYSICS_SCALE;
+
+        // Пропускаем частицу, если она за пределами экрана
+        if (px < viewMinX - padding || px > viewMaxX + padding ||
+            py < viewMinY - padding || py > viewMaxY + padding) {
+            continue;
+        }
+
+        const angle = particle.getAngle();
         const size = VISUAL_RADIUS * 2; // Полный размер квадрата
 
         Dom.sandContext.save();

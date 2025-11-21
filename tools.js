@@ -49,6 +49,11 @@ const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) 
 // Переменная для отслеживания двойного тапа на мобильных
 let lastTouchEndTime = 0;
 
+// Экспортируем статус взаимодействия для оптимизации рендеринга
+export function isInteractionActive() {
+    return isDrawing || mouseJoint !== null || draggedBody !== null || waterSpawnInterval !== null || sandSpawnInterval !== null;
+}
+
 export function switchTool(tool) {
     toolState.currentTool = tool;
     Dom.toolButtons.forEach(btn => btn.classList.remove('active'));

@@ -7,13 +7,15 @@ import { renderSand, sandParticlesPool } from './sand.js';
 import { keyState } from './ui_common.js';
 import { SoundManager } from './sound.js';
 import { renderWorld } from './render_core.js';
+import { isInteractionActive } from './tools.js'; // NEW: Import interaction state
 
 let isPaused = false;
 let cameraData = null;
 let beforeRenderCallback = () => {};
 
-// Переменные для оптимизации фона
+// Переменные для оптимизации фона и рендеринга
 let lastCameraState = { x: null, y: null, scale: null, width: null, height: null };
+let frameCounter = 0; // Для троттлинга
 
 // Новая функция для применения сил/импульсов от моторов
 function applyMotorForces(world) {
@@ -52,8 +54,9 @@ function manageBodyStates(world, cameraData) {
     );
 
     for (let body = world.getBodyList(); body; body = body.getNext()) {
+        // Не отключаем воду и песок через awake, они управляются отдельно
         const userData = body.getUserData() || {};
-        if (!body.isDynamic()) {
+        if (!body.isDynamic() || userData.label === 'water' || userData.label === 'sand') {
             continue;
         }
 
@@ -149,12 +152,39 @@ export function initializeEngine() {
 
         const deltaTime = (time - lastTime) / 1000;
         lastTime = time;
+        frameCounter++;
 
+        // --- Смарт-Рендеринг: Проверка на необходимость отрисовки ---
+        // Если пауза + камера не двигалась + нет ввода = пропускаем кадр
+        let cameraMoved = false;
         if (cameraData) {
+             if (
+                lastCameraState.x !== cameraData.viewOffset.x || 
+                lastCameraState.y !== cameraData.viewOffset.y || 
+                lastCameraState.scale !== cameraData.scale ||
+                lastCameraState.width !== render.canvas.width ||
+                lastCameraState.height !== render.canvas.height
+            ) {
+                cameraMoved = true;
+            }
+        }
+        
+        const userInteracting = isInteractionActive() || (cameraData && cameraData.isPanning());
+        
+        // Если игра на паузе, камера стоит и игрок ничего не делает -> полностью пропускаем отрисовку
+        if (isPaused && !cameraMoved && !userInteracting) {
+            return;
+        }
+
+        // --- Троттлинг ---
+        // Запускаем тяжелую проверку видимости (Culling) только раз в 10 кадров
+        // или если камера сдвинулась.
+        if (cameraData && (cameraMoved || frameCounter % 10 === 0)) {
             manageBodyStates(world, cameraData);
         }
 
-        // ОПТИМИЗАЦИЯ: Проверяем, есть ли активные частицы, чтобы не запускать тяжелую логику
+        // ОПТИМИЗАЦИЯ: Проверяем наличие активных частиц, чтобы не перебирать их зря
+        // Просто проверка пула дешевая, но рисование пустого слоя - нет.
         let hasActiveWater = false;
         for (let i = 0; i < waterParticlesPool.length; i++) {
             if (waterParticlesPool[i].isActive()) {
@@ -174,7 +204,7 @@ export function initializeEngine() {
         if (!isPaused) {
             accumulator += deltaTime;
             while (accumulator >= timeStep) {
-                // Обновляем физику воды только если она есть
+                // Обновляем физику воды
                 if (hasActiveWater) {
                     updateWaterPhysics();
                 }
@@ -185,14 +215,8 @@ export function initializeEngine() {
         }
         
         if (cameraData) {
-            // ОПТИМИЗАЦИЯ ФОНА: Перерисовываем только если камера или размер окна изменились
-            if (
-                lastCameraState.x !== cameraData.viewOffset.x || 
-                lastCameraState.y !== cameraData.viewOffset.y || 
-                lastCameraState.scale !== cameraData.scale ||
-                lastCameraState.width !== render.canvas.width ||
-                lastCameraState.height !== render.canvas.height
-            ) {
+            // ОПТИМИЗАЦИЯ ФОНА: Перерисовываем только если камера изменилась
+            if (cameraMoved) {
                 beforeRenderCallback(cameraData);
                 lastCameraState.x = cameraData.viewOffset.x;
                 lastCameraState.y = cameraData.viewOffset.y;
@@ -203,7 +227,7 @@ export function initializeEngine() {
 
             renderWorld(world, render, cameraData);
             
-            // ОПТИМИЗАЦИЯ ВОДЫ: Скрываем слой, если нет частиц (отключает CSS фильтры)
+            // ОПТИМИЗАЦИЯ ВОДЫ: Скрываем слой, если нет частиц
             if (hasActiveWater) {
                 if (Dom.waterEffectContainer.style.display === 'none') {
                     Dom.waterEffectContainer.style.display = 'block';
