@@ -2,8 +2,8 @@
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { PHYSICS_SCALE } from './game_config.js';
-import { renderWater, updateWaterPhysics } from './water.js';
-import { renderSand } from './sand.js';
+import { renderWater, updateWaterPhysics, waterParticlesPool } from './water.js';
+import { renderSand, sandParticlesPool } from './sand.js';
 import { keyState } from './ui_common.js';
 import { SoundManager } from './sound.js';
 import { renderWorld } from './render_core.js';
@@ -11,6 +11,9 @@ import { renderWorld } from './render_core.js';
 let isPaused = false;
 let cameraData = null;
 let beforeRenderCallback = () => {};
+
+// Переменные для оптимизации фона
+let lastCameraState = { x: null, y: null, scale: null, width: null, height: null };
 
 // Новая функция для применения сил/импульсов от моторов
 function applyMotorForces(world) {
@@ -151,10 +154,30 @@ export function initializeEngine() {
             manageBodyStates(world, cameraData);
         }
 
+        // ОПТИМИЗАЦИЯ: Проверяем, есть ли активные частицы, чтобы не запускать тяжелую логику
+        let hasActiveWater = false;
+        for (let i = 0; i < waterParticlesPool.length; i++) {
+            if (waterParticlesPool[i].isActive()) {
+                hasActiveWater = true;
+                break;
+            }
+        }
+
+        let hasActiveSand = false;
+        for (let i = 0; i < sandParticlesPool.length; i++) {
+            if (sandParticlesPool[i].isActive()) {
+                hasActiveSand = true;
+                break;
+            }
+        }
+
         if (!isPaused) {
             accumulator += deltaTime;
             while (accumulator >= timeStep) {
-                updateWaterPhysics();
+                // Обновляем физику воды только если она есть
+                if (hasActiveWater) {
+                    updateWaterPhysics();
+                }
                 applyMotorForces(world);
                 world.step(timeStep, velocityIterations, positionIterations);
                 accumulator -= timeStep;
@@ -162,10 +185,49 @@ export function initializeEngine() {
         }
         
         if (cameraData) {
-            beforeRenderCallback(cameraData);
+            // ОПТИМИЗАЦИЯ ФОНА: Перерисовываем только если камера или размер окна изменились
+            if (
+                lastCameraState.x !== cameraData.viewOffset.x || 
+                lastCameraState.y !== cameraData.viewOffset.y || 
+                lastCameraState.scale !== cameraData.scale ||
+                lastCameraState.width !== render.canvas.width ||
+                lastCameraState.height !== render.canvas.height
+            ) {
+                beforeRenderCallback(cameraData);
+                lastCameraState.x = cameraData.viewOffset.x;
+                lastCameraState.y = cameraData.viewOffset.y;
+                lastCameraState.scale = cameraData.scale;
+                lastCameraState.width = render.canvas.width;
+                lastCameraState.height = render.canvas.height;
+            }
+
             renderWorld(world, render, cameraData);
-            renderWater(cameraData);
-            renderSand(cameraData);
+            
+            // ОПТИМИЗАЦИЯ ВОДЫ: Скрываем слой, если нет частиц (отключает CSS фильтры)
+            if (hasActiveWater) {
+                if (Dom.waterEffectContainer.style.display === 'none') {
+                    Dom.waterEffectContainer.style.display = 'block';
+                }
+                renderWater(cameraData);
+            } else {
+                if (Dom.waterEffectContainer.style.display !== 'none') {
+                    Dom.waterEffectContainer.style.display = 'none';
+                    Dom.waterContext.clearRect(0, 0, Dom.waterCanvas.width, Dom.waterCanvas.height);
+                }
+            }
+
+            // ОПТИМИЗАЦИЯ ПЕСКА: Скрываем слой, если нет частиц
+            if (hasActiveSand) {
+                if (Dom.sandEffectContainer.style.display === 'none') {
+                    Dom.sandEffectContainer.style.display = 'block';
+                }
+                renderSand(cameraData);
+            } else {
+                if (Dom.sandEffectContainer.style.display !== 'none') {
+                    Dom.sandEffectContainer.style.display = 'none';
+                    Dom.sandContext.clearRect(0, 0, Dom.sandCanvas.width, Dom.sandCanvas.height);
+                }
+            }
         }
     }
     
