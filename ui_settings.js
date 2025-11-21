@@ -26,24 +26,29 @@ function hexToRgba(hex, alpha) {
     return `rgba(${+r},${+g},${+b},${alpha})`;
 }
 
-function updateLiquidColors() {
+export function updateLiquidColors() {
     const isEnabled = Dom.newLiquidEffectToggle.checked;
     const rootStyles = document.documentElement.style;
 
     // Water
     const opaqueWaterColor = Dom.waterColorPicker.value;
     const transparentWaterColor = hexToRgba(opaqueWaterColor, 0.75);
+    
     rootStyles.setProperty('--water-color-opaque', opaqueWaterColor);
     rootStyles.setProperty('--water-color-transparent', transparentWaterColor);
+    
+    // CRITICAL FIX: Force opaque color when liquid effect is ON
     setWaterColor(isEnabled ? opaqueWaterColor : transparentWaterColor);
     Dom.waterButton.style.color = opaqueWaterColor;
-    rootStyles.setProperty('--button-active-bg', opaqueWaterColor);
 
     // Sand
     const opaqueSandColor = Dom.sandColorPicker.value;
     const transparentSandColor = hexToRgba(opaqueSandColor, 0.75);
+    
     rootStyles.setProperty('--sand-color-opaque', opaqueSandColor);
     rootStyles.setProperty('--sand-color-transparent', transparentSandColor);
+    
+    // CRITICAL FIX: Force opaque color when liquid effect is ON
     setSandColor(isEnabled ? opaqueSandColor : transparentSandColor);
     Dom.sandButton.style.color = opaqueSandColor;
 }
@@ -106,7 +111,7 @@ export function initializeNewSettingsPanel(engineData, cameraData, isGameStarted
         updateLiquidColors();
         if (applyLiquidFilters) applyLiquidFilters();
     });
-    Dom.newLiquidEffectToggle.dispatchEvent(new Event('change'));
+    // Don't dispatch change event here automatically, we call updateLiquidColors in index.js
 
     Dom.newShowHitboxesToggle.addEventListener('change', (e) => {
         render.options.showHitboxes = e.target.checked;

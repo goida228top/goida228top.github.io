@@ -66,7 +66,8 @@ export function initializeCamera(render) {
     function applyLiquidFilters() {
         if (Dom.newLiquidEffectToggle && Dom.newLiquidEffectToggle.checked) {
             const blurAmount = 5 / scale;
-            const contrastAmount = 25;
+            // FIX: Reduced contrast from 40 to 20 to avoid color artifacts while maintaining solid edges
+            const contrastAmount = 20;
             const filterStyle = `blur(${blurAmount.toFixed(2)}px) contrast(${contrastAmount})`;
             Dom.waterEffectContainer.style.filter = filterStyle;
             Dom.sandEffectContainer.style.filter = filterStyle;

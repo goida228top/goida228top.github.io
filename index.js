@@ -13,6 +13,7 @@ import { ALL_IMAGE_URLS, ALL_SOUND_URLS } from './game_config.js';
 import { ImageLoader } from './image_loader.js';
 import { SoundManager } from './sound.js';
 import { initializeBackground, renderBackground } from './background.js';
+import { updateLiquidColors } from './ui_settings.js'; // Импорт функции обновления цветов
 
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBar = document.getElementById('progress-bar');
@@ -159,6 +160,10 @@ async function main() {
         await sleep(150);
         
         initializeUI(engineData, cameraData, worldData);
+        
+        // CRITICAL FIX: Initialize liquid colors properly (opaque) on start
+        updateLiquidColors();
+        
         updateProgress(98);
         await sleep(100);
         
