@@ -47,14 +47,14 @@ export function createCircle(world, center, edge) {
         linearDamping: 0.1,
     });
     body.createFixture(planck.Circle(radius), {
-        friction: 0.8,
+        friction: 10.0, // ОЧЕНЬ высокое трение для "Липких шин" (Arcade Grip)
         restitution: 0.1,
         density: 1.0,
     });
     body.setUserData({
         motor: {
             isEnabled: false,
-            speed: 10.0
+            speed: 150.0 // Повышенная начальная скорость для драйва
         }
     });
 }

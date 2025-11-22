@@ -61,6 +61,7 @@ export function switchTool(tool) {
     if(activeBtn) activeBtn.classList.add('active');
     deselectBody();
     hideObjectPropertiesPanel();
+    stopAllActions(); // Сбрасываем текущие действия при смене инструмента
 }
 
 export async function initializeTools(engineData, cameraData, worldData) {
@@ -147,6 +148,8 @@ export async function initializeTools(engineData, cameraData, worldData) {
                         }
                     }
                     setFirstJointBody(firstBody, anchorPoint);
+                    // Рисуем превью сразу от точки старта
+                    setPreview('polygon', [anchorPoint], anchorPoint); 
                 }
                 break;
             case 'tnt-small':
@@ -215,6 +218,16 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     }
                 }
                 break;
+            case 'weld':
+            case 'spring':
+            case 'rod':
+                const { body } = getFirstJointBody();
+                if (body) {
+                     // Используем превью типа 'polygon' (линия) для отображения будущей связи
+                     const { anchor } = getFirstJointBody();
+                     setPreview('polygon', [anchor], lastMousePos);
+                }
+                break;
             case 'eraser':
                 eraseAt(world, lastMousePos);
                 break;
@@ -246,12 +259,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
             // Для завершения полигона на тач: долгое нажатие или замыкание
             if (duration > POLYGON_HOLD_DURATION || (polygonVertices.length >= 3 && planck.Vec2.distance(clickPoint, polygonVertices[0]) < 0.5)) {
-                if (polygonVertices.length >= 3) {
-                    createPolygon(world, polygonVertices);
-                }
-                polygonVertices = [];
-                clearPreview();
-                isDrawing = false;
+                finishPolygon();
             }
             // При полигоне isDrawing сбрасывается только при завершении фигуры
             return;
@@ -309,7 +317,9 @@ export async function initializeTools(engineData, cameraData, worldData) {
                         }
                     }
                 }
+                // Сбрасываем состояние и превью НЕМЕДЛЕННО
                 setFirstJointBody(null, null);
+                clearPreview();
                 break;
             case 'water':
                  if (waterSpawnInterval) clearInterval(waterSpawnInterval);
@@ -320,6 +330,15 @@ export async function initializeTools(engineData, cameraData, worldData) {
                  sandSpawnInterval = null;
                  break;
         }
+    }
+
+    function finishPolygon() {
+        if (polygonVertices.length >= 3) {
+            createPolygon(world, polygonVertices);
+        }
+        polygonVertices = [];
+        clearPreview();
+        isDrawing = false;
     }
 
     // --- Event Handler Wrappers ---
@@ -381,8 +400,22 @@ export async function initializeTools(engineData, cameraData, worldData) {
     function handleContextMenu(e) {
         e.preventDefault();
         
-        if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
-            polygonVertices = [];
+        if (toolState.currentTool === 'polygon') {
+            // Если рисуем полигон, ПКМ должна завершать его, если точек достаточно, или отменять
+            if (polygonVertices.length >= 3) {
+                finishPolygon();
+            } else {
+                polygonVertices = [];
+                clearPreview();
+                isDrawing = false;
+            }
+            return;
+        }
+
+        // Если активен инструмент соединения и уже выбрано первое тело - отменяем
+        const { body } = getFirstJointBody();
+        if (body) {
+            setFirstJointBody(null, null);
             clearPreview();
             isDrawing = false;
             return;
@@ -406,10 +439,10 @@ export async function initializeTools(engineData, cameraData, worldData) {
             }
         }
         
-        const body = getBodyAt(world, pos);
-        if (body) {
-            selectBody(body);
-            showObjectPropertiesPanel(body, screenPos.x, screenPos.y);
+        const bodyFound = getBodyAt(world, pos);
+        if (bodyFound) {
+            selectBody(bodyFound);
+            showObjectPropertiesPanel(bodyFound, screenPos.x, screenPos.y);
         } else {
             deselectBody();
             deselectSpring();
@@ -436,6 +469,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
         if(sandSpawnInterval) clearInterval(sandSpawnInterval);
         sandSpawnInterval = null;
 
+        setFirstJointBody(null, null); // Сброс состояния соединений
         clearPreview();
         if (polygonVertices.length > 0) {
             polygonVertices = [];

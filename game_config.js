@@ -96,7 +96,7 @@ export const WATER_MAX_FORCE_SQ = 4.0; // Максимальная квадра�
 
 // --- Настройки песка (квадратики) ---
 export const SAND_MAX_PARTICLES = 1500;
-export const SAND_VISUAL_RADIUS = 5; // Визуальный "радиус" (половина стороны) квадрата
+export const SAND_VISUAL_RADIUS = 10;
 export const SAND_PHYSICAL_RADIUS_FACTOR = 0.6; // Физический хитбокс меньше визуального
 export const SAND_FRICTION = 1.0;
 export const SAND_RESTITUTION = 0.0;

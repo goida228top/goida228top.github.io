@@ -65,12 +65,16 @@ export function initializeCamera(render) {
 
     function applyLiquidFilters() {
         if (Dom.newLiquidEffectToggle && Dom.newLiquidEffectToggle.checked) {
-            const blurAmount = 5 / scale;
-            // FIX: Reduced contrast from 40 to 20 to avoid color artifacts while maintaining solid edges
-            const contrastAmount = 20;
-            const filterStyle = `blur(${blurAmount.toFixed(2)}px) contrast(${contrastAmount})`;
-            Dom.waterEffectContainer.style.filter = filterStyle;
-            Dom.sandEffectContainer.style.filter = filterStyle;
+            const contrastAmount = 25;
+            
+            // Фильтр для воды (радиус частиц 10)
+            const waterBlur = 5 / scale;
+            Dom.waterEffectContainer.style.filter = `blur(${waterBlur.toFixed(2)}px) contrast(${contrastAmount})`;
+            
+            // Фильтр для песка (радиус частиц уменьшен, блюр тоже чуть меньше для четкости)
+            // Используем SVG фильтр для жесткого порога альфа-канала без искажения цвета
+            const sandBlur = 4 / scale; 
+            Dom.sandEffectContainer.style.filter = `blur(${sandBlur.toFixed(2)}px) url(#sand-threshold)`;
         } else {
             if (Dom.waterEffectContainer) Dom.waterEffectContainer.style.filter = 'none';
             if (Dom.sandEffectContainer) Dom.sandEffectContainer.style.filter = 'none';

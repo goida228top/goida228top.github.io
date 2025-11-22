@@ -1,7 +1,7 @@
 
 import * as Dom from './dom.js';
 import { t } from './lang.js';
-import { savePlayer_Data } from './yandex.js';
+import { savePlayer_Data, showFullscreenAdv } from './yandex.js'; // Added showFullscreenAdv
 import { serializeWorld, deserializeWorld } from './world_serializer.js';
 import { waterParticlesPool } from './water.js';
 import { sandParticlesPool } from './sand.js';
@@ -93,18 +93,20 @@ export function openSaveLoadPanel(mode, world, cameraData, engineData) {
                 if (!slotData) actionBtn.style.opacity = 0.5;
                 addTapListener(actionBtn, () => {
                     if (slotData) {
-                        deserializeWorld(world, slotData.state);
-                        if (slotData.camera) {
-                             cameraData.restoreCameraState(slotData.camera);
-                             cameraData.updateView();
-                        }
-                        showToast(t('game-loaded-message'), 'success');
-                        closeSaveLoadPanel();
-                        if (!Dom.toolbar.style.display || Dom.toolbar.style.display === 'none') {
-                             startGame(engineData);
-                        }
-                        engineData.runner.enabled = true;
-                        // updatePlayPauseIcons(true); // Вызывается в ui.js
+                        // Показываем рекламу при загрузке
+                        showFullscreenAdv(engineData, () => {
+                            deserializeWorld(world, slotData.state);
+                            if (slotData.camera) {
+                                 cameraData.restoreCameraState(slotData.camera);
+                                 cameraData.updateView();
+                            }
+                            showToast(t('game-loaded-message'), 'success');
+                            closeSaveLoadPanel();
+                            if (!Dom.toolbar.style.display || Dom.toolbar.style.display === 'none') {
+                                 startGame(engineData);
+                            }
+                            engineData.runner.enabled = true;
+                        });
                     }
                 });
             }

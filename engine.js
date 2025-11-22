@@ -21,31 +21,100 @@ let frameCounter = 0; // Для троттлинга
 let fpsFrameCount = 0;
 let fpsLastTime = 0;
 
+// Новая функция для применения сил стабилизации (Wheelie Bar)
+function applyStabilizerForces(world) {
+    if (isPaused) return;
+
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData();
+        
+        if (userData?.stabilizer?.isEnabled && body.isDynamic()) {
+             // 1. Get normalized angle between -PI and PI
+            let angle = body.getAngle();
+            while (angle <= -Math.PI) angle += 2 * Math.PI;
+            while (angle > Math.PI) angle -= 2 * Math.PI;
+
+            const limitDeg = userData.stabilizer.maxAngle || 60;
+            const limitRad = limitDeg * (Math.PI / 180);
+            
+            // 2. Check if angle exceeds limit (relative to flat horizon 0)
+            // Positive angle = Tipping Right/Back (CW)
+            // Negative angle = Tipping Left/Front (CCW)
+            
+            if (Math.abs(angle) > limitRad) {
+                // How far past the limit?
+                const excess = Math.abs(angle) - limitRad;
+                
+                // Direction to push back: if angle > 0, we need negative torque.
+                const correctionDir = angle > 0 ? -1 : 1;
+                
+                // PD Controller (Tuned for Wheelie)
+                // P (Proportional): Усилен до 1000 для жесткого удержания
+                const Kp = body.getMass() * 1000 * excess; 
+                
+                // D (Derivative): Dampen angular velocity to prevent oscillation
+                const Kd = body.getMass() * 40 * body.getAngularVelocity();
+                
+                // Total Torque
+                const torque = (correctionDir * Kp) - Kd;
+                
+                body.applyTorque(torque);
+                body.setAwake(true);
+            }
+        }
+    }
+}
+
 // Новая функция для применения сил/импульсов от моторов
 function applyMotorForces(world) {
-    if (isPaused) return; // Оптимизация: не считать моторы на паузе
+    if (isPaused) return;
     
     let moveDirection = 0;
     if (keyState.ArrowRight && !keyState.ArrowLeft) {
-        moveDirection = 1;
+        moveDirection = 1; // Вправо
     } else if (keyState.ArrowLeft && !keyState.ArrowRight) {
-        moveDirection = -1;
-    }
-    
-    if (moveDirection === 0) {
-        return;
+        moveDirection = -1; // Влево
     }
 
     for (let body = world.getBodyList(); body; body = body.getNext()) {
         const userData = body.getUserData();
+        // Проверяем, включен ли мотор на этом объекте
         if (userData?.motor?.isEnabled) {
-            const motorSpeed = userData.motor.speed || 10.0;
-            const targetAngVel = moveDirection * Math.abs(motorSpeed);
+            const maxSpeed = userData.motor.speed !== undefined ? userData.motor.speed : 150.0;
+            // Получаем настроенную мощность (ускорение) или используем дефолт
+            const power = userData.motor.power !== undefined ? userData.motor.power : 50.0;
             
-            const currentAngVel = body.getAngularVelocity();
-            const angVelChange = targetAngVel - currentAngVel;
-            const impulse = body.getInertia() * angVelChange;
-            body.applyAngularImpulse(impulse, true);
+            // Гарантированно будим тело
+            body.setAwake(true);
+
+            if (moveDirection !== 0) {
+                // 1. ВРАЩЕНИЕ (Визуал + физическое сцепление)
+                // Задаем угловую скорость напрямую для стабильности
+                body.setAngularVelocity(moveDirection * maxSpeed);
+
+                // 2. ТЯГА (Аркадный импульс)
+                // Используем настройку Power для расчета силы рывка
+                // Значительно уменьшили делитель (с 20.0 до 80.0), чтобы не было "подлета" при старте
+                const thrustFactor = power / 80.0; 
+                const thrustForce = body.getMass() * thrustFactor; 
+                
+                // Прикладываем импульс к центру колеса
+                body.applyLinearImpulse(planck.Vec2(moveDirection * thrustForce, 0), body.getWorldCenter(), true);
+
+                // Убираем сопротивление воздуха при разгоне
+                body.setLinearDamping(0);
+                // Убираем сопротивление вращению при разгоне
+                body.setAngularDamping(0); 
+            } else {
+                // 3. ТОРМОЗ (Мягкий)
+                
+                // Убрали setAngularVelocity(0), так как это вызывало резкий "клев" носом (stoppie).
+                // Вместо этого используем сильное угловое затухание.
+                body.setAngularDamping(5.0); 
+                
+                // Сильно снижаем линейное торможение, чтобы байк катился, а не вставал колом
+                body.setLinearDamping(0.05);
+            }
         }
     }
 }
@@ -98,12 +167,24 @@ export function initializeEngine() {
     world.on('post-solve', (contact, impulse) => {
         const totalImpulse = impulse.normalImpulses[0] + (impulse.normalImpulses[1] || 0);
 
-        if (totalImpulse < 0.2) return;
+        // 1. Проверка импульса (сила * время)
+        // Фильтруем совсем слабые касания
+        if (totalImpulse < 2.0) return;
 
-        const now = performance.now();
         const bodyA = contact.getFixtureA().getBody();
         const bodyB = contact.getFixtureB().getBody();
         
+        // 2. НОВАЯ ПРОВЕРКА: Относительная скорость столкновения
+        // Импульс может быть большим, если тяжелый объект просто лежит на другом.
+        // Скорость же покажет, был ли это удар.
+        const vA = bodyA.getLinearVelocity();
+        const vB = bodyB.getLinearVelocity();
+        const relVel = planck.Vec2.sub(vA, vB);
+        const impactSpeed = relVel.length();
+
+        // Если скорость удара меньше 0.5 м/с, считаем это "качением" или "давлением", а не ударом
+        if (impactSpeed < 0.5) return;
+
         const userDataA = bodyA.getUserData() || {};
         const userDataB = bodyB.getUserData() || {};
         
@@ -111,18 +192,23 @@ export function initializeEngine() {
             return;
         }
 
+        const now = performance.now();
         const lastSoundA = userDataA.lastCollisionSound || 0;
         const lastSoundB = userDataB.lastCollisionSound || 0;
 
-        if (now - lastSoundA < 100 || now - lastSoundB < 100) return;
+        if (now - lastSoundA < 150 || now - lastSoundB < 150) return;
 
         userDataA.lastCollisionSound = now;
         userDataB.lastCollisionSound = now;
         bodyA.setUserData(userDataA);
         bodyB.setUserData(userDataB);
         
-        const volume = Math.min(1.0, totalImpulse / 8.0);
-        const soundName = totalImpulse > 2.5 ? 'collision_heavy' : 'collision_light';
+        // Громкость зависит и от импульса, и от скорости
+        const volume = Math.min(1.0, (totalImpulse * impactSpeed) / 50.0);
+        
+        if (volume < 0.05) return; // Слишком тихо
+
+        const soundName = totalImpulse > 15.0 ? 'collision_heavy' : 'collision_light';
         
         SoundManager.playSound(soundName, { volume });
     });
@@ -223,12 +309,8 @@ export function initializeEngine() {
         if (!isPaused) {
             accumulator += deltaTime;
             
-            // --- Защита от Спирали Смерти (Spiral of Death) ---
-            // Если accumulator слишком большой (лагает физика), мы не пытаемся
-            // просчитать все пропущенные кадры, а ограничиваем их.
-            // Это замедлит время игры (слоу-мо), но спасет от 0 FPS.
             if (accumulator > 0.1) {
-                accumulator = 0.1; // Ограничиваем накопленное время (максимум 6 шагов)
+                accumulator = 0.1; 
             }
 
             while (accumulator >= timeStep) {
@@ -236,7 +318,8 @@ export function initializeEngine() {
                 if (hasActiveWater) {
                     updateWaterPhysics();
                 }
-                applyMotorForces(world);
+                applyMotorForces(world); // Применяем физику моторов
+                applyStabilizerForces(world); // Применяем стабилизацию (NEW)
                 world.step(timeStep, velocityIterations, positionIterations);
                 accumulator -= timeStep;
             }

@@ -1,5 +1,4 @@
 
-// @ts-nocheck
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -25,25 +24,25 @@ const PHYSICAL_HALF_SIZE = (VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) / PHYSI
 
 let sandColor = getComputedStyle(document.documentElement).getPropertyValue('--sand-color-transparent').trim() || 'rgba(194, 178, 128, 0.75)';
 
-// Упрощенные свойства частиц согласно запросу
 const sandParticleOptions = {
     restitution: SAND_RESTITUTION,
     friction: SAND_FRICTION,
     density: SAND_DENSITY,
 };
 
-
 function initializeSandPool(world) {
     for (let i = 0; i < MAX_PARTICLES; i++) {
         const body = world.createDynamicBody({
             position: Vec2(-1000, -1000), // Изначально за экраном
             active: false,
-            bullet: false, // Для маленьких быстрых объектов можно включить
+            bullet: false, 
+            angularDamping: 10.0, // ОПТИМИЗАЦИЯ: Гасим вращение, чтобы физика быстрее "засыпала"
+            linearDamping: 0.5,   // Небольшое сопротивление воздуха
             userData: {
                 label: 'sand',
             },
         });
-        // Создаем квадрат вместо круга. planck.Box принимает полуширину и полувысоту.
+        // Оставляем Box, чтобы строились горки
         body.createFixture(planck.Box(PHYSICAL_HALF_SIZE, PHYSICAL_HALF_SIZE), {
             ...sandParticleOptions,
         });
@@ -56,20 +55,10 @@ export function initializeSand(engineData) {
     initializeSandPool(world);
 }
 
-// ФУНКЦИЯ КАСТОМНОЙ ФИЗИКИ ПОЛНОСТЬЮ УДАЛЕНА.
-// Вся физика теперь обрабатывается в world.step() в engine.js.
-// export function updateSandPhysics(world) { ... }
-
-
 export function renderSand(cameraData) {
     const isLiquidEffectEnabled = Dom.newLiquidEffectToggle.checked;
 
     Dom.sandContext.clearRect(0, 0, Dom.sandCanvas.width, Dom.sandCanvas.height);
-
-    if (isLiquidEffectEnabled) {
-        Dom.sandContext.fillStyle = 'white';
-        Dom.sandContext.fillRect(0, 0, Dom.sandCanvas.width, Dom.sandCanvas.height);
-    }
 
     Dom.sandContext.save();
     Dom.sandContext.scale(1 / cameraData.scale, 1 / cameraData.scale);
@@ -77,7 +66,6 @@ export function renderSand(cameraData) {
 
     Dom.sandContext.fillStyle = sandColor;
 
-    // --- ОПТИМИЗАЦИЯ: Culling (Отсечение невидимого) ---
     const viewMinX = cameraData.viewOffset.x;
     const viewMinY = cameraData.viewOffset.y;
     const canvasW = Dom.sandCanvas.width * cameraData.scale;
@@ -86,30 +74,54 @@ export function renderSand(cameraData) {
     const viewMaxY = viewMinY + canvasH;
     const padding = VISUAL_RADIUS * 2;
 
-    // Рендерим квадраты, учитывая вращение
-    for (const particle of sandParticlesPool) {
-        if (!particle.isActive()) continue;
+    // ОПТИМИЗАЦИЯ: Начинаем один путь для всех частиц
+    Dom.sandContext.beginPath();
 
-        const pos = particle.getPosition();
-        const px = pos.x * PHYSICS_SCALE;
-        const py = pos.y * PHYSICS_SCALE;
+    if (isLiquidEffectEnabled) {
+        const liquidRadius = VISUAL_RADIUS * 1.3;
+        
+        for (const particle of sandParticlesPool) {
+            if (!particle.isActive()) continue;
 
-        // Пропускаем частицу, если она за пределами экрана
-        if (px < viewMinX - padding || px > viewMaxX + padding ||
-            py < viewMinY - padding || py > viewMaxY + padding) {
-            continue;
+            const pos = particle.getPosition();
+            const px = pos.x * PHYSICS_SCALE;
+            const py = pos.y * PHYSICS_SCALE;
+
+            if (px < viewMinX - padding || px > viewMaxX + padding ||
+                py < viewMinY - padding || py > viewMaxY + padding) {
+                continue;
+            }
+
+            Dom.sandContext.moveTo(px + liquidRadius, py);
+            Dom.sandContext.arc(px, py, liquidRadius, 0, Math.PI * 2);
         }
+    } else {
+        // ОПТИМИЗАЦИЯ РЕНДЕРА:
+        // Рисуем квадраты БЕЗ вращения (Axis-Aligned).
+        // Физически они вращаются (поэтому горки строятся), но визуально мы рисуем ровные квадратики.
+        // Это позволяет использовать простой rect() вместо сложной математики вершин, что в 10 раз быстрее.
+        const size = VISUAL_RADIUS * 2;
+        const halfSize = VISUAL_RADIUS;
 
-        const angle = particle.getAngle();
-        const size = VISUAL_RADIUS * 2; // Полный размер квадрата
+        for (const particle of sandParticlesPool) {
+            if (!particle.isActive()) continue;
 
-        Dom.sandContext.save();
-        Dom.sandContext.translate(px, py);
-        Dom.sandContext.rotate(angle);
-        Dom.sandContext.fillRect(-VISUAL_RADIUS, -VISUAL_RADIUS, size, size);
-        Dom.sandContext.restore();
+            const pos = particle.getPosition();
+            const px = pos.x * PHYSICS_SCALE;
+            const py = pos.y * PHYSICS_SCALE;
+
+            if (px < viewMinX - padding || px > viewMaxX + padding ||
+                py < viewMinY - padding || py > viewMaxY + padding) {
+                continue;
+            }
+
+            // Просто рисуем прямоугольник по координатам центра
+            Dom.sandContext.rect(px - halfSize, py - halfSize, size, size);
+        }
     }
-
+    
+    // Заливаем всё разом одним вызовом
+    Dom.sandContext.fill();
     Dom.sandContext.restore();
 }
 
@@ -121,7 +133,7 @@ export function spawnSandParticle(world, x, y, initialVelocity) {
     particle.setAwake(true);
     particle.setPosition(Vec2(x, y));
     particle.setLinearVelocity(initialVelocity || Vec2(0, 0));
-    particle.setAngularVelocity((Math.random() - 0.5) * 2); // Небольшое случайное вращение
+    particle.setAngularVelocity((Math.random() - 0.5) * 2); 
     
     currentSandParticleIndex = (currentSandParticleIndex + 1) % maxActiveParticles;
 }

@@ -107,6 +107,7 @@ export function initializeUI(engineData, cameraData, worldData) {
     addTapListener(Dom.aboutGameBtn, () => {
         SoundManager.playSound('ui_click');
         togglePanel(Dom.aboutPanel, aboutState, 'isOpen');
+        applyTranslations(); // Apply translations when opening to ensure content is correct
     });
 
     addTapListener(Dom.aboutPanelCloseBtn, () => {
@@ -140,7 +141,7 @@ export function initializeUI(engineData, cameraData, worldData) {
         });
     });
 
-    // --- Centralized play/pause handler ---
+    // --- Centralized play/pause handler (NO ADS HERE) ---
     const handlePlayPause = () => {
         if (!isGameStarted) return;
 
@@ -148,10 +149,8 @@ export function initializeUI(engineData, cameraData, worldData) {
             runner.enabled = false;
             updatePlayPauseIcons(false);
         } else {
-            showFullscreenAdv(engineData, () => {
-                runner.enabled = true;
-                updatePlayPauseIcons(true);
-            });
+            runner.enabled = true;
+            updatePlayPauseIcons(true);
         }
     };
     
@@ -160,19 +159,35 @@ export function initializeUI(engineData, cameraData, worldData) {
         handlePlayPause();
     });
 
+    // --- Clear All with Interstitial Ad ---
     addTapListener(Dom.clearAllButton, () => {
         SoundManager.playSound('ui_click');
         showConfirm(t('confirm-title'), t('confirm-clear-all'), () => {
-            clearWorldCompletely(world); // Теперь эта функция определена выше
-            SoundManager.playSound('explosion_medium', { volume: 0.5 });
-            showToast(t('world-cleared-message'), 'info');
+            // Показываем рекламу перед очисткой
+            showFullscreenAdv(engineData, () => {
+                clearWorldCompletely(world);
+                SoundManager.playSound('explosion_medium', { volume: 0.5 });
+                showToast(t('world-cleared-message'), 'info');
+            });
         });
     });
 
+    // --- Controls (Keyboard & UI) ---
+    const updateKeyState = (code, value) => {
+        if (keyState.hasOwnProperty(code)) {
+            keyState[code] = value;
+        }
+    };
+
+    // Keyboard
     document.addEventListener('keydown', (e) => {
         if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
             return;
         }
+        
+        // Update keyState
+        updateKeyState(e.code, true);
+
         // Блокируем пробел в меню
         if (e.code === 'Space') {
             e.preventDefault();
@@ -182,6 +197,29 @@ export function initializeUI(engineData, cameraData, worldData) {
             }
         }
     });
+
+    document.addEventListener('keyup', (e) => {
+         updateKeyState(e.code, false);
+    });
+
+    // Touch UI
+    const bindControlBtn = (btn, code) => {
+        if(!btn) return;
+        const set = (v) => (e) => {
+            if(e.cancelable) e.preventDefault(); // Prevent text selection etc.
+            updateKeyState(code, v);
+        };
+        
+        btn.addEventListener('mousedown', set(true));
+        window.addEventListener('mouseup', set(false)); 
+        btn.addEventListener('touchstart', set(true), { passive: false });
+        btn.addEventListener('touchend', set(false));
+        btn.addEventListener('touchcancel', set(false));
+    };
+
+    bindControlBtn(Dom.leftButton, 'ArrowLeft');
+    bindControlBtn(Dom.rightButton, 'ArrowRight');
+
 
     // --- New Settings Panel Logic ---
     initializeNewSettingsPanel(engineData, cameraData, setGameStarted);
@@ -215,6 +253,9 @@ export function initializeUI(engineData, cameraData, worldData) {
          SoundManager.playSound('ui_click');
          togglePanel(Dom.rewardMenuPanel, rewardState, 'isOpen');
     });
+
+    // Initial Translation
+    applyTranslations();
 }
 
 export function startGame(engineData) {
@@ -264,5 +305,10 @@ function applyTranslations() {
     document.querySelectorAll('[data-translate-title]').forEach(el => {
         const key = el.getAttribute('data-translate-title');
         el.title = t(key);
+    });
+    // Added support for HTML content in translations
+    document.querySelectorAll('[data-translate-html]').forEach(el => {
+        const key = el.getAttribute('data-translate-html');
+        el.innerHTML = t(key);
     });
 }

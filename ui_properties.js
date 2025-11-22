@@ -8,6 +8,50 @@ export const panelState = {
     isSpringPropertiesOpen: false,
 };
 
+function clampPanelPosition(panel, targetX, targetY) {
+    // Сначала показываем панель, чтобы браузер рассчитал её размеры
+    panel.style.display = 'flex';
+    
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
+    
+    // Используем clientWidth/Height документа для надежности в iframe
+    const windowW = document.documentElement.clientWidth || window.innerWidth;
+    const windowH = document.documentElement.clientHeight || window.innerHeight;
+    const padding = 10; // Отступ от краев экрана
+
+    let left = targetX;
+    let top = targetY;
+
+    // Жесткая математика ограничений:
+    // 1. Если меню вылазит справа -> сдвигаем влево
+    if (left + width > windowW - padding) {
+        left = windowW - width - padding;
+    }
+    // 2. Если меню вылазит слева -> прибиваем к левому краю
+    if (left < padding) {
+        left = padding;
+    }
+
+    // 3. Если меню вылазит снизу -> сдвигаем вверх
+    if (top + height > windowH - padding) {
+        top = windowH - height - padding;
+        
+        // Проверка: если при сдвиге вверх оно улезло за верхний край -> центрируем по вертикали или прибиваем к верху
+        if (top < padding) {
+             // Если меню выше чем экран (маловероятно, но возможно на мобилках), прижимаем к верху и даем скролл (он есть в CSS)
+             top = padding;
+        }
+    }
+    // 4. Если меню вылазит сверху -> прибиваем к верху
+    if (top < padding) {
+        top = padding;
+    }
+
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+}
+
 export function showObjectPropertiesPanel(body, x, y) {
     if (panelState.isPropertiesOpen) {
         hideObjectPropertiesPanel();
@@ -45,21 +89,46 @@ export function showObjectPropertiesPanel(body, x, y) {
         }
     }
 
+    // --- Stabilizer UI Logic ---
+    if (!hasCircleFixture && body.isDynamic()) {
+        Dom.stabilizerSection.style.display = 'flex';
+        const stabilizerData = userData.stabilizer || { isEnabled: false, maxAngle: 60 };
+        Dom.objStabilizerEnableToggle.checked = stabilizerData.isEnabled;
+        Dom.objStabilizerAngleSlider.value = stabilizerData.maxAngle;
+        Dom.objStabilizerAngleValue.textContent = stabilizerData.maxAngle + '°';
+        
+        if (stabilizerData.isEnabled) {
+            Dom.objStabilizerAngleSlider.parentElement.style.display = 'flex';
+        } else {
+            Dom.objStabilizerAngleSlider.parentElement.style.display = 'none';
+        }
+    } else {
+        Dom.stabilizerSection.style.display = 'none';
+    }
+
     if (hasCircleFixture) {
         Dom.motorPropertiesSection.style.display = 'flex';
-        const motorData = userData.motor || { isEnabled: false, speed: 10.0, grip: 0.8 };
+        const motorData = userData.motor || { isEnabled: false, speed: 10.0, grip: 0.8, power: 50 };
         Dom.objMotorEnableToggle.checked = motorData.isEnabled;
         Dom.objMotorSpeedSlider.value = motorData.speed;
         Dom.objMotorSpeedValue.textContent = motorData.speed.toFixed(1);
+        
+        const power = motorData.power !== undefined ? motorData.power : 50;
+        Dom.objMotorAccelerationSlider.value = power;
+        Dom.objMotorAccelerationValue.textContent = power;
+
         const currentFriction = body.getFixtureList().getFriction();
         Dom.objMotorGripSlider.value = currentFriction;
         Dom.objMotorGripValue.textContent = currentFriction.toFixed(1);
+        
         if (motorData.isEnabled) {
              Dom.objMotorSpeedSlider.parentElement.style.display = 'flex';
+             Dom.objMotorAccelerationSlider.parentElement.style.display = 'flex';
              Dom.objMotorGripContainer.style.display = 'flex';
              Dom.objFrictionContainer.style.display = 'none';
         } else {
              Dom.objMotorSpeedSlider.parentElement.style.display = 'none';
+             Dom.objMotorAccelerationSlider.parentElement.style.display = 'none';
              Dom.objMotorGripContainer.style.display = 'none';
              Dom.objFrictionContainer.style.display = 'flex';
         }
@@ -68,9 +137,8 @@ export function showObjectPropertiesPanel(body, x, y) {
         Dom.objFrictionContainer.style.display = 'flex';
     }
 
-    Dom.objectPropertiesPanel.style.display = 'flex';
-    Dom.objectPropertiesPanel.style.left = `${Math.min(x, window.innerWidth - 270)}px`;
-    Dom.objectPropertiesPanel.style.top = `${Math.min(y, window.innerHeight - 400)}px`;
+    // Используем новую функцию безопасного позиционирования
+    clampPanelPosition(Dom.objectPropertiesPanel, x, y);
     panelState.isPropertiesOpen = true;
 }
 
@@ -97,9 +165,8 @@ export function showSpringPropertiesPanel(joint, x, y) {
     Dom.springLengthValue.textContent = length.toFixed(2);
     Dom.springFixedToggle.checked = !!userData.isFixed;
 
-    Dom.springPropertiesPanel.style.display = 'flex';
-    Dom.springPropertiesPanel.style.left = `${Math.min(x, window.innerWidth - 270)}px`;
-    Dom.springPropertiesPanel.style.top = `${Math.min(y, window.innerHeight - 300)}px`;
+    // Используем новую функцию безопасного позиционирования
+    clampPanelPosition(Dom.springPropertiesPanel, x, y);
     panelState.isSpringPropertiesOpen = true;
 }
 
@@ -179,23 +246,60 @@ export function initializeObjectPropertiesPanel(world) {
         hideObjectPropertiesPanel();
     });
     
+    // --- Stabilizer Listeners ---
+    Dom.objStabilizerEnableToggle.addEventListener('change', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const isEnabled = e.target.checked;
+            const userData = body.getUserData() || {};
+            if (!userData.stabilizer) userData.stabilizer = { maxAngle: 60 };
+            userData.stabilizer.isEnabled = isEnabled;
+            body.setUserData(userData);
+            
+            if (isEnabled) {
+                Dom.objStabilizerAngleSlider.parentElement.style.display = 'flex';
+            } else {
+                Dom.objStabilizerAngleSlider.parentElement.style.display = 'none';
+            }
+            // Пересчитываем позицию меню, так как размер изменился
+            const rect = Dom.objectPropertiesPanel.getBoundingClientRect();
+            clampPanelPosition(Dom.objectPropertiesPanel, rect.left, rect.top);
+        }
+    });
+
+    Dom.objStabilizerAngleSlider.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const angle = parseInt(e.target.value);
+            Dom.objStabilizerAngleValue.textContent = angle + '°';
+            const userData = body.getUserData();
+            if (userData?.stabilizer) userData.stabilizer.maxAngle = angle;
+        }
+    });
+
+
     Dom.objMotorEnableToggle.addEventListener('change', (e) => {
         const body = getSelectedBody();
         if (body) {
             const isEnabled = e.target.checked;
             const userData = body.getUserData() || {};
-            if (!userData.motor) userData.motor = { speed: 10.0, grip: 0.8 };
+            if (!userData.motor) userData.motor = { speed: 10.0, grip: 0.8, power: 50 };
             userData.motor.isEnabled = isEnabled;
             body.setUserData(userData);
             if (isEnabled) {
                  Dom.objMotorSpeedSlider.parentElement.style.display = 'flex';
+                 Dom.objMotorAccelerationSlider.parentElement.style.display = 'flex';
                  Dom.objMotorGripContainer.style.display = 'flex';
                  Dom.objFrictionContainer.style.display = 'none';
             } else {
                  Dom.objMotorSpeedSlider.parentElement.style.display = 'none';
+                 Dom.objMotorAccelerationSlider.parentElement.style.display = 'none';
                  Dom.objMotorGripContainer.style.display = 'none';
                  Dom.objFrictionContainer.style.display = 'flex';
             }
+            // Пересчитываем позицию меню, так как размер изменился
+            const rect = Dom.objectPropertiesPanel.getBoundingClientRect();
+            clampPanelPosition(Dom.objectPropertiesPanel, rect.left, rect.top);
         }
     });
 
@@ -206,6 +310,16 @@ export function initializeObjectPropertiesPanel(world) {
             Dom.objMotorSpeedValue.textContent = speed.toFixed(1);
             const userData = body.getUserData();
             if (userData?.motor) userData.motor.speed = speed;
+        }
+    });
+
+    Dom.objMotorAccelerationSlider.addEventListener('input', (e) => {
+        const body = getSelectedBody();
+        if (body) {
+            const power = parseFloat(e.target.value);
+            Dom.objMotorAccelerationValue.textContent = power;
+            const userData = body.getUserData();
+            if (userData?.motor) userData.motor.power = power;
         }
     });
     

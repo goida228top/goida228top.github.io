@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1016,6 +1017,17 @@
 </script>
 </head>
 <body oncontextmenu="return false;">
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;">
+        <defs>
+            <filter id="sand-threshold">
+                <!-- Matrix to threshold alpha without affecting color: A*18 - 8 -->
+                <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0
+                                                                        0 1 0 0 0
+                                                                        0 0 1 0 0
+                                                                        0 0 0 18 -8" />
+            </filter>
+        </defs>
+    </svg>
     <div id="loading-overlay">
         <div id="loading-container">
             <h1 id="loading-title">Физическая песочница</h1>
@@ -1033,9 +1045,9 @@
     <div id="main-menu-overlay">
         <div id="main-menu-container">
             <h1 class="main-menu-title">Физическая песочница</h1>
-            <button id="start-game-btn" class="main-menu-btn">Начать игру</button>
-            <button id="load-game-menu-btn" class="main-menu-btn">Загрузить игру</button>
-            <button id="about-game-btn" class="main-menu-btn">Об игре</button>
+            <button id="start-game-btn" class="main-menu-btn" data-translate-text="start-game-button">Играть</button>
+            <button id="load-game-menu-btn" class="main-menu-btn" data-translate-text="load-title">Загрузить игру</button>
+            <button id="about-game-btn" class="main-menu-btn" data-translate-text="about-btn">Об игре</button>
         </div>
     </div>
 
@@ -1170,9 +1182,15 @@
     </div>
     
     <div id="bottom-toolbar">
+        <button id="left-btn" class="control-btn">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+        </button>
         <button id="play-pause-btn" data-translate-title="play-title">
-            <svg id="play-icon" viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
-            <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+            <svg id="play-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
+            <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+        </button>
+         <button id="right-btn" class="control-btn">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
         </button>
     </div>
     
@@ -1214,6 +1232,21 @@
             <label for="obj-static" data-translate-text="static-label">Неподвижный:</label>
             <input type="checkbox" id="obj-static">
         </div>
+        <!-- NEW: Stabilizer Section -->
+        <div id="stabilizer-section" style="display: none; flex-direction: column; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
+             <div class="popup-toggle-container">
+                <label for="obj-stabilizer-enable" data-translate-text="stabilizer-enable-label">Помощник Вилли:</label>
+                <input type="checkbox" id="obj-stabilizer-enable">
+            </div>
+             <div class="popup-slider-container">
+                <div class="label-value">
+                    <label for="obj-stabilizer-angle" data-translate-text="stabilizer-angle-label">Угол Вилли:</label>
+                    <span id="obj-stabilizer-angle-value">60°</span>
+                </div>
+                <input type="range" id="obj-stabilizer-angle" min="10" max="90" step="1" value="60">
+            </div>
+        </div>
+
         <!-- NEW: Motor Section -->
         <div id="motor-properties-section" style="display: none; flex-direction: column; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
             <div class="popup-toggle-container">
@@ -1223,16 +1256,26 @@
             <div class="popup-slider-container">
                 <div class="label-value">
                     <label for="obj-motor-speed" data-translate-text="motor-speed-label">Скорость:</label>
-                    <span id="obj-motor-speed-value">10.0</span>
+                    <span id="obj-motor-speed-value">50.0</span>
                 </div>
-                <input type="range" id="obj-motor-speed" min="-100" max="100" step="0.1" value="10.0">
+                <!-- Увеличен диапазон скорости, убраны отрицательные значения -->
+                <input type="range" id="obj-motor-speed" min="0" max="300" step="5" value="50.0">
+            </div>
+            <!-- NEW: Motor Acceleration Slider -->
+            <div class="popup-slider-container">
+                <div class="label-value">
+                    <label for="obj-motor-acceleration" data-translate-text="motor-acceleration-label">Мощность:</label>
+                    <span id="obj-motor-acceleration-value">50</span>
+                </div>
+                <input type="range" id="obj-motor-acceleration" min="10" max="100" step="5" value="50">
             </div>
             <div class="popup-slider-container" id="obj-motor-grip-container">
                 <div class="label-value">
                     <label for="obj-motor-grip" data-translate-text="grip-label">Сцепление:</label>
                     <span id="obj-motor-grip-value">0.8</span>
                 </div>
-                <input type="range" id="obj-motor-grip" min="0" max="20" step="0.1" value="0.8">
+                <!-- Увеличен диапазон сцепления для вилли -->
+                <input type="range" id="obj-motor-grip" min="0" max="100" step="0.5" value="0.8">
             </div>
         </div>
         <div class="delete-button" id="delete-selected-btn" data-translate-text="delete-button">Удалить</div>
@@ -1449,24 +1492,11 @@
     <div id="about-panel" class="popup">
         <button id="about-panel-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="about-panel-content">
-            <h2>Об игре "Физическая песочница"</h2>
-            <p>
-                Добро пожаловать! Это первая версия игры, и я буду рад любой поддержке. <br>
-                Имейте в виду, что не все предметы и механики доделаны до конца. Например, песок в данный момент находится в стадии активной разработки и может вести себя некорректно.
-            </p>
-            <p style="color: #ffcc00;">
-                <b>Внимание:</b> Большое количество частиц воды и песка может вызывать сильное падение производительности на некоторых устройствах.
-            </p>
-            <h3>Что в планах</h3>
-            <ul>
-                <li>Полная переработка и оптимизация песка.</li>
-                <li>Добавление новых интерактивных предметов и инструментов.</li>
-                <li>Возможность загружать собственные изображения как текстуры для объектов.</li>
-                <li>Инструмент "Нож" для вырезания отверстий в объектах.</li>
-                <li>Улучшение и исправление существующих инструментов (Перемещение, Кисть, Пружина).</li>
-                <li>Добавление настроек для инструментов (размер ластика, толщина кисти и т.д.).</li>
-                <li>Больше настроек для симуляции и улучшение интерфейса.</li>
-                <li>Готовые карты и постройки для исследования в главном меню.</li>
+            <h2 data-translate-text="about-title">Об игре</h2>
+            <p data-translate-html="about-text-intro"></p>
+            <p style="color: #ffcc00;" data-translate-html="about-text-warning"></p>
+            <h3 data-translate-text="about-subtitle-plans">Что в планах</h3>
+            <ul data-translate-html="about-list-plans">
             </ul>
         </div>
     </div>

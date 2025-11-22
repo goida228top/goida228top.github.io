@@ -181,20 +181,20 @@ export function renderWorld(world, render, camera) {
         
         // --- Отрисовка СВАРКИ ---
         else if (joint.getType() === 'weld-joint') {
-            const posA = bodyA.getPosition();
-            const posB = bodyB.getPosition();
+            // ИСПРАВЛЕНИЕ: Используем точную точку якоря соединения, а не среднюю точку между телами
+            const anchor = joint.getAnchorA();
             
-            const midX = (posA.x + posB.x) / 2 * PHYSICS_SCALE;
-            const midY = (posA.y + posB.y) / 2 * PHYSICS_SCALE;
+            const iconX = anchor.x * PHYSICS_SCALE;
+            const iconY = anchor.y * PHYSICS_SCALE;
             const iconSize = 16; // в "мировых пикселях"
 
-            const gradient = context.createRadialGradient(midX, midY, 0, midX, midY, iconSize);
+            const gradient = context.createRadialGradient(iconX, iconY, 0, iconX, iconY, iconSize);
             gradient.addColorStop(0, 'rgba(255, 237, 160, 0.95)'); // Light yellow
             gradient.addColorStop(0.7, 'rgba(255, 179, 71, 0.9)');  // Orange
             gradient.addColorStop(1, 'rgba(255, 140, 0, 0.8)');   // Darker orange
 
             context.save();
-            context.translate(midX, midY);
+            context.translate(iconX, iconY);
             
             // Масштабируем иконку (24x24) до нужного размера (iconSize)
             const scaleFactor = iconSize / 24;

@@ -73,6 +73,8 @@ export const saveSlotsContainer = document.getElementById('save-slots-container'
 export const toolButtons = [moveButton, fingerButton, boxButton, circleButton, polygonButton, brushButton, weldButton, springButton, rodButton, tntSmallButton, tntMediumButton, tntLargeButton, waterButton, sandButton, eraserButton];
 
 // Кнопки нижней панели
+export const leftButton = document.getElementById('left-btn'); // NEW
+export const rightButton = document.getElementById('right-btn'); // NEW
 export const playPauseButton = document.getElementById('play-pause-btn');
 export const playIcon = document.getElementById('play-icon');
 export const pauseIcon = document.getElementById('pause-icon');
@@ -92,11 +94,20 @@ export const objResistanceValue = document.getElementById('obj-resistance-value'
 export const objStaticToggle = document.getElementById('obj-static');
 export const deleteSelectedButton = document.getElementById('delete-selected-btn');
 
+// NEW: Элементы панели свойств стабилизатора
+export const stabilizerSection = document.getElementById('stabilizer-section');
+export const objStabilizerEnableToggle = document.getElementById('obj-stabilizer-enable');
+export const objStabilizerAngleSlider = document.getElementById('obj-stabilizer-angle');
+export const objStabilizerAngleValue = document.getElementById('obj-stabilizer-angle-value');
+
+
 // NEW: Элементы панели свойств мотора
 export const motorPropertiesSection = document.getElementById('motor-properties-section');
 export const objMotorEnableToggle = document.getElementById('obj-motor-enable');
 export const objMotorSpeedSlider = document.getElementById('obj-motor-speed');
 export const objMotorSpeedValue = document.getElementById('obj-motor-speed-value');
+export const objMotorAccelerationSlider = document.getElementById('obj-motor-acceleration'); // NEW
+export const objMotorAccelerationValue = document.getElementById('obj-motor-acceleration-value'); // NEW
 export const objMotorGripContainer = document.getElementById('obj-motor-grip-container'); // NEW
 export const objMotorGripSlider = document.getElementById('obj-motor-grip'); // NEW
 export const objMotorGripValue = document.getElementById('obj-motor-grip-value'); // NEW

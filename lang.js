@@ -1,4 +1,6 @@
 
+
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -20,7 +22,8 @@ const translations = {
         'save-title': 'Сохранить игру',
         'load-title': 'Загрузить игру',
         'settings-title': 'Настройки',
-        'play-title': 'Воспроизвести',
+        'start-game-button': 'Играть',
+        'play-title': 'Старт',
         'pause-title': 'Пауза',
         'clear-all-title': 'Очистить всё',
         'confirm-title': 'Подтверждение',
@@ -53,7 +56,10 @@ const translations = {
         'brush-size-label': 'Толщина:',
         'enable-motor-label': 'Включить мотор:', // NEW
         'motor-speed-label': 'Скорость:', // NEW
+        'motor-acceleration-label': 'Мощность:', // NEW
         'grip-label': 'Сцепление:', // NEW
+        'stabilizer-enable-label': 'Помощник Вилли:',
+        'stabilizer-angle-label': 'Угол Вилли:',
         'low-fps-title': 'Низкая производительность',
         'low-fps-message': 'Обнаружен низкий FPS. Большое количество воды может замедлять симуляцию. Что вы хотите сделать?',
         'delete-water-button': 'Удалить всю воду',
@@ -105,6 +111,12 @@ const translations = {
         'show-debug-label': 'Показывать FPS и коорд.:',
         'exit-game-button': 'Выйти в меню',
         'confirm-exit-game': 'Вы уверены, что хотите выйти в главное меню? Несохраненный прогресс будет потерян.',
+        'about-btn': 'Об игре',
+        'about-title': 'Об игре "Физическая песочница"',
+        'about-text-intro': 'Добро пожаловать! Это первая версия игры, и я буду рад любой поддержке. <br>Имейте в виду, что не все предметы и механики доделаны до конца.',
+        'about-text-warning': '<b>Внимание:</b> Большое количество частиц воды и песка может вызывать падение производительности.',
+        'about-subtitle-plans': 'Что в планах',
+        'about-list-plans': '<li>Полная переработка и оптимизация песка.</li><li>Добавление новых интерактивных предметов.</li><li>Инструмент "Нож" для вырезания.</li><li>Улучшение инструментов (Кисть, Пружина).</li><li>Готовые карты и постройки.</li>',
     },
     en: {
         'app-title': 'Physics Sandbox',
@@ -126,7 +138,8 @@ const translations = {
         'save-title': 'Save Game',
         'load-title': 'Load Game',
         'settings-title': 'Settings',
-        'play-title': 'Play',
+        'start-game-button': 'Play',
+        'play-title': 'Start',
         'pause-title': 'Pause',
         'clear-all-title': 'Clear All',
         'confirm-title': 'Confirmation',
@@ -159,7 +172,10 @@ const translations = {
         'brush-size-label': 'Thickness:',
         'enable-motor-label': 'Enable Motor:', // NEW
         'motor-speed-label': 'Speed:', // NEW
+        'motor-acceleration-label': 'Power:', // NEW
         'grip-label': 'Grip:', // NEW
+        'stabilizer-enable-label': 'Wheelie Assist:',
+        'stabilizer-angle-label': 'Wheelie Angle:',
         'low-fps-title': 'Low Performance',
         'low-fps-message': 'Low FPS detected. A large amount of water can slow down the simulation. What would you like to do?',
         'delete-water-button': 'Delete All Water',
@@ -211,6 +227,12 @@ const translations = {
         'show-debug-label': 'Show FPS & Coords:',
         'exit-game-button': 'Exit to Menu',
         'confirm-exit-game': 'Are you sure you want to exit to the main menu? Unsaved progress will be lost.',
+        'about-btn': 'About',
+        'about-title': 'About "Physics Sandbox"',
+        'about-text-intro': 'Welcome! This is the first version of the game, and I appreciate any support.<br>Please note that not all items and mechanics are finalized.',
+        'about-text-warning': '<b>Warning:</b> Large amounts of water and sand particles may cause performance drops.',
+        'about-subtitle-plans': 'Future Plans',
+        'about-list-plans': '<li>Complete rework and optimization of sand.</li><li>New interactive items.</li><li>"Knife" tool for cutting objects.</li><li>Improvements to tools (Brush, Spring).</li><li>Pre-made maps and buildings.</li>',
     },
     tr: {
         'app-title': 'Fizik Sandbox',
@@ -232,7 +254,8 @@ const translations = {
         'save-title': 'Oyunu Kaydet',
         'load-title': 'Oyunu Yükle',
         'settings-title': 'Ayarlar',
-        'play-title': 'Oynat',
+        'start-game-button': 'Oyna',
+        'play-title': 'Başlat',
         'pause-title': 'Duraklat',
         'clear-all-title': 'Tümünü Temizle',
         'confirm-title': 'Onay',
@@ -265,7 +288,10 @@ const translations = {
         'brush-size-label': 'Kalınlık:',
         'enable-motor-label': 'Motoru Etkinleştir:', // NEW
         'motor-speed-label': 'Hız:', // NEW
+        'motor-acceleration-label': 'Güç:', // NEW
         'grip-label': 'Yol Tutuşu:', // NEW
+        'stabilizer-enable-label': 'Wheelie Desteği:',
+        'stabilizer-angle-label': 'Wheelie Açısı:',
         'low-fps-title': 'Düşük Performans',
         'low-fps-message': 'Düşük FPS algılandı. Çok miktarda su simülasyonu yavaşlatabilir. Ne yapmak istersiniz?',
         'delete-water-button': 'Tüm Suyu Sil',
@@ -317,6 +343,12 @@ const translations = {
         'show-debug-label': 'FPS ve Koor. Göster:',
         'exit-game-button': 'Menüye Dön',
         'confirm-exit-game': 'Ana menüye dönmek istediğinizden emin misiniz? Kaydedilmemiş ilerleme kaybolacak.',
+        'about-btn': 'Oyun Hakkında',
+        'about-title': '"Fizik Sandbox" Hakkında',
+        'about-text-intro': 'Hoş geldiniz! Bu oyunun ilk sürümüdür, her türlü desteğe açığım.<br>Lütfen tüm öğelerin ve mekaniklerin henüz tamamlanmadığını unutmayın.',
+        'about-text-warning': '<b>Uyarı:</b> Büyük miktarda su ve kum parçacıkları performans düşüşüne neden olabilir.',
+        'about-subtitle-plans': 'Gelecek Planları',
+        'about-list-plans': '<li>Kumun tamamen elden geçirilmesi ve optimizasyonu.</li><li>Yeni etkileşimli öğeler.</li><li>Nesneleri kesmek için "Bıçak" aracı.</li><li>Araçlarda iyileştirmeler (Fırça, Yay).</li><li>Hazır haritalar ve yapılar.</li>',
     }
 };
 
