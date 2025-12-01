@@ -8,6 +8,7 @@ import { keyState } from './ui_common.js';
 import { SoundManager } from './sound.js';
 import { renderWorld } from './render_core.js';
 import { isInteractionActive } from './tools.js'; // NEW: Import interaction state
+import { updateEffects } from './effects.js'; // NEW: Импорт функции обновления эффектов
 
 let isPaused = false;
 let cameraData = null;
@@ -16,6 +17,7 @@ let beforeRenderCallback = () => {};
 // Переменные для оптимизации фона и рендеринга
 let lastCameraState = { x: null, y: null, scale: null, width: null, height: null };
 let frameCounter = 0; // Для троттлинга
+let forceRenderNextFrame = false; // Флаг принудительной отрисовки
 
 // Для честного FPS
 let fpsFrameCount = 0;
@@ -274,8 +276,12 @@ export function initializeEngine() {
         
         const userInteracting = isInteractionActive() || (cameraData && cameraData.isPanning());
         
+        // ПРОВЕРКА НА ЭФФЕКТЫ: Мы не знаем точно, есть ли активные эффекты, но если игра активна, мы должны рендерить.
+        // Если игра на паузе, эффекты замерли, но рендерить их надо (это обрабатывается ниже через forceRenderNextFrame или cameraMoved).
+        
         // Если игра на паузе, камера стоит и игрок ничего не делает -> полностью пропускаем отрисовку
-        if (isPaused && !cameraMoved && !userInteracting) {
+        // НО: Если установлен флаг forceRenderNextFrame, мы рисуем кадр
+        if (isPaused && !cameraMoved && !userInteracting && !forceRenderNextFrame) {
             // Даже если мы пропускаем рендер, нужно обновлять время, чтобы при снятии с паузы не было скачка
             accumulator = 0; 
             return;
@@ -321,13 +327,14 @@ export function initializeEngine() {
                 applyMotorForces(world); // Применяем физику моторов
                 applyStabilizerForces(world); // Применяем стабилизацию (NEW)
                 world.step(timeStep, velocityIterations, positionIterations);
+                updateEffects(timeStep); // NEW: Обновляем визуальные эффекты только если игра идет
                 accumulator -= timeStep;
             }
         }
         
         if (cameraData) {
             // ОПТИМИЗАЦИЯ ФОНА: Перерисовываем только если камера изменилась
-            if (cameraMoved) {
+            if (cameraMoved || forceRenderNextFrame) {
                 beforeRenderCallback(cameraData);
                 lastCameraState.x = cameraData.viewOffset.x;
                 lastCameraState.y = cameraData.viewOffset.y;
@@ -364,6 +371,9 @@ export function initializeEngine() {
                 }
             }
         }
+
+        // Сбрасываем флаг принудительной отрисовки после того, как кадр нарисован
+        forceRenderNextFrame = false;
     }
     
     requestAnimationFrame(gameLoop);
@@ -381,6 +391,7 @@ export function initializeEngine() {
         setCamera: (camData) => { cameraData = camData; },
         setBeforeRenderCallback: (cb) => { beforeRenderCallback = cb; },
         setVelocityIterations: (value) => { velocityIterations = value; },
-        setPositionIterations: (value) => { positionIterations = value; }
+        setPositionIterations: (value) => { positionIterations = value; },
+        requestRender: () => { forceRenderNextFrame = true; } // Метод для вызова перерисовки извне
     };
 }

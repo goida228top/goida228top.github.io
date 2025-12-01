@@ -7,12 +7,13 @@ import { setupWorld } from './world.js';
 import { initializeWater } from './water.js';
 import { initializeSand } from './sand.js'; // Импортируем инициализатор песка
 import { initializeTools } from './tools.js';
-import { initializeUI, initUIData } from './ui.js';
+import { initializeUI, initUIData, updatePlayPauseIcons } from './ui.js';
 import { initYandexSDK, gameReady, loadPlayer_Data } from './yandex.js';
 import { ALL_IMAGE_URLS, ALL_SOUND_URLS } from './game_config.js';
 import { ImageLoader } from './image_loader.js';
 import { SoundManager } from './sound.js';
 import { initializeBackground, renderBackground } from './background.js';
+import { isGameStarted } from './ui_common.js'; // Import isGameStarted
 
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBar = document.getElementById('progress-bar');
@@ -166,18 +167,50 @@ async function main() {
         function onResize() {
             const { world, render } = engineData;
             
-            resizeCamera(render); // Изменяет размеры всех canvas
+            // Используем умный ресайз камеры, который сохраняет центр вида
+            if (cameraData && cameraData.resize) {
+                cameraData.resize();
+            } else {
+                resizeCamera(render); // Fallback если что-то пошло не так
+            }
+            
             const newHeight = render.canvas.parentElement.clientHeight;
             setupWorld(world, newHeight);
-            cameraData.updateView();
-
-            // Обновляем размеры в "виртуальном" рендере движка
-            render.options.width = render.canvas.width;
-            render.options.height = render.canvas.height;
         }
 
         window.addEventListener('resize', onResize);
         onResize();
+        
+        // --- 1.3 Handling Page Visibility (Suspend Audio & Pause Game) ---
+        let wasRunningBeforeHide = false;
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page hidden: Stop sound, pause game
+                SoundManager.toggleMuteAll(true);
+                
+                wasRunningBeforeHide = engineData.runner.enabled;
+                if (isGameStarted) {
+                    engineData.runner.enabled = false;
+                    updatePlayPauseIcons(false);
+                }
+            } else {
+                // Page visible: Resume sound capabilities (but maybe keep game paused?)
+                SoundManager.toggleMuteAll(false);
+                
+                // Requirement often implies game should stay paused, or resume if it was running.
+                // For better UX, let's keep it paused if it was paused, or paused anyway to let user resume.
+                // However, "background sound stops" implies it resumes when back.
+                // Let's just restore 'sound readiness'.
+                
+                // Optional: Auto-resume game if it was running.
+                // if (wasRunningBeforeHide && isGameStarted) {
+                //    engineData.runner.enabled = true;
+                //    updatePlayPauseIcons(true);
+                // }
+            }
+        });
+
         updateProgress(100);
         
         // Завершение загрузки

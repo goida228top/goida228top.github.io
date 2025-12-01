@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 // sound.js
 
@@ -182,7 +183,7 @@ export const SoundManager = {
      */
     playSound(name, { volume = 1.0, pitch = 1.0 } = {}) {
         // Возобновляем AudioContext, если он был приостановлен браузером
-        if (audioContext.state === 'suspended') {
+        if (audioContext.state === 'suspended' && !audioContext._forceSuspended) {
             audioContext.resume();
         }
 
@@ -247,6 +248,17 @@ export const SoundManager = {
             masterGain.gain.setValueAtTime(volume, audioContext.currentTime);
         }
     },
+    
+    // NEW: Global mute toggle for Ads and Window minimization
+    toggleMuteAll(shouldMute) {
+        if (shouldMute) {
+            audioContext.suspend();
+            audioContext._forceSuspended = true; // Флаг, чтобы playSound не включал его обратно сам
+        } else {
+            audioContext._forceSuspended = false;
+            audioContext.resume();
+        }
+    }
 };
 
 // Проверяем, был ли AudioContext создан успешно.
@@ -256,6 +268,7 @@ if (!audioContext) {
     SoundManager.playSound = () => {};
     SoundManager.setCategoryMute = () => {};
     SoundManager.setMasterVolume = () => {};
+    SoundManager.toggleMuteAll = () => {};
     SoundManager.loadMuteSettings = () => ({ ui: false, object: false, environment: false });
     SoundManager.loadAllSounds = async () => {};
 }

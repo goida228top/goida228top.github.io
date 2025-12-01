@@ -2,11 +2,13 @@
 import * as Dom from './dom.js';
 import { t } from './lang.js';
 import { SoundManager } from './sound.js';
-import { addTapListener, togglePanel, showConfirm } from './ui_common.js';
+import { addTapListener, togglePanel, showConfirm, showToast } from './ui_common.js';
 import { setMaxWaterParticles, setWaterColor } from './water.js';
 import { setMaxSandParticles, setSandColor } from './sand.js';
 import { updatePlayPauseIcons } from './ui.js';
 import planck from './planck.js';
+import { loadFromJSON, loadFromSVG } from './import_utils.js';
+import { PHYSICS_SCALE } from './game_config.js';
 
 export const settingsState = {
     isOpen: false
@@ -153,6 +155,71 @@ export function initializeNewSettingsPanel(engineData, cameraData, isGameStarted
         // We check visibility in main UI loop or CSS, this just sets state
         if (Dom.debugInfo) Dom.debugInfo.style.display = e.target.checked ? 'flex' : 'none';
     });
+
+    // --- Import Modal Logic ---
+    let currentImportMode = null;
+
+    const openImportModal = (mode) => {
+        currentImportMode = mode;
+        Dom.importModalTitle.textContent = mode === 'json' ? 'Загрузить JSON' : 'Загрузить SVG';
+        Dom.importTextarea.value = '';
+        Dom.importModalOverlay.style.display = 'flex';
+        // Закрываем панель настроек, чтобы не мешала
+        Dom.newSettingsPanel.style.display = 'none';
+        settingsState.isOpen = false;
+    };
+
+    const closeImportModal = () => {
+        Dom.importModalOverlay.style.display = 'none';
+        currentImportMode = null;
+    };
+
+    addTapListener(Dom.importJsonBtn, () => {
+        SoundManager.playSound('ui_click');
+        openImportModal('json');
+    });
+
+    addTapListener(Dom.importSvgBtn, () => {
+        SoundManager.playSound('ui_click');
+        openImportModal('svg');
+    });
+
+    addTapListener(Dom.importCancelBtn, () => {
+        SoundManager.playSound('ui_click');
+        closeImportModal();
+    });
+
+    addTapListener(Dom.importConfirmBtn, () => {
+        const content = Dom.importTextarea.value.trim();
+        if (!content) return;
+        
+        SoundManager.playSound('ui_click');
+        
+        // Определяем центр экрана в мировых координатах
+        const viewCenter = {
+            x: cameraData.viewOffset.x + (engineData.render.canvas.width / 2 * cameraData.scale),
+            y: cameraData.viewOffset.y + (engineData.render.canvas.height / 2 * cameraData.scale)
+        };
+        
+        // Конвертируем в метры
+        const spawnPos = planck.Vec2(viewCenter.x / PHYSICS_SCALE, viewCenter.y / PHYSICS_SCALE);
+
+        let success = false;
+        if (currentImportMode === 'json') {
+            success = loadFromJSON(world, content, spawnPos);
+        } else if (currentImportMode === 'svg') {
+            success = loadFromSVG(world, content, spawnPos);
+        }
+
+        if (success) {
+            showToast(t('game-loaded-message'), 'success');
+            engineData.requestRender();
+        } else {
+            showToast(t('game-load-failed-message'), 'error');
+        }
+        closeImportModal();
+    });
+
 
     // --- Exit Game Button Logic ---
     if (Dom.exitGameBtn) {

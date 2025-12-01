@@ -28,6 +28,7 @@ import { SoundManager } from './sound.js';
 let mouseJoint = null;
 let ground = null;
 let draggedBody = null;
+let world = null;
 
 let isDrawing = false;
 let startPoint = planck.Vec2(0, 0);
@@ -49,6 +50,9 @@ const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) 
 // Переменная для отслеживания двойного тапа на мобильных
 let lastTouchEndTime = 0;
 
+// Ссылка на функцию принудительной отрисовки
+let requestRender = () => {};
+
 // Экспортируем статус взаимодействия для оптимизации рендеринга
 export function isInteractionActive() {
     return isDrawing || mouseJoint !== null || draggedBody !== null || waterSpawnInterval !== null || sandSpawnInterval !== null;
@@ -62,11 +66,17 @@ export function switchTool(tool) {
     deselectBody();
     hideObjectPropertiesPanel();
     stopAllActions(); // Сбрасываем текущие действия при смене инструмента
+    requestRender(); // Обновляем интерфейс (например, убираем превью)
 }
 
 export async function initializeTools(engineData, cameraData, worldData) {
-    const { world } = engineData;
+    world = engineData.world;
     const { getMousePos, isPanning } = cameraData;
+    
+    // Сохраняем ссылку на requestRender из engineData
+    if (engineData.requestRender) {
+        requestRender = engineData.requestRender;
+    }
 
     ground = world.createBody();
 
@@ -122,6 +132,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             case 'box':
             case 'circle':
                 setPreview(toolState.currentTool, startPoint, startPoint);
+                requestRender(); // Рисуем начальное превью
                 break;
             case 'polygon':
                 polygonMouseDownTime = Date.now();
@@ -129,6 +140,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             case 'brush':
                  lastBrushPoint = startPoint;
                  createBrushStroke(world, startPoint, startPoint, BRUSH_RADIUS / PHYSICS_SCALE);
+                 requestRender();
                  break;
             case 'weld':
             case 'spring':
@@ -149,7 +161,8 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     }
                     setFirstJointBody(firstBody, anchorPoint);
                     // Рисуем превью сразу от точки старта
-                    setPreview('polygon', [anchorPoint], anchorPoint); 
+                    setPreview('polygon', [anchorPoint], anchorPoint);
+                    requestRender(); 
                 }
                 break;
             case 'tnt-small':
@@ -157,25 +170,31 @@ export async function initializeTools(engineData, cameraData, worldData) {
             case 'tnt-large':
                 const tntType = toolState.currentTool.replace('tnt-', '');
                 createTNT(world, startPoint, tntType);
+                requestRender();
                 break;
             case 'water':
                 spawnWaterCluster(world, startPoint.x, startPoint.y);
+                requestRender();
                 if (waterSpawnInterval) clearInterval(waterSpawnInterval);
                 waterSpawnInterval = setInterval(() => {
                     spawnWaterCluster(world, lastMousePos.x, lastMousePos.y);
                     SoundManager.playSound('water_pour', { volume: 0.2, pitch: 1.0 + Math.random() * 0.2 });
+                    requestRender();
                 }, 40);
                 break;
             case 'sand':
                 spawnSandCluster(world, startPoint.x, startPoint.y);
+                requestRender();
                 if (sandSpawnInterval) clearInterval(sandSpawnInterval);
                 sandSpawnInterval = setInterval(() => {
                     spawnSandCluster(world, lastMousePos.x, lastMousePos.y);
                     SoundManager.playSound('sand_pour', { volume: 0.3, pitch: 1.0 + Math.random() * 0.2 });
+                    requestRender();
                 }, 40);
                 break;
             case 'eraser':
                 eraseAt(world, startPoint);
+                requestRender();
                 break;
         }
     }
@@ -185,6 +204,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
         if (toolState.currentTool === 'polygon' && polygonVertices.length > 0) {
             setPreview('polygon', polygonVertices, lastMousePos);
+            requestRender();
         }
 
         if (!isDrawing) return;
@@ -198,16 +218,19 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     draggedBody.setPosition(planck.Vec2(currentPos.x + dx, currentPos.y + dy));
                     draggedBody.setAwake(true);
                     startPoint = lastMousePos;
+                    requestRender();
                  }
                  break;
             case 'finger':
                 if (mouseJoint) {
                     mouseJoint.setTarget(lastMousePos);
+                    requestRender();
                 }
                 break;
             case 'box':
             case 'circle':
                 setPreview(toolState.currentTool, startPoint, lastMousePos);
+                requestRender(); // Обновляем превью при движении
                 break;
             case 'brush':
                 if (lastBrushPoint) {
@@ -215,6 +238,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
                     if (dist * PHYSICS_SCALE > BRUSH_RADIUS * 0.5) {
                          createBrushStroke(world, lastBrushPoint, lastMousePos, BRUSH_RADIUS / PHYSICS_SCALE);
                          lastBrushPoint = lastMousePos;
+                         requestRender();
                     }
                 }
                 break;
@@ -226,10 +250,12 @@ export async function initializeTools(engineData, cameraData, worldData) {
                      // Используем превью типа 'polygon' (линия) для отображения будущей связи
                      const { anchor } = getFirstJointBody();
                      setPreview('polygon', [anchor], lastMousePos);
+                     requestRender();
                 }
                 break;
             case 'eraser':
                 eraseAt(world, lastMousePos);
+                requestRender();
                 break;
         }
     }
@@ -256,6 +282,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             if (polygonVertices.length === 1) {
                 setPreview('polygon', polygonVertices, clickPoint);
             }
+            requestRender();
 
             // Для завершения полигона на тач: долгое нажатие или замыкание
             if (duration > POLYGON_HOLD_DURATION || (polygonVertices.length >= 3 && planck.Vec2.distance(clickPoint, polygonVertices[0]) < 0.5)) {
@@ -330,6 +357,9 @@ export async function initializeTools(engineData, cameraData, worldData) {
                  sandSpawnInterval = null;
                  break;
         }
+        
+        // ПРИНУДИТЕЛЬНАЯ ОТРИСОВКА ПОСЛЕ ЗАВЕРШЕНИЯ ДЕЙСТВИЯ
+        requestRender();
     }
 
     function finishPolygon() {
@@ -339,6 +369,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
         polygonVertices = [];
         clearPreview();
         isDrawing = false;
+        requestRender();
     }
 
     // --- Event Handler Wrappers ---
@@ -388,6 +419,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             const body = getBodyAt(world, lastMousePos);
             if (body && (body.getUserData()?.label === 'tnt')) {
                  detonateTNT(world, body);
+                 requestRender();
             }
         }
         
@@ -408,6 +440,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 polygonVertices = [];
                 clearPreview();
                 isDrawing = false;
+                requestRender(); // Обновить экран после отмены
             }
             return;
         }
@@ -418,6 +451,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             setFirstJointBody(null, null);
             clearPreview();
             isDrawing = false;
+            requestRender(); // Обновить экран после отмены
             return;
         }
 
@@ -447,6 +481,7 @@ export async function initializeTools(engineData, cameraData, worldData) {
             deselectBody();
             deselectSpring();
         }
+        requestRender();
     }
 
     function handleDoubleClick(e) {
@@ -454,27 +489,29 @@ export async function initializeTools(engineData, cameraData, worldData) {
         const body = getBodyAt(world, pos);
         if(body && (body.getUserData()?.label === 'tnt')) {
              detonateTNT(world, body);
+             requestRender();
         }
     }
+}
 
-    function stopAllActions() {
-        if(isDrawing) isDrawing = false;
-        if(mouseJoint) {
-            world.destroyJoint(mouseJoint);
-            mouseJoint = null;
-        }
-        draggedBody = null;
-        if(waterSpawnInterval) clearInterval(waterSpawnInterval);
-        waterSpawnInterval = null;
-        if(sandSpawnInterval) clearInterval(sandSpawnInterval);
-        sandSpawnInterval = null;
-
-        setFirstJointBody(null, null); // Сброс состояния соединений
-        clearPreview();
-        if (polygonVertices.length > 0) {
-            polygonVertices = [];
-        }
+function stopAllActions() {
+    if(isDrawing) isDrawing = false;
+    if(mouseJoint) {
+        if (world) world.destroyJoint(mouseJoint);
+        mouseJoint = null;
     }
+    draggedBody = null;
+    if(waterSpawnInterval) clearInterval(waterSpawnInterval);
+    waterSpawnInterval = null;
+    if(sandSpawnInterval) clearInterval(sandSpawnInterval);
+    sandSpawnInterval = null;
+
+    setFirstJointBody(null, null); // Сброс состояния соединений
+    clearPreview();
+    if (polygonVertices.length > 0) {
+        polygonVertices = [];
+    }
+    requestRender(); // Обязательно перерисовать, чтобы убрать "призраков"
 }
 
 function getBodyAt(world, worldPoint, onlyDynamic = false) {

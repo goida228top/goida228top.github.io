@@ -1,6 +1,8 @@
+
 // @ts-nocheck
 import { setLang } from './lang.js';
 import { YANDEX_INIT_TIMEOUT } from './game_config.js';
+import { SoundManager } from './sound.js'; // Import SoundManager for muting
 
 let ysdkInstance = null;
 let player = null; // Переменная для хранения объекта игрока
@@ -26,9 +28,10 @@ export async function initYandexSDK() {
         console.log('Yandex SDK initialized.');
         
         // Получаем объект игрока после успешной инициализации
+        // ВАЖНО: scopes: false предотвращает появление диалога авторизации (требование 1.2.1)
         try {
-            player = await ysdkInstance.getPlayer();
-            console.log('Yandex Player object received.');
+            player = await ysdkInstance.getPlayer({ scopes: false });
+            console.log('Yandex Player object received (Guest/Authorized).');
         } catch (e) {
             console.error('Could not get Yandex Player object:', e);
             player = null; // Убедимся, что player равен null в случае ошибки
@@ -66,6 +69,8 @@ export async function savePlayer_Data(data) {
         return;
     }
     try {
+        // Если игрок не авторизован (Guest), setData может предложить авторизацию или сохранить локально
+        // Для соответствия требованиям, мы просто пытаемся сохранить. Если вылезет промпт - это действие пользователя (нажатие Save).
         await player.setData(data, true); // true для немедленной отправки
         console.log('Player data saved to cloud:', data);
     } catch (e) {
@@ -100,6 +105,9 @@ export function showFullscreenAdv(engineData, onCloseCallback) {
     const { runner } = engineData;
     const wasRunning = runner.enabled;
     runner.enabled = false; 
+    
+    // Mute sound (Requirement 4.7)
+    SoundManager.toggleMuteAll(true);
 
     window.ysdk.adv.showFullscreenAdv({
         callbacks: {
@@ -108,6 +116,9 @@ export function showFullscreenAdv(engineData, onCloseCallback) {
                 if (wasRunning) {
                     runner.enabled = true;
                 }
+                // Unmute sound
+                SoundManager.toggleMuteAll(false);
+                
                 if (onCloseCallback) onCloseCallback();
             },
             onError: (error) => {
@@ -115,7 +126,10 @@ export function showFullscreenAdv(engineData, onCloseCallback) {
                 if (wasRunning) {
                     runner.enabled = true;
                 }
-                 if (onCloseCallback) onCloseCallback();
+                // Unmute sound on error too
+                SoundManager.toggleMuteAll(false);
+                
+                if (onCloseCallback) onCloseCallback();
             },
         }
     });
@@ -134,16 +148,25 @@ export function showRewardedVideo(engineData, onRewarded, onError) {
     const wasRunning = runner.enabled;
     runner.enabled = false;
     
+    // Mute sound (Requirement 4.7)
+    SoundManager.toggleMuteAll(true);
+    
     let isRewarded = false;
     let errorHandled = false;
+
+    const cleanup = () => {
+        // Restore sound and game state
+        if (wasRunning) runner.enabled = true;
+        SoundManager.toggleMuteAll(false);
+        showStickyAdv();
+    };
 
     const handleError = (error) => {
         if (!errorHandled) {
             errorHandled = true;
             if (error) console.error('Rewarded video error:', error);
             if (onError) onError();
-            if (wasRunning) runner.enabled = true;
-            showStickyAdv();
+            cleanup();
         }
     };
 
@@ -163,8 +186,7 @@ export function showRewardedVideo(engineData, onRewarded, onError) {
                     handleError(); // Closed without reward
                 } else {
                     // Ad was successful, just restore state
-                    if (wasRunning) runner.enabled = true;
-                    showStickyAdv();
+                    cleanup();
                 }
             },
             onError: handleError,

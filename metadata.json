@@ -1,7 +1,7 @@
 {
   "description": "Стройте машины, делайте Вилли и взрывайте всё вокруг! Физическая песочница с водой, песком и редактором техники.",
   "requestFramePermissions": [],
-  "name": "App",
+  "name": "Физическая песочница",
   "contentSecurityPolicy": {
     "default-src": [
       "'self'",

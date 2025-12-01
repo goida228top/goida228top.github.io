@@ -180,3 +180,12 @@ export const newEnvSoundsToggle = document.getElementById('new-env-sounds-toggle
 
 // Interface Settings
 export const showDebugToggle = document.getElementById('show-debug-toggle');
+
+// Import Modal
+export const importJsonBtn = document.getElementById('import-json-btn');
+export const importSvgBtn = document.getElementById('import-svg-btn');
+export const importModalOverlay = document.getElementById('import-modal-overlay');
+export const importModalTitle = document.getElementById('import-modal-title');
+export const importTextarea = document.getElementById('import-textarea');
+export const importConfirmBtn = document.getElementById('import-confirm-btn');
+export const importCancelBtn = document.getElementById('import-cancel-btn');

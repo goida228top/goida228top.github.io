@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -59,24 +58,34 @@
             --sky-top: #3a7bd5;
             --sky-bottom: #a8d5e5;
         }
-        body {
+        
+        html, body {
             margin: 0;
-            overflow: hidden;
+            padding: 0;
+            overflow: hidden; /* Строгий запрет скролла страницы */
+            width: 100%;
+            height: 100%;
+            /* Fix for iOS bounce/scroll */
+            position: fixed; 
+            overscroll-behavior: none; /* Запрет "резинового" скролла и pull-to-refresh (требование 1.10.2) */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
             -webkit-user-select: none;
             -ms-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
-            touch-action: none; /* Важно для отключения жестов браузера в игре */
+            touch-action: none; /* Отключаем жесты браузера */
         }
         
-        /* Разрешаем скролл и тач-действия в меню и попапах */
-        .popup, .settings-panel-content, .about-panel-content, .save-load-content, .reward-menu-content, .reward-buttons-container, .save-slots-container {
-            touch-action: pan-y; /* Разрешить вертикальный скролл */
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Разрешаем скролл и тач-действия ВНУТРИ меню и попапов, но блокируем передачу родителю */
+        .popup, .settings-panel-content, .about-panel-content, .save-load-content, .reward-menu-content, .reward-buttons-container, .save-slots-container, .import-modal-content {
+            touch-action: pan-x pan-y; /* Разрешить скролл */
+            overscroll-behavior: contain; /* Скролл не передается телу страницы */
         }
         
         /* Prevent context menu on images */
@@ -163,15 +172,18 @@
             justify-content: center;
             align-items: center;
             z-index: 900;
+            overflow-y: auto; /* На случай очень низких экранов */
         }
         
         .main-menu-title {
-            font-size: 4em; /* Крупный шрифт для ПК */
+            /* clamp(min, preferred, max) для адаптивного размера шрифта */
+            font-size: clamp(2rem, 5vw, 4em);
             color: white;
             text-shadow: 0 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(58, 123, 213, 0.8);
             margin-bottom: 40px;
             text-align: center;
             padding: 0 20px;
+            line-height: 1.2;
         }
         #main-menu-container {
             text-align: center;
@@ -183,6 +195,8 @@
             max-width: 400px;
             padding: 0 20px;
             box-sizing: border-box;
+            /* Предотвращение обрезания на маленьких экранах */
+            margin: auto 0;
         }
         
         /* Smoke entrance animation for menu */
@@ -468,6 +482,10 @@
             color: white;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             min-width: 250px;
+            /* Предотвращение выхода за пределы экрана */
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .popup-slider-container, .popup-color-container, .popup-input-container, .popup-toggle-container {
              display: flex;
@@ -555,50 +573,53 @@
             justify-content: center;
         }
 
-        /* Reward Menu */
+        /* Reward Menu - General */
         #reward-menu-panel {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding-top: 0;
-            box-sizing: border-box;
             z-index: 1000;
+            border-radius: 0; /* Full screen overlay */
+            padding: 0;
+            max-width: none;
+            max-height: none;
         }
+        
         #reward-menu-panel .reward-menu-content {
             background: transparent;
-            border-radius: 8px;
-            padding: 30px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            gap: 30px;
-            max-width: 90%;
+            gap: 20px;
+            width: 100%;
+            max-height: 100%;
             box-sizing: border-box;
-            max-height: 90%;
-            overflow-y: hidden;
+            position: relative;
         }
+
         #reward-menu-panel h3 {
             margin: 0;
             color: var(--text-color);
             text-align: center;
             font-size: 2.8em;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
         .panel-close-btn {
             position: absolute;
-            top: 40px;
-            right: 40px;
-            width: 50px;
-            height: 50px;
-            font-size: 1.8em;
+            top: 30px;
+            right: 30px;
+            width: 44px;
+            height: 44px;
+            font-size: 1.5em;
             background-color: #dc3545;
             color: white;
             border: 1px solid #c0392b;
@@ -608,7 +629,7 @@
             justify-content: center;
             align-items: center;
             transition: background-color 0.2s, transform 0.2s;
-            z-index: 1001;
+            z-index: 1002;
         }
         .panel-close-btn:hover {
             background-color: #c0392b;
@@ -619,10 +640,10 @@
             display: flex;
             flex-wrap: nowrap;
             justify-content: center;
-            align-items: flex-start;
-            gap: 40px;
-            min-width: calc(3 * 280px + 2 * 40px);
-            overflow-x: hidden;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+            /* Default for desktop */
         }
 
         .reward-button {
@@ -633,16 +654,30 @@
             border: 1px solid var(--border-color);
             background-color: var(--button-bg);
             color: var(--text-color);
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1.3em;
             cursor: default;
-            transition: background-color 0.2s;
+            transition: transform 0.2s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
             text-align: center;
             box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* Hint for scrolling on mobile */
+        .scroll-hint {
+            display: none; /* Hidden by default */
+            color: #ccc;
+            font-size: 0.9em;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
         }
         
         .reward-info-top {
@@ -650,24 +685,28 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
+            width: 100%;
+            flex-grow: 1;
+            justify-content: center;
         }
         .reward-button-subtitle {
-            font-size: 1.1em;
+            font-size: 0.9em;
             font-weight: 500;
             color: #ddd;
         }
         .reward-button-header {
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: bold;
             color: var(--selection-color);
             line-height: 1;
             margin-bottom: 5px;
         }
         .reward-tier-image {
-            width: 220px;
-            height: 220px;
+            width: 80%;
+            height: auto;
+            max-height: 200px;
             object-fit: contain;
-            vertical-align: middle;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
         }
         .reward-progress-btn {
             width: 100%;
@@ -675,8 +714,8 @@
             border: 1px solid #FF8C00;
             background-color: #FF8C00;
             color: #333;
-            border-radius: 5px;
-            font-size: 1.1em;
+            border-radius: 6px;
+            font-size: 1.0em;
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s, opacity 0.2s, color 0.2s;
@@ -685,6 +724,7 @@
             justify-content: center;
             align-items: center;
             gap: 5px;
+            margin-top: 10px;
         }
         .reward-progress-btn.watching-ad { background-color: #5cb85c; color: white; border-color: #4cae4c; cursor: default; }
         .reward-progress-btn.ad-failed { background-color: #d9534f; color: white; border-color: #d43f3a; }
@@ -698,80 +738,135 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9); /* Darker background like rewards */
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            border-radius: 0;
+            padding: 0;
+            max-width: none;
+            max-height: none;
         }
         .save-load-content {
             background: transparent;
-            border-radius: 8px;
-            padding: 30px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            max-width: 95%;
+            gap: 20px;
+            width: 100%;
+            max-height: 100%;
             box-sizing: border-box;
+            position: relative;
         }
         #save-load-panel h3 {
             margin: 0;
             color: var(--text-color);
             text-align: center;
             font-size: 2.8em;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
         #save-slots-container {
             display: flex;
             flex-wrap: nowrap;
-            justify-content: center;
+            /* SAFE CENTERING FOR DESKTOP:
+               Use flex-start + margin:auto on children to allow scrolling if overflow, 
+               but center if it fits. */
+            justify-content: flex-start; 
             gap: 20px;
             width: 100%;
-            overflow-x: auto;
-            padding-bottom: 10px;
+            padding: 40px 60px; /* Add breathing room for desktop */
+            overflow-x: auto; /* Enable scroll if needed */
+            box-sizing: border-box;
+            
+            /* Custom Scrollbar for PC */
+            scrollbar-width: thin;
+            scrollbar-color: #555 #333;
         }
+        #save-slots-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        #save-slots-container::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 4px;
+        }
+        #save-slots-container::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        #save-slots-container::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
         .save-slot-button {
             flex-shrink: 0;
-            width: 220px;
-            min-height: 400px;
-            padding: 20px;
+            width: 280px;
+            height: 520px; /* Match reward button height */
+            padding: 25px;
             border: 1px solid var(--border-color);
             background-color: var(--button-bg);
             color: var(--text-color);
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1.1em;
             transition: background-color 0.2s;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             align-items: center;
             text-align: center;
             box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
+        
+        /* MAGIC: Auto margins on first/last child centers content when it fits, 
+           but allows scrolling from start when it doesn't. */
+        .save-slot-button:first-child {
+            margin-left: auto;
+        }
+        .save-slot-button:last-child {
+            margin-right: auto;
+        }
+
         .save-button-header {
             font-size: 2em;
             font-weight: bold;
             color: var(--selection-color);
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+        }
+        .save-button-image-container {
+             margin-top: auto;
+             width: 100%;
+             display: flex;
+             justify-content: center;
+             align-items: center;
         }
         .save-tier-image {
-            width: 150px;
-            height: 150px;
+            width: 80%;
+            height: auto;
+            max-height: 180px;
             object-fit: contain;
+            margin: 10px 0;
+        }
+        .save-slot-date {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-bottom: auto;
+            margin-top: 10px;
         }
         .save-slot-actions {
             display: flex;
             flex-direction: column;
             gap: 8px;
             width: 100%;
+            margin-top: auto;
         }
         .save-slot-actions button {
             width: 100%;
             padding: 12px 10px;
             border: 1px solid;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
@@ -858,6 +953,9 @@
             max-width: 90%;
             width: 450px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            /* Prevent overflow on small screens */
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .confirm-modal-buttons button {
             padding: 12px 25px;
@@ -927,12 +1025,68 @@
             margin-top: 30px;
         }
 
+        /* Import Modal */
+        #import-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1600;
+        }
+        .import-modal-content {
+            background: var(--toolbar-bg);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            max-width: 90%;
+            width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: var(--text-color);
+            /* Handle resize */
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #import-textarea {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            color: #ddd;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            resize: vertical;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        .import-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .import-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #import-confirm-btn { background-color: #28a745; color: white; }
+        #import-cancel-btn { background-color: var(--button-bg); color: var(--text-color); }
+
         /* =========================================
            MOBILE STYLES (Strictly Adaptive)
            ========================================= */
         @media (max-width: 768px) {
             .main-menu-title {
-                font-size: 2.5em; /* Меньше шрифт заголовка */
+                /* Font size controlled by clamp above */
                 margin-bottom: 20px;
             }
             .main-menu-btn {
@@ -961,11 +1115,12 @@
             .popup {
                 padding: 10px;
                 min-width: 200px;
+                max-width: 95vw; /* Убеждаемся, что не вылезает за экран */
             }
             .settings-panel-content, 
             .about-panel-content,
             .save-load-content,
-            .reward-menu-content {
+            .import-modal-content {
                 width: 95%;
                 padding: 15px;
             }
@@ -982,28 +1137,218 @@
                 height: 35px;
                 font-size: 1.2em;
             }
-
-            /* Save/Load slots adaptation */
-            .save-slot-button {
-                width: 180px;
-                min-height: 350px;
+            
+            /* --- REWARD MENU MOBILE REDESIGN (Responsive VH/VW) --- */
+            #reward-menu-panel .reward-menu-content {
+                width: 100%;
+                height: 100%;
                 padding: 10px;
+                justify-content: center;
             }
-            .save-tier-image {
-                width: 100px;
-                height: 100px;
+
+            .reward-buttons-container {
+                /* Use flex to fit content */
+                display: flex;
+                gap: 10px;
+                width: 100%;
+                height: auto;
+                max-height: 90vh;
+                /* Default to row for landscape-like behavior, but wrap if needed or scale? */
+                flex-direction: row; 
+                align-items: center;
+                justify-content: center;
+                overflow: hidden; /* Try to fit without scroll first */
+            }
+
+            .reward-button {
+                /* Make them tiny! */
+                width: 30vw; 
+                height: auto;
+                aspect-ratio: 9/16; /* Maintain ratio */
+                padding: 5px;
+                min-height: 0;
+                border-radius: 8px;
+            }
+
+            .reward-button-header { font-size: 1.2em; margin-bottom: 2px; }
+            .reward-button-subtitle { font-size: 0.6em; }
+            .reward-tier-image { max-height: 25%; margin: 2px 0; }
+            .reward-progress-btn { 
+                padding: 5px; 
+                font-size: 0.7em; 
+                margin-top: 5px;
+            }
+            .ad-icon { width: 12px; height: 12px; }
+            
+            /* SAVE/LOAD MOBILE DEFAULT (Portrait overrides below) */
+            /* Default vertical stack for mobile (to be overridden by landscape) */
+        }
+        
+        /* Landscape Mobile Mode (Height < 600px) - Strict Scaling */
+        @media (max-width: 900px) and (orientation: landscape) {
+            /* --- REWARD MENU --- */
+            #reward-menu-panel {
+                padding: 0;
+                justify-content: center;
+            }
+            #reward-menu-panel h3 {
+                 font-size: 2em;
+                 margin-bottom: 5px;
+            }
+            .reward-buttons-container {
+                flex-direction: row;
+                align-items: stretch; /* Stretch cards to equal height */
+                justify-content: center;
+                height: 80vh; /* Increase available height slightly */
+                gap: 15px;
+                padding: 0;
+            }
+            .reward-button {
+                width: 27vw; /* ~10% smaller than previous */
+                max-width: 200px;
+                height: auto;
+                min-height: 0;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                border-radius: 8px;
+            }
+            /* Override the gap in the top container */
+            .reward-info-top {
+                gap: 5px; 
+                justify-content: flex-start;
+                flex-grow: 0; /* Do not take extra space unnecessarily */
+            }
+            .reward-button-header { 
+                font-size: 4.5vh; 
+                line-height: 1;
+            }
+            .reward-button-subtitle { 
+                font-size: 3.2vh; 
+                margin-bottom: 2px;
+                line-height: 1.2;
+            }
+            .reward-tier-image { 
+                height: auto; 
+                max-height: 35vh; 
+                width: auto; 
+                max-width: 80%;
+                object-fit: contain; 
+                margin: 5px 0;
+            }
+            /* Ensure button is visible and tappable */
+            .reward-progress-btn { 
+                font-size: 3.3vh;
+                padding: 5px 2px; 
+                margin-top: auto; 
+                height: auto;
+                min-height: 60px; /* Taller button for easier tapping */
+                flex-shrink: 0; 
+                white-space: normal; /* Allow text to wrap to 2 lines */
+                line-height: 1.1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
             }
             
-            /* Reward buttons adaptation */
-            .reward-button {
-                width: 220px;
-                height: 450px;
+            /* --- SAVE/LOAD MENU ADAPTATION --- */
+            #save-load-panel {
+                padding: 0;
+                justify-content: center;
+            }
+            #save-load-panel .save-load-content {
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+                padding: 10px;
+                justify-content: center;
+            }
+            #save-slots-container {
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto; /* Allow scrolling for many slots */
+                justify-content: flex-start; /* Start from left */
+                align-items: center;
+                height: 85vh; /* Take most of height */
+                padding: 0 20px; /* Side padding */
+                gap: 20px;
+                scroll-behavior: smooth;
+            }
+            /* Disable special margins on mobile to avoid layout bugs */
+            .save-slot-button:first-child { margin-left: 0; }
+            .save-slot-button:last-child { margin-right: 0; }
+
+            .save-slot-button {
+                /* Large cards using VH */
+                height: 75vh;
+                width: 48vh; /* Maintain roughly portrait aspect ratio */
+                min-width: 200px;
+                flex-shrink: 0; /* No shrinking, force scroll */
                 padding: 15px;
+                display: flex;
+                flex-direction: column;
+                margin: 0;
             }
-            .reward-tier-image {
-                width: 150px;
-                height: 150px;
+            .save-button-header { font-size: 4vh; }
+            .save-tier-image { max-height: 25vh; width: auto; object-fit: contain; }
+            .save-slot-date { font-size: 2.5vh; margin: 5px 0; }
+            .save-slot-actions button {
+                font-size: 3vh;
+                padding: 5px;
+                height: auto;
+                min-height: 50px;
+                white-space: normal;
+                line-height: 1.1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
+            .scroll-hint { display: none !important; }
+        }
+
+        /* Portrait Mobile Mode */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .reward-buttons-container, 
+            #save-slots-container {
+                flex-direction: column;
+                overflow-y: auto;
+                justify-content: flex-start;
+                padding: 10px 0;
+                height: 80vh;
+                width: 100%;
+                gap: 20px;
+            }
+            /* Disable special margins on mobile */
+            .save-slot-button:first-child { margin-left: 0; }
+            .save-slot-button:last-child { margin-right: 0; }
+
+            .reward-button,
+            .save-slot-button {
+                width: 70vw;
+                height: auto;
+                min-height: 0;
+                padding: 20px;
+                margin-bottom: 0;
+                flex-shrink: 0;
+                aspect-ratio: unset;
+            }
+            
+            /* Save/Load Specific Portrait fixes */
+            .save-slot-button {
+                min-height: 250px;
+            }
+            .save-tier-image { height: auto; max-height: 100px; width: auto; }
+            .save-button-header { font-size: 1.8em; }
+            
+            /* Reward specific */
+            .reward-tier-image { height: auto; max-height: 12vh; width: auto; }
+            .reward-button-header { font-size: 1.8em; }
+            .reward-progress-btn { font-size: 1em; padding: 10px; }
+            
+            .scroll-hint { display: block; transform: rotate(90deg); } /* Vertical hint */
         }
     </style>
 <script type="importmap">
@@ -1057,7 +1402,7 @@
         <div id="toolbar-scroll-area">
             <button id="save-btn" data-translate-title="save-title">
                 <svg viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M17,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V7L17,3M19,19H5V5H16.17L19,7.83V19M12,12C10.34,12 9,13.34 9,15S10.34,18 12,18 15,16.66 15,15 13.66,12 12,12M6,6H15V10H6V6Z" />
+                    <path fill="currentColor" d="M17,3H5C3.89,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1 21 21,20.1 21,19V7L17,3M19,19H5V5H16.17L19,7.83V19M12,12C10.34,12 9,13.34 9,15S10.34,18 12,18 15,16.66 15,15 13.66,12 12,12M6,6H15V10H6V6Z" />
                 </svg>
             </button>
             <button id="load-btn" data-translate-title="load-title">
@@ -1329,6 +1674,7 @@
         <button id="reward-menu-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="reward-menu-content">
             <h3 data-translate-text="reward-menu-title">Получить Резонансы</h3>
+            <div class="scroll-hint">← Скролл →</div>
             <div class="reward-buttons-container">
                 <div id="reward-10-btn" class="reward-button" role="button" data-ads="1" data-reward="10"></div>
                 <div id="reward-50-btn" class="reward-button" role="button" data-ads="3" data-reward="50"></div>
@@ -1447,7 +1793,7 @@
                             <label for="master-volume-slider" data-translate-text="master-volume-label">Общая громкость:</label>
                             <span id="master-volume-value">100%</span>
                         </div>
-                        <input type="range" id="master-volume-slider" min="0" max="1" step="0.01" value="1">
+                        <input type="range" id="master-volume-slider" min="0" max="1" step="0.1" value="1">
                     </div>
                     <!-- Звуки UI -->
                     <div class="popup-toggle-container">
@@ -1482,8 +1828,32 @@
                 </div>
             </div>
 
+            <!-- Категория: Тест -->
+            <div class="settings-category">
+                <div class="settings-category-header">
+                    <span data-translate-text="category-test">Тест</span>
+                    <span class="category-arrow">▼</span>
+                </div>
+                <div class="settings-category-content">
+                    <button id="import-json-btn" style="width: 100%; padding: 10px; background-color: var(--button-bg); color: white; border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; margin-bottom: 10px;" data-translate-text="import-json-button">Загрузить JSON</button>
+                    <button id="import-svg-btn" style="width: 100%; padding: 10px; background-color: var(--button-bg); color: white; border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer;" data-translate-text="import-svg-button">Загрузить SVG</button>
+                </div>
+            </div>
+
              <!-- Exit Button -->
             <button id="exit-game-btn" data-translate-text="exit-game-button">Выйти в меню</button>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal-overlay">
+        <div class="import-modal-content">
+            <h3 id="import-modal-title">Импорт</h3>
+            <textarea id="import-textarea" placeholder="Вставьте код сюда..."></textarea>
+            <div class="import-buttons">
+                <button id="import-cancel-btn" data-translate-text="cancel-button">Отмена</button>
+                <button id="import-confirm-btn" data-translate-text="confirm-button">Импортировать</button>
+            </div>
         </div>
     </div>
 

@@ -25,10 +25,16 @@ let lastPinchCenter = { x: 0, y: 0 };
 const CAMERA_PADDING = GRASS_HEIGHT + DIRT_HEIGHT + STONE_HEIGHT;
 
 function setCanvasSize(canvas) {
-    canvas.width = Dom.container.clientWidth;
-    canvas.height = Dom.container.clientHeight;
+    // Устанавливаем размер канваса равным размеру контейнера
+    if (Dom.container.clientWidth && Dom.container.clientHeight) {
+        canvas.width = Dom.container.clientWidth;
+        canvas.height = Dom.container.clientHeight;
+    }
 }
 
+// Эта функция теперь экспортируется, но используется только внутри initializeCamera,
+// либо если нужно сбросить размер извне без привязки к экземпляру (редкий кейс).
+// Основная логика теперь внутри initializeCamera -> resize().
 export function resizeCamera(render) {
     setCanvasSize(render.canvas);
     setCanvasSize(Dom.waterCanvas);
@@ -62,6 +68,51 @@ export function initializeCamera(render) {
     Dom.container.addEventListener('touchmove', handleTouchMove, { passive: false });
     Dom.container.addEventListener('touchend', handleTouchEnd);
     Dom.container.addEventListener('touchcancel', handleTouchEnd);
+
+    // Функция умного ресайза, сохраняющая центр
+    function resize() {
+        const container = Dom.container;
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+
+        if (!newWidth || !newHeight) return;
+
+        // 1. Вычисляем текущий центр мира (в пикселях физического мира), на который смотрит камера
+        // viewOffset - это координата верхнего левого угла
+        const oldWidth = render.options.width;
+        const oldHeight = render.options.height;
+        
+        const worldCenterX = viewOffset.x + (oldWidth * scale) / 2;
+        const worldCenterY = viewOffset.y + (oldHeight * scale) / 2;
+
+        // 2. Обновляем размеры всех Canvas
+        setCanvasSize(render.canvas);
+        setCanvasSize(Dom.waterCanvas);
+        setCanvasSize(Dom.sandCanvas);
+        setCanvasSize(Dom.backgroundCanvas);
+        
+        if (Dom.waterEffectContainer) {
+            Dom.waterEffectContainer.style.width = `${newWidth}px`;
+            Dom.waterEffectContainer.style.height = `${newHeight}px`;
+        }
+        if (Dom.sandEffectContainer) {
+            Dom.sandEffectContainer.style.width = `${newWidth}px`;
+            Dom.sandEffectContainer.style.height = `${newHeight}px`;
+        }
+
+        // 3. Обновляем настройки рендера
+        render.options.width = newWidth;
+        render.options.height = newHeight;
+
+        // 4. Пересчитываем viewOffset так, чтобы центр мира остался в центре экрана
+        // NewTopLeft = Center - (NewSize * scale / 2)
+        viewOffset.x = worldCenterX - (newWidth * scale) / 2;
+        viewOffset.y = worldCenterY - (newHeight * scale) / 2;
+
+        // 5. Применяем ограничения и обновляем вид
+        clampViewOffset();
+        updateView();
+    }
 
     function applyLiquidFilters() {
         if (Dom.newLiquidEffectToggle && Dom.newLiquidEffectToggle.checked) {
@@ -269,6 +320,7 @@ export function initializeCamera(render) {
         getMousePos,
         updateView,
         applyLiquidFilters,
+        resize, // Экспортируем функцию ресайза
         restoreCameraState: (state) => {
             scale = state.scale;
             viewOffset.x = state.viewOffset.x;

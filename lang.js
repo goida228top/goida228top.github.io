@@ -1,6 +1,9 @@
 
 
 
+
+
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -113,10 +116,13 @@ const translations = {
         'confirm-exit-game': 'Вы уверены, что хотите выйти в главное меню? Несохраненный прогресс будет потерян.',
         'about-btn': 'Об игре',
         'about-title': 'Об игре "Физическая песочница"',
-        'about-text-intro': 'Добро пожаловать! Это первая версия игры, и я буду рад любой поддержке. <br>Имейте в виду, что не все предметы и механики доделаны до конца.',
+        'about-text-intro': 'Добро пожаловать! Это первая версия игры, и я буду рад любой поддержке.',
         'about-text-warning': '<b>Внимание:</b> Большое количество частиц воды и песка может вызывать падение производительности.',
         'about-subtitle-plans': 'Что в планах',
-        'about-list-plans': '<li>Полная переработка и оптимизация песка.</li><li>Добавление новых интерактивных предметов.</li><li>Инструмент "Нож" для вырезания.</li><li>Улучшение инструментов (Кисть, Пружина).</li><li>Готовые карты и постройки.</li>',
+        'about-list-plans': '<li>Добавление новых интерактивных предметов.</li><li>Инструмент "Нож" для вырезания.</li><li>Улучшение инструментов (Кисть).</li><li>Готовые карты и постройки.</li>',
+        'category-test': 'Тест',
+        'import-json-button': 'Загрузить JSON',
+        'import-svg-button': 'Загрузить SVG',
     },
     en: {
         'app-title': 'Physics Sandbox',
@@ -229,10 +235,13 @@ const translations = {
         'confirm-exit-game': 'Are you sure you want to exit to the main menu? Unsaved progress will be lost.',
         'about-btn': 'About',
         'about-title': 'About "Physics Sandbox"',
-        'about-text-intro': 'Welcome! This is the first version of the game, and I appreciate any support.<br>Please note that not all items and mechanics are finalized.',
+        'about-text-intro': 'Welcome! This is the first version of the game, and I appreciate any support.',
         'about-text-warning': '<b>Warning:</b> Large amounts of water and sand particles may cause performance drops.',
         'about-subtitle-plans': 'Future Plans',
-        'about-list-plans': '<li>Complete rework and optimization of sand.</li><li>New interactive items.</li><li>"Knife" tool for cutting objects.</li><li>Improvements to tools (Brush, Spring).</li><li>Pre-made maps and buildings.</li>',
+        'about-list-plans': '<li>New interactive items.</li><li>"Knife" tool for cutting objects.</li><li>Improvements to tools (Brush).</li><li>Pre-made maps and buildings.</li>',
+        'category-test': 'Test',
+        'import-json-button': 'Load JSON',
+        'import-svg-button': 'Load SVG',
     },
     tr: {
         'app-title': 'Fizik Sandbox',
@@ -345,10 +354,13 @@ const translations = {
         'confirm-exit-game': 'Ana menüye dönmek istediğinizden emin misiniz? Kaydedilmemiş ilerleme kaybolacak.',
         'about-btn': 'Oyun Hakkında',
         'about-title': '"Fizik Sandbox" Hakkında',
-        'about-text-intro': 'Hoş geldiniz! Bu oyunun ilk sürümüdür, her türlü desteğe açığım.<br>Lütfen tüm öğelerin ve mekaniklerin henüz tamamlanmadığını unutmayın.',
+        'about-text-intro': 'Hoş geldiniz! Bu oyunun ilk sürümüdür, her türlü desteğe açığım.',
         'about-text-warning': '<b>Uyarı:</b> Büyük miktarda su ve kum parçacıkları performans düşüşüne neden olabilir.',
         'about-subtitle-plans': 'Gelecek Planları',
-        'about-list-plans': '<li>Kumun tamamen elden geçirilmesi ve optimizasyonu.</li><li>Yeni etkileşimli öğeler.</li><li>Nesneleri kesmek için "Bıçak" aracı.</li><li>Araçlarda iyileştirmeler (Fırça, Yay).</li><li>Hazır haritalar ve yapılar.</li>',
+        'about-list-plans': '<li>Yeni etkileşimli öğeler.</li><li>Nesneleri kesmek için "Bıçak" aracı.</li><li>Araçlarda iyileştirmeler (Fırça).</li><li>Hazır haritalar ve yapılar.</li>',
+        'category-test': 'Test',
+        'import-json-button': 'JSON Yükle',
+        'import-svg-button': 'SVG Yükle',
     }
 };
 
