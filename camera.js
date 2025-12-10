@@ -1,4 +1,5 @@
 
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -7,6 +8,7 @@ import {
     GRASS_HEIGHT, DIRT_HEIGHT, STONE_HEIGHT,
     CAMERA_MIN_SCALE, CAMERA_MAX_SCALE, CAMERA_INITIAL_SCALE, CAMERA_PAN_START_OFFSET_Y
 } from './game_config.js';
+import { t } from './lang.js'; // Импорт функции перевода
 
 let viewOffset = { x: 0, y: 0 };
 let scale = CAMERA_INITIAL_SCALE;
@@ -285,13 +287,14 @@ export function initializeCamera(render) {
         render.bounds.max.y = viewOffset.y + render.canvas.height * scale;
         
         if (Dom.zoomIndicator) {
-            const zoomPercentage = (1 - scale) * -100; // Примерная визуализация
-            Dom.zoomIndicator.textContent = `Zoom: ${(1/scale * 100).toFixed(0)}%`;
+            // Использование локализованной строки
+            Dom.zoomIndicator.textContent = t('debug-zoom', { value: (1/scale * 100).toFixed(0) });
         }
         if (Dom.coordsIndicator) {
             const centerX = (render.bounds.min.x + render.bounds.max.x) / (2 * PHYSICS_SCALE);
             const centerY = (render.bounds.min.y + render.bounds.max.y) / (2 * PHYSICS_SCALE);
-            Dom.coordsIndicator.textContent = `X: ${centerX.toFixed(0)}, Y: ${centerY.toFixed(0)}`;
+            // Использование локализованной строки
+            Dom.coordsIndicator.textContent = t('debug-coords', { x: centerX.toFixed(0), y: centerY.toFixed(0) });
         }
     }
     

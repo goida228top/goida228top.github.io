@@ -4,18 +4,21 @@
 
 
 
+
+
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
         'move-title': 'Переместить (точно)',
         'finger-title': 'Палец (физика)',
         'box-title': 'Коробка',
-        'circle-title': 'Круг', // NEW
+        'circle-title': 'Круг',
         'polygon-title': 'Полигон',
         'brush-title': 'Кисть',
         'weld-title': 'Сварка',
         'spring-title': 'Пружина',
-        'rod-title': 'Стержень', // NEW
+        'rod-title': 'Стержень',
         'tnt-small-title': 'Малый ТНТ',
         'tnt-medium-title': 'Средний ТНТ',
         'tnt-large-title': 'Мощный ТНТ',
@@ -57,10 +60,10 @@ const translations = {
         'spring-length-label': 'Длина:',
         'spring-fixed-label': 'Фиксированная:',
         'brush-size-label': 'Толщина:',
-        'enable-motor-label': 'Включить мотор:', // NEW
-        'motor-speed-label': 'Скорость:', // NEW
-        'motor-acceleration-label': 'Мощность:', // NEW
-        'grip-label': 'Сцепление:', // NEW
+        'enable-motor-label': 'Включить мотор:',
+        'motor-speed-label': 'Скорость:',
+        'motor-acceleration-label': 'Мощность:',
+        'grip-label': 'Сцепление:',
         'stabilizer-enable-label': 'Помощник Вилли:',
         'stabilizer-angle-label': 'Угол Вилли:',
         'low-fps-title': 'Низкая производительность',
@@ -123,18 +126,21 @@ const translations = {
         'category-test': 'Тест',
         'import-json-button': 'Загрузить JSON',
         'import-svg-button': 'Загрузить SVG',
+        'debug-fps': 'Кадров/с: {value}',
+        'debug-coords': 'X: {x}, Y: {y}',
+        'debug-zoom': 'Зум: {value}%',
     },
     en: {
         'app-title': 'Physics Sandbox',
         'move-title': 'Move (precise)',
         'finger-title': 'Finger (physics)',
         'box-title': 'Box',
-        'circle-title': 'Circle', // NEW
+        'circle-title': 'Circle',
         'polygon-title': 'Polygon',
         'brush-title': 'Brush',
         'weld-title': 'Weld',
         'spring-title': 'Spring',
-        'rod-title': 'Rod', // NEW
+        'rod-title': 'Rod',
         'tnt-small-title': 'Small TNT',
         'tnt-medium-title': 'Medium TNT',
         'tnt-large-title': 'Large TNT',
@@ -176,10 +182,10 @@ const translations = {
         'spring-length-label': 'Length:',
         'spring-fixed-label': 'Fixed:',
         'brush-size-label': 'Thickness:',
-        'enable-motor-label': 'Enable Motor:', // NEW
-        'motor-speed-label': 'Speed:', // NEW
-        'motor-acceleration-label': 'Power:', // NEW
-        'grip-label': 'Grip:', // NEW
+        'enable-motor-label': 'Enable Motor:',
+        'motor-speed-label': 'Speed:',
+        'motor-acceleration-label': 'Power:',
+        'grip-label': 'Grip:',
         'stabilizer-enable-label': 'Wheelie Assist:',
         'stabilizer-angle-label': 'Wheelie Angle:',
         'low-fps-title': 'Low Performance',
@@ -242,18 +248,21 @@ const translations = {
         'category-test': 'Test',
         'import-json-button': 'Load JSON',
         'import-svg-button': 'Load SVG',
+        'debug-fps': 'FPS: {value}',
+        'debug-coords': 'X: {x}, Y: {y}',
+        'debug-zoom': 'Zoom: {value}%',
     },
     tr: {
         'app-title': 'Fizik Sandbox',
         'move-title': 'Taşı (hassas)',
         'finger-title': 'Parmak (fizik)',
         'box-title': 'Kutu',
-        'circle-title': 'Daire', // NEW
+        'circle-title': 'Daire',
         'polygon-title': 'Çokgen',
         'brush-title': 'Fırça',
         'weld-title': 'Kaynak',
         'spring-title': 'Yay',
-        'rod-title': 'Çubuk', // NEW
+        'rod-title': 'Çubuk',
         'tnt-small-title': 'Küçük TNT',
         'tnt-medium-title': 'Orta TNT',
         'tnt-large-title': 'Büyük TNT',
@@ -295,10 +304,10 @@ const translations = {
         'spring-length-label': 'Uzunluk:',
         'spring-fixed-label': 'Sabit:',
         'brush-size-label': 'Kalınlık:',
-        'enable-motor-label': 'Motoru Etkinleştir:', // NEW
-        'motor-speed-label': 'Hız:', // NEW
-        'motor-acceleration-label': 'Güç:', // NEW
-        'grip-label': 'Yol Tutuşu:', // NEW
+        'enable-motor-label': 'Motoru Etkinleştir:',
+        'motor-speed-label': 'Hız:',
+        'motor-acceleration-label': 'Güç:',
+        'grip-label': 'Yol Tutuşu:',
         'stabilizer-enable-label': 'Wheelie Desteği:',
         'stabilizer-angle-label': 'Wheelie Açısı:',
         'low-fps-title': 'Düşük Performans',
@@ -361,6 +370,9 @@ const translations = {
         'category-test': 'Test',
         'import-json-button': 'JSON Yükle',
         'import-svg-button': 'SVG Yükle',
+        'debug-fps': 'FPS: {value}',
+        'debug-coords': 'X: {x}, Y: {y}',
+        'debug-zoom': 'Yakınlaştırma: {value}%',
     }
 };
 

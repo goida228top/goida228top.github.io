@@ -1,4 +1,5 @@
 
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { PHYSICS_SCALE } from './game_config.js';
@@ -9,6 +10,7 @@ import { SoundManager } from './sound.js';
 import { renderWorld } from './render_core.js';
 import { isInteractionActive } from './tools.js'; // NEW: Import interaction state
 import { updateEffects } from './effects.js'; // NEW: Импорт функции обновления эффектов
+import { t } from './lang.js'; // Импорт функции перевода
 
 let isPaused = false;
 let cameraData = null;
@@ -253,7 +255,8 @@ export function initializeEngine() {
         if (time - fpsLastTime >= 500) { // Обновляем текст каждые 500мс
             const fps = Math.round((fpsFrameCount * 1000) / (time - fpsLastTime));
             if (Dom.fpsIndicator) {
-                Dom.fpsIndicator.textContent = `FPS: ${fps}`;
+                // Использование локализованной строки
+                Dom.fpsIndicator.textContent = t('debug-fps', { value: fps });
             }
             fpsFrameCount = 0;
             fpsLastTime = time;
