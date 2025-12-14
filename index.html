@@ -490,6 +490,29 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .popup-close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+        }
+        .popup-close-btn:hover {
+            color: white;
+        }
         .popup-slider-container, .popup-color-container, .popup-input-container, .popup-toggle-container {
              display: flex;
             justify-content: space-between;
@@ -1544,6 +1567,10 @@
     
     <!-- Панель свойств объекта -->
     <div id="object-properties-panel" class="popup">
+        <div class="popup-header">
+            <span data-translate-text="properties-title">Свойства</span>
+            <button id="object-properties-close-btn" class="popup-close-btn">✖</button>
+        </div>
         <div class="popup-color-container">
             <label for="obj-color" data-translate-text="color-label">Цвет:</label>
             <input type="color" id="obj-color" value="#cccccc">
@@ -1631,6 +1658,10 @@
     
     <!-- NEW: Панель свойств пружины -->
     <div id="spring-properties-panel" class="popup">
+        <div class="popup-header">
+            <span data-translate-text="properties-title">Свойства</span>
+            <button id="spring-properties-close-btn" class="popup-close-btn">✖</button>
+        </div>
         <div class="popup-slider-container">
             <div class="label-value">
                 <label for="spring-stiffness" data-translate-text="stiffness-label">Жёсткость:</label>

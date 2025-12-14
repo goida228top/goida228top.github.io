@@ -9,6 +9,7 @@
 
 
 
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -39,6 +40,7 @@ const translations = {
         'world-cleared-message': 'Мир очищен!',
         'confirm-button': 'Подтвердить',
         'cancel-button': 'Отмена',
+        'properties-title': 'Свойства',
         'gravity-label': 'Гравитация:',
         'liquid-effect-label': 'Эффект жидкости:',
         'show-hitboxes-label': 'Показывать хитбоксы:',
@@ -166,6 +168,7 @@ const translations = {
         'world-cleared-message': 'World cleared!',
         'confirm-button': 'Confirm',
         'cancel-button': 'Cancel',
+        'properties-title': 'Properties',
         'gravity-label': 'Gravity:',
         'liquid-effect-label': 'Liquid effect:',
         'show-hitboxes-label': 'Show hitboxes:',
@@ -293,6 +296,7 @@ const translations = {
         'world-cleared-message': 'Dünya temizlendi!',
         'confirm-button': 'Onayla',
         'cancel-button': 'İptal',
+        'properties-title': 'Özellikler',
         'gravity-label': 'Yerçekimi:',
         'liquid-effect-label': 'Sıvı efekti:',
         'show-hitboxes-label': 'Sınırları göster:',

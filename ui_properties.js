@@ -177,6 +177,11 @@ export function hideSpringPropertiesPanel() {
 }
 
 export function initializeObjectPropertiesPanel(world) {
+    // Кнопка закрытия
+    addTapListener(document.getElementById('object-properties-close-btn'), () => {
+        hideObjectPropertiesPanel();
+    });
+
     Dom.objColorInput.addEventListener('input', (e) => {
         const body = getSelectedBody();
         if (body) {
@@ -336,6 +341,11 @@ export function initializeObjectPropertiesPanel(world) {
 }
 
 export function initializeSpringPropertiesPanel(world) {
+    // Кнопка закрытия
+    addTapListener(document.getElementById('spring-properties-close-btn'), () => {
+        hideSpringPropertiesPanel();
+    });
+
     Dom.springStiffnessSlider.addEventListener('input', (e) => {
         const spring = getSelectedSpring();
         if (spring) {
