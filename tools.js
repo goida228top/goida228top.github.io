@@ -50,6 +50,13 @@ const SAND_PHYSICAL_RADIUS = (SAND_VISUAL_RADIUS * SAND_PHYSICAL_RADIUS_FACTOR) 
 // Переменная для отслеживания двойного тапа на мобильных
 let lastTouchEndTime = 0;
 
+// Переменные для Long Press (Долгое нажатие - аналог ПКМ)
+let longPressTimer = null;
+let isLongPressTriggered = false;
+let touchStartScreenPos = { x: 0, y: 0 };
+const LONG_PRESS_DELAY = 600; // мс
+const LONG_PRESS_TOLERANCE = 15; // пиксели (допуск на дрожание пальца)
+
 // Ссылка на функцию принудительной отрисовки
 let requestRender = () => {};
 
@@ -397,9 +404,47 @@ export async function initializeTools(engineData, cameraData, worldData) {
         // Обрабатываем только касание ОДНИМ пальцем.
         if (e.touches.length > 1) {
             stopAllActions(); 
+            // Отменяем таймер если пошло 2 пальца
+            if (longPressTimer) clearTimeout(longPressTimer);
             return;
         }
         e.preventDefault(); 
+        
+        // --- LONG PRESS LOGIC START ---
+        isLongPressTriggered = false;
+        touchStartScreenPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        
+        if (longPressTimer) clearTimeout(longPressTimer);
+        
+        longPressTimer = setTimeout(() => {
+            // Имитируем событие для получения координат мира
+            // Создаем мок-объект, совместимый с getMousePos (который ожидает touches или clientX/Y)
+            const mockEvent = { 
+                touches: [{ clientX: touchStartScreenPos.x, clientY: touchStartScreenPos.y }] 
+            };
+            
+            const worldPos = getMousePos(mockEvent);
+            
+            // Проверяем, есть ли под пальцем объект, у которого можно открыть свойства
+            const body = getBodyAt(world, worldPos);
+            const joint = getDistanceJointAt(world, worldPos);
+            
+            // Если что-то нашли, активируем меню
+            if (body || joint) {
+                isLongPressTriggered = true;
+                
+                // Останавливаем текущее действие (например, чтобы не началась рисоваться коробка или не тащился объект)
+                stopAllActions();
+                
+                // Вызываем меню свойств
+                triggerContextMenu(worldPos, touchStartScreenPos);
+                
+                // Вибрация для отклика
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
+        }, LONG_PRESS_DELAY);
+        // --- LONG PRESS LOGIC END ---
+
         const pos = getMousePos(e);
         startAction(pos, true);
     }
@@ -407,12 +452,41 @@ export async function initializeTools(engineData, cameraData, worldData) {
     function handleTouchMove(e) {
         if (e.touches.length > 1) return;
         e.preventDefault();
+        
+        // --- LONG PRESS CHECK ---
+        if (longPressTimer) {
+            const dx = e.touches[0].clientX - touchStartScreenPos.x;
+            const dy = e.touches[0].clientY - touchStartScreenPos.y;
+            // Если палец сдвинулся слишком сильно, отменяем таймер
+            if (Math.hypot(dx, dy) > LONG_PRESS_TOLERANCE) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+        // ------------------------
+
         const pos = getMousePos(e);
         moveAction(pos);
     }
 
     function handleTouchEnd(e) {
         e.preventDefault();
+        
+        // Очищаем таймер долгого нажатия
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+
+        // Если сработал Long Press, то мы просто выходим, 
+        // не выполняя завершение обычного действия (чтобы не поставить точку полигона или коробку)
+        if (isLongPressTriggered) {
+            isLongPressTriggered = false;
+            // Дополнительно сбрасываем drawing на всякий случай
+            isDrawing = false;
+            return;
+        }
+
         const now = Date.now();
         // Проверка на двойной тап для ТНТ
         if (now - lastTouchEndTime < 300 && lastMousePos) {
@@ -429,18 +503,17 @@ export async function initializeTools(engineData, cameraData, worldData) {
 
     // --- Other Handlers ---
 
-    function handleContextMenu(e) {
-        e.preventDefault();
-        
+    // Вынесено в отдельную функцию для переиспользования в Long Press
+    function triggerContextMenu(pos, screenPos) {
         if (toolState.currentTool === 'polygon') {
-            // Если рисуем полигон, ПКМ должна завершать его, если точек достаточно, или отменять
+            // Для полигона ПКМ (или Long Press) работает как отмена/завершение
             if (polygonVertices.length >= 3) {
                 finishPolygon();
             } else {
                 polygonVertices = [];
                 clearPreview();
                 isDrawing = false;
-                requestRender(); // Обновить экран после отмены
+                requestRender();
             }
             return;
         }
@@ -451,12 +524,9 @@ export async function initializeTools(engineData, cameraData, worldData) {
             setFirstJointBody(null, null);
             clearPreview();
             isDrawing = false;
-            requestRender(); // Обновить экран после отмены
+            requestRender();
             return;
         }
-
-        const pos = getMousePos(e);
-        const screenPos = { x: e.clientX, y: e.clientY };
 
         hideObjectPropertiesPanel();
         hideSpringPropertiesPanel();
@@ -482,6 +552,13 @@ export async function initializeTools(engineData, cameraData, worldData) {
             deselectSpring();
         }
         requestRender();
+    }
+
+    function handleContextMenu(e) {
+        e.preventDefault();
+        const pos = getMousePos(e);
+        const screenPos = { x: e.clientX, y: e.clientY };
+        triggerContextMenu(pos, screenPos);
     }
 
     function handleDoubleClick(e) {
