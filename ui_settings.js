@@ -1,4 +1,6 @@
 
+
+
 import * as Dom from './dom.js';
 import { t } from './lang.js';
 import { SoundManager } from './sound.js';
@@ -161,7 +163,7 @@ export function initializeNewSettingsPanel(engineData, cameraData, isGameStarted
 
     const openImportModal = (mode) => {
         currentImportMode = mode;
-        Dom.importModalTitle.textContent = mode === 'json' ? 'Загрузить JSON' : 'Загрузить SVG';
+        Dom.importModalTitle.textContent = t(mode === 'json' ? 'import-modal-title-json' : 'import-modal-title-svg');
         Dom.importTextarea.value = '';
         Dom.importModalOverlay.style.display = 'flex';
         // Закрываем панель настроек, чтобы не мешала

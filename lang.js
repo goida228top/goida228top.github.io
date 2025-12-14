@@ -7,6 +7,8 @@
 
 
 
+
+
 const translations = {
     ru: {
         'app-title': 'Физическая песочница',
@@ -129,6 +131,11 @@ const translations = {
         'debug-fps': 'Кадров/с: {value}',
         'debug-coords': 'X: {x}, Y: {y}',
         'debug-zoom': 'Зум: {value}%',
+        'import-modal-title-json': 'Загрузить JSON',
+        'import-modal-title-svg': 'Загрузить SVG',
+        'import-placeholder': 'Вставьте код сюда...',
+        'loading-error-message': 'Произошла ошибка при загрузке. Пожалуйста, обновите страницу.',
+        'reload-button': 'Обновить страницу',
     },
     en: {
         'app-title': 'Physics Sandbox',
@@ -251,6 +258,11 @@ const translations = {
         'debug-fps': 'FPS: {value}',
         'debug-coords': 'X: {x}, Y: {y}',
         'debug-zoom': 'Zoom: {value}%',
+        'import-modal-title-json': 'Load JSON',
+        'import-modal-title-svg': 'Load SVG',
+        'import-placeholder': 'Paste code here...',
+        'loading-error-message': 'An error occurred while loading. Please refresh the page.',
+        'reload-button': 'Reload Page',
     },
     tr: {
         'app-title': 'Fizik Sandbox',
@@ -373,6 +385,11 @@ const translations = {
         'debug-fps': 'FPS: {value}',
         'debug-coords': 'X: {x}, Y: {y}',
         'debug-zoom': 'Yakınlaştırma: {value}%',
+        'import-modal-title-json': 'JSON Yükle',
+        'import-modal-title-svg': 'SVG Yükle',
+        'import-placeholder': 'Kodu buraya yapıştırın...',
+        'loading-error-message': 'Yükleme sırasında bir hata oluştu. Lütfen sayfayı yenileyin.',
+        'reload-button': 'Sayfayı Yenile',
     }
 };
 

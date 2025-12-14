@@ -1,4 +1,6 @@
 
+
+
 import * as Dom from './dom.js';
 import { SoundManager } from './sound.js';
 import { t } from './lang.js';
@@ -310,5 +312,10 @@ function applyTranslations() {
     document.querySelectorAll('[data-translate-html]').forEach(el => {
         const key = el.getAttribute('data-translate-html');
         el.innerHTML = t(key);
+    });
+    // Added support for placeholders
+    document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-translate-placeholder');
+        el.placeholder = t(key);
     });
 }

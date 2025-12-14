@@ -297,6 +297,7 @@
             /* Hide Scrollbar */
             scrollbar-width: none;
             -ms-overflow-style: none;
+            touch-action: pan-x; /* Explicitly allow horizontal scroll */
         }
         #toolbar-scroll-area::-webkit-scrollbar {
             display: none;
@@ -1377,21 +1378,21 @@
     </svg>
     <div id="loading-overlay">
         <div id="loading-container">
-            <h1 id="loading-title">Физическая песочница</h1>
+            <h1 id="loading-title" data-translate-text="app-title">Физическая песочница</h1>
             <div id="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
             <div id="loading-text"></div>
             <div id="loading-error" style="display: none; margin-top: 15px;">
-                <p id="loading-error-message"></p>
-                <button id="reload-button">Обновить страницу</button>
+                <p id="loading-error-message" data-translate-text="loading-error-message"></p>
+                <button id="reload-button" data-translate-text="reload-button">Обновить страницу</button>
             </div>
         </div>
     </div>
     
     <div id="main-menu-overlay">
         <div id="main-menu-container">
-            <h1 class="main-menu-title">Физическая песочница</h1>
+            <h1 class="main-menu-title" data-translate-text="app-title">Физическая песочница</h1>
             <button id="start-game-btn" class="main-menu-btn" data-translate-text="start-game-button">Играть</button>
             <button id="load-game-menu-btn" class="main-menu-btn" data-translate-text="load-title">Загрузить игру</button>
             <button id="about-game-btn" class="main-menu-btn" data-translate-text="about-btn">Об игре</button>
@@ -1671,7 +1672,7 @@
     </div>
 
     <!-- Новое меню наград -->
-    <div id="reward-menu-panel" class="popup">
+    <div id="reward-menu-panel">
         <!-- Кнопка "Закрыть" (X) -->
         <button id="reward-menu-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="reward-menu-content">
@@ -1686,7 +1687,7 @@
     </div>
 
     <!-- Новая панель Сохранения/Загрузки -->
-    <div id="save-load-panel" class="popup">
+    <div id="save-load-panel">
         <button id="save-load-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="save-load-content">
             <h3 id="save-load-title"></h3>
@@ -1697,7 +1698,7 @@
     </div>
     
     <!-- NEW: Новая панель настроек (полноэкранная) -->
-    <div id="new-settings-panel" class="popup">
+    <div id="new-settings-panel">
         <button id="new-settings-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="settings-panel-content">
             <h2 data-translate-text="settings-title">Настройки</h2>
@@ -1850,8 +1851,8 @@
     <!-- Import Modal -->
     <div id="import-modal-overlay">
         <div class="import-modal-content">
-            <h3 id="import-modal-title">Импорт</h3>
-            <textarea id="import-textarea" placeholder="Вставьте код сюда..."></textarea>
+            <h3 id="import-modal-title" data-translate-text="import-modal-title-json">Импорт</h3>
+            <textarea id="import-textarea" placeholder="Вставьте код сюда..." data-translate-placeholder="import-placeholder"></textarea>
             <div class="import-buttons">
                 <button id="import-cancel-btn" data-translate-text="cancel-button">Отмена</button>
                 <button id="import-confirm-btn" data-translate-text="confirm-button">Импортировать</button>
@@ -1861,7 +1862,7 @@
 
 
     <!-- NEW: About Panel -->
-    <div id="about-panel" class="popup">
+    <div id="about-panel">
         <button id="about-panel-close-btn" class="panel-close-btn" data-translate-title="close-button">X</button>
         <div class="about-panel-content">
             <h2 data-translate-text="about-title">Об игре</h2>
@@ -1895,7 +1896,7 @@
         document.addEventListener('touchmove', function(e) {
             const target = e.target;
             // Проверяем, находится ли элемент внутри скроллящегося контейнера
-            const scrollable = target.closest('.popup, .settings-panel-content, .about-panel-content, .save-load-content, .reward-menu-content, .reward-buttons-container, .save-slots-container, .import-modal-content');
+            const scrollable = target.closest('.popup, .settings-panel-content, .about-panel-content, .save-load-content, .reward-menu-content, .reward-buttons-container, .save-slots-container, .import-modal-content, #toolbar-scroll-area');
 
             // Если не внутри скролла -> запрещаем действие браузера
             if (!scrollable) {
