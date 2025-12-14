@@ -574,21 +574,32 @@
 
         #bottom-toolbar {
             position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px;
-            background-color: var(--toolbar-bg);
-            border-radius: 8px;
+            bottom: 20px; /* Немного выше от края */
+            left: 0;
+            width: 100%; /* На всю ширину */
             display: none; 
-            gap: 10px;
+            justify-content: center; /* Центрируем содержимое */
+            align-items: center;
             z-index: 10;
-            border: 1px solid var(--border-color);
+            pointer-events: none; /* Пропускаем клики сквозь пустые места */
         }
-        #bottom-toolbar button {
-            width: 42px;
-            height: 42px;
-            padding: 8px;
+        
+        .bottom-controls-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            background-color: var(--toolbar-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            pointer-events: auto; /* Включаем клики на самой панели */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .control-btn {
+            width: 28px; /* Уменьшено (42 / 1.5) */
+            height: 28px;
+            padding: 5px;
             cursor: pointer;
             border: 1px solid var(--border-color);
             background-color: var(--button-bg);
@@ -597,6 +608,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background-color 0.1s, transform 0.1s;
+        }
+        .control-btn:active {
+            transform: scale(0.95);
+            background-color: var(--button-hover-bg);
+        }
+        
+        /* Скрываем кнопки управления по умолчанию, показываем JS-ом */
+        #left-btn, #right-btn {
+            display: none;
         }
 
         /* Reward Menu - General */
@@ -1552,17 +1573,20 @@
         </div>
     </div>
     
+    <!-- Измененная структура для надежного центрирования -->
     <div id="bottom-toolbar">
-        <button id="left-btn" class="control-btn">
-            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
-        </button>
-        <button id="play-pause-btn" data-translate-title="play-title">
-            <svg id="play-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
-            <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
-        </button>
-         <button id="right-btn" class="control-btn">
-            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
-        </button>
+        <div class="bottom-controls-group">
+            <button id="left-btn" class="control-btn">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+            </button>
+            <button id="play-pause-btn" class="control-btn" data-translate-title="play-title">
+                <svg id="play-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
+                <svg id="pause-icon" style="display: none;" viewBox="0 0 24 24"><path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+            </button>
+             <button id="right-btn" class="control-btn">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+            </button>
+        </div>
     </div>
     
     <!-- Панель свойств объекта -->

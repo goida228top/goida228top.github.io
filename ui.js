@@ -1,6 +1,8 @@
 
 
 
+
+
 import * as Dom from './dom.js';
 import { SoundManager } from './sound.js';
 import { t } from './lang.js';
@@ -21,6 +23,8 @@ export { keyState, showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpr
 
 let playtimeInterval = null;
 let currentPlaytime = 0;
+// Интервал для проверки видимости кнопок управления
+let controlVisibilityInterval = null; 
 
 const aboutState = { isOpen: false };
 const rewardState = { isOpen: false };
@@ -59,6 +63,27 @@ function clearWorldCompletely(world) {
     deselectSpring();
 }
 
+function updateMotorControlsVisibility(world) {
+    let hasMotor = false;
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData();
+        if (userData && userData.motor && userData.motor.isEnabled) {
+            hasMotor = true;
+            break;
+        }
+    }
+    
+    const display = hasMotor ? 'flex' : 'none';
+    
+    // Применяем стиль только если он изменился, чтобы избежать лишних перерисовок
+    if (Dom.leftButton.style.display !== display) {
+        Dom.leftButton.style.display = display;
+    }
+    if (Dom.rightButton.style.display !== display) {
+        Dom.rightButton.style.display = display;
+    }
+}
+
 export function initializeUI(engineData, cameraData, worldData) {
     const { world, runner } = engineData;
     
@@ -77,6 +102,14 @@ export function initializeUI(engineData, cameraData, worldData) {
             currentPlaytime += 1; // Увеличиваем каждую секунду, когда игра не на паузе
         }
     }, 1000);
+
+    // Запускаем проверку видимости кнопок управления
+    if (controlVisibilityInterval) clearInterval(controlVisibilityInterval);
+    controlVisibilityInterval = setInterval(() => {
+        if (isGameStarted) {
+            updateMotorControlsVisibility(world);
+        }
+    }, 500);
 
     // --- Yandex Games Moderation Fix: Prevent context menu on all UI panels ---
     const protectedPanels = [
