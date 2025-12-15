@@ -1,4 +1,6 @@
 
+
+
 import * as Dom from './dom.js';
 import { t } from './lang.js';
 
@@ -12,7 +14,8 @@ export const keyState = {
 export let playerData = {
     coins: 0,
     rewardProgress: {},
-    unlockedSlots: [false, false, false, false, false]
+    unlockedSlots: [false, false, false, false, false],
+    unlockedTools: [] // NEW: List of purchased tools
 };
 
 // Флаг, отслеживающий, началась ли игра (пройдено ли главное меню)

@@ -1,4 +1,8 @@
 
+
+
+
+
 // Этот файл содержит все глобальные настройки игры и константы.
 
 // --- Глобальные физические настройки ---
@@ -33,6 +37,17 @@ export const CAMERA_INITIAL_SCALE = isMobile ? 1.43 : 1.0;
 // Начальное смещение Y для камеры:
 // 20 метров * 50 = 1000px для всех устройств
 export const CAMERA_PAN_START_OFFSET_Y = 1000;
+
+// --- Цены на инструменты (Если инструмента нет в списке - он бесплатный) ---
+export const TOOL_PRICES = {
+    'tnt-medium': 50,
+    'tnt-large': 100,
+    'water': 25,
+    'sand': 25,
+    'spring': 25,
+    'polygon': 25,
+    'ragdoll': 150 // NEW: Цена куклы
+};
 
 // --- Настройки инструментов ---
 export const TOOL_SETTINGS = {

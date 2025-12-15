@@ -1,4 +1,9 @@
 
+
+
+
+
+
 import planck from './planck.js';
 import { SoundManager } from './sound.js';
 import { tntTypes } from './tnt_textures.js';
@@ -7,6 +12,7 @@ import { TOOL_SETTINGS, PHYSICS_SCALE } from './game_config.js';
 import { addExplosionEffect } from './effects.js';
 import { showToast } from './ui_common.js';
 import { t } from './lang.js';
+import { TutorialHooks } from './tutorial.js'; // NEW: Import hooks
 
 export function createBox(world, start, end) {
     const minX = Math.min(start.x, end.x);
@@ -30,6 +36,7 @@ export function createBox(world, start, end) {
         restitution: 0.1,
         density: 1.0,
     });
+    TutorialHooks.onObjectCreated(); // NEW
 }
 
 export function createCircle(world, center, edge) {
@@ -57,6 +64,7 @@ export function createCircle(world, center, edge) {
             speed: 150.0 // Повышенная начальная скорость для драйва
         }
     });
+    TutorialHooks.onObjectCreated(); // NEW
 }
 
 export function createBrushStroke(world, p1, p2, thickness) {
@@ -73,7 +81,7 @@ export function createBrushStroke(world, p1, p2, thickness) {
         angle: angle,
         userData: {
             label: 'brush-stroke',
-            render: { fillStyle: '#4a2a0a' }
+            render: { fillStyle: '#808080' } // CHANGED: Gray color for concrete/ground look
         }
      });
 
@@ -125,6 +133,152 @@ export function createRod(world, bodyA, bodyB, anchorA, anchorB) {
     });
     joint.setUserData({ tool: 'rod' });
     world.createJoint(joint);
+}
+
+// --- RAGDOLL LOGIC ---
+export function createRagdoll(world, pos) {
+    SoundManager.playSound('create_object', { volume: 0.8, pitch: 0.9 });
+
+    // Размеры (в метрах)
+    const headSize = 0.45; 
+    const torsoW = 0.5, torsoH = 0.9;
+    const armW = 0.2, armH = 0.8;
+    const legW = 0.22, legH = 0.9;
+
+    // Цвета (серые оттенки)
+    const colorHead = '#D3D3D3';
+    const colorBody = '#A9A9A9';
+    const colorLimbs = '#808080';
+
+    // Уникальная группа, чтобы части куклы не сталкивались друг с другом
+    const groupIndex = -1 * (Math.floor(Math.random() * 10000) + 1);
+
+    // --- SHARED STATE (Мозги куклы) ---
+    // Сюда мы сохраним ссылки на суставы, чтобы отключать их при смерти
+    const ragdollState = {
+        hp: 100,
+        isDead: false,
+        stunTimer: 0, 
+        maxHp: 100,
+        joints: [] // Список суставов
+    };
+
+    const commonFixtureDef = {
+        density: 0.6, // УВЕЛИЧЕНО (было 0.2). Теперь он тяжелее и бьется сильнее.
+        friction: 0.8,
+        restitution: 0.1, 
+        filterGroupIndex: groupIndex
+    };
+
+    // 1. TORSO (Тело) - Главный контроллер
+    const torso = world.createDynamicBody({
+        position: pos,
+        angularDamping: 2.0 
+    });
+    torso.createFixture(planck.Box(torsoW / 2, torsoH / 2), commonFixtureDef);
+    torso.setUserData({ 
+        label: 'ragdoll-torso',
+        render: { fillStyle: colorBody },
+        ragdollState: ragdollState 
+    });
+
+    // 2. HEAD (Голова)
+    const headPos = planck.Vec2(pos.x, pos.y - (torsoH / 2 + headSize / 2 + 0.02));
+    const head = world.createDynamicBody({ position: headPos });
+    // Голова легче тела, но добавляем label для критов
+    head.createFixture(planck.Box(headSize / 2, headSize / 2), { ...commonFixtureDef, density: 0.3 });
+    head.setUserData({ 
+        label: 'ragdoll-head', // ВАЖНО: Метка для критического урона
+        render: { fillStyle: colorHead }, 
+        ragdollState: ragdollState 
+    });
+
+    // Neck Joint (Шея)
+    const neck = world.createJoint(planck.RevoluteJoint({
+        bodyA: torso,
+        bodyB: head,
+        localAnchorA: planck.Vec2(0, -torsoH / 2),
+        localAnchorB: planck.Vec2(0, headSize / 2),
+        enableLimit: true,
+        lowerAngle: -0.3, 
+        upperAngle: 0.3,
+        enableMotor: true,
+        maxMotorTorque: 2.0, 
+        motorSpeed: 0 
+    }));
+    ragdollState.joints.push(neck);
+
+    // 3. LEFT ARM (Левая рука)
+    const lArmPos = planck.Vec2(pos.x - (torsoW / 2 + armW / 2 + 0.05), pos.y - torsoH / 2 + 0.15);
+    const lArm = world.createDynamicBody({ position: lArmPos });
+    lArm.createFixture(planck.Box(armW / 2, armH / 2), commonFixtureDef);
+    lArm.setUserData({ render: { fillStyle: colorLimbs }, ragdollState: ragdollState });
+
+    // L Shoulder Joint
+    const lShoulder = world.createJoint(planck.RevoluteJoint({
+        bodyA: torso,
+        bodyB: lArm,
+        localAnchorA: planck.Vec2(-torsoW / 2, -torsoH / 2 + 0.15),
+        localAnchorB: planck.Vec2(0, -armH / 2 + 0.1),
+        enableLimit: true,
+        lowerAngle: -0.2, 
+        upperAngle: 3.0
+    }));
+    ragdollState.joints.push(lShoulder);
+
+    // 4. RIGHT ARM (Правая рука)
+    const rArmPos = planck.Vec2(pos.x + (torsoW / 2 + armW / 2 + 0.05), pos.y - torsoH / 2 + 0.15);
+    const rArm = world.createDynamicBody({ position: rArmPos });
+    rArm.createFixture(planck.Box(armW / 2, armH / 2), commonFixtureDef);
+    rArm.setUserData({ render: { fillStyle: colorLimbs }, ragdollState: ragdollState });
+
+    // R Shoulder Joint
+    const rShoulder = world.createJoint(planck.RevoluteJoint({
+        bodyA: torso,
+        bodyB: rArm,
+        localAnchorA: planck.Vec2(torsoW / 2, -torsoH / 2 + 0.15),
+        localAnchorB: planck.Vec2(0, -armH / 2 + 0.1),
+        enableLimit: true,
+        lowerAngle: -3.0, 
+        upperAngle: 0.2
+    }));
+    ragdollState.joints.push(rShoulder);
+
+    // 5. LEFT LEG (Левая нога)
+    const lLegPos = planck.Vec2(pos.x - 0.15, pos.y + torsoH / 2 + legH / 2 + 0.02);
+    const lLeg = world.createDynamicBody({ position: lLegPos });
+    lLeg.createFixture(planck.Box(legW / 2, legH / 2), commonFixtureDef);
+    lLeg.setUserData({ render: { fillStyle: colorLimbs }, ragdollState: ragdollState });
+
+    // L Hip Joint
+    const lHip = world.createJoint(planck.RevoluteJoint({
+        bodyA: torso,
+        bodyB: lLeg,
+        localAnchorA: planck.Vec2(-0.15, torsoH / 2),
+        localAnchorB: planck.Vec2(0, -legH / 2),
+        enableLimit: true,
+        lowerAngle: -0.1, 
+        upperAngle: 1.0 
+    }));
+    ragdollState.joints.push(lHip);
+
+    // 6. RIGHT LEG (Правая нога)
+    const rLegPos = planck.Vec2(pos.x + 0.15, pos.y + torsoH / 2 + legH / 2 + 0.02);
+    const rLeg = world.createDynamicBody({ position: rLegPos });
+    rLeg.createFixture(planck.Box(legW / 2, legH / 2), commonFixtureDef);
+    rLeg.setUserData({ render: { fillStyle: colorLimbs }, ragdollState: ragdollState });
+
+    // R Hip Joint
+    const rHip = world.createJoint(planck.RevoluteJoint({
+        bodyA: torso,
+        bodyB: rLeg,
+        localAnchorA: planck.Vec2(0.15, torsoH / 2),
+        localAnchorB: planck.Vec2(0, -legH / 2),
+        enableLimit: true,
+        lowerAngle: -1.0,
+        upperAngle: 0.1
+    }));
+    ragdollState.joints.push(rHip);
 }
 
 
@@ -264,6 +418,24 @@ createExplosion = function(world, center, radius, power, type) {
         const impulse = direction.mul(impulseMagnitude);
         body.applyLinearImpulse(impulse, bodyPos, true);
         body.setAwake(true);
+        
+        // --- НОВЫЙ БЛОК: Урон куклам от взрыва ---
+        if (userData.ragdollState && !userData.ragdollState.isDead) {
+             const damage = impulseMagnitude * 30; // Урон от взрыва зависит от силы
+             userData.ragdollState.hp -= damage;
+             userData.ragdollState.stunTimer = 5.0; // Гарантированный стан
+
+             if (userData.ragdollState.hp <= 0) {
+                 userData.ragdollState.isDead = true;
+                 if (userData.ragdollState.joints) {
+                    userData.ragdollState.joints.forEach(j => {
+                        if (j.m_enableLimit !== undefined) j.enableLimit(false);
+                        if (j.m_enableMotor !== undefined) j.enableMotor(false);
+                    });
+                 }
+             }
+        }
+        // ----------------------------------------
 
         return true;
     });
@@ -404,4 +576,5 @@ export function createPolygon(world, vertices) {
         console.error("Error creating fixtures from triangles:", e);
         world.destroyBody(body);
     }
+    TutorialHooks.onObjectCreated(); // NEW
 }

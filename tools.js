@@ -1,4 +1,6 @@
 
+
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -13,7 +15,7 @@ import { spawnSandParticle } from './sand.js';
 import { hideObjectPropertiesPanel, hideSpringPropertiesPanel, showObjectPropertiesPanel, showSpringPropertiesPanel } from './ui.js';
 import { 
     createBox, createCircle, createBrushStroke, createWeld, createSpring, createRod, 
-    createTNT, eraseAt, createPolygon, detonateTNT
+    createTNT, eraseAt, createPolygon, detonateTNT, createRagdoll
 } from './tool_actions.js';
 import { 
     PHYSICS_SCALE,
@@ -24,6 +26,7 @@ import {
     SAND_PHYSICAL_RADIUS_FACTOR,
 } from './game_config.js';
 import { SoundManager } from './sound.js';
+import { TutorialHooks } from './tutorial.js'; // NEW: Import hooks
 
 let mouseJoint = null;
 let ground = null;
@@ -74,6 +77,8 @@ export function switchTool(tool) {
     hideObjectPropertiesPanel();
     stopAllActions(); // Сбрасываем текущие действия при смене инструмента
     requestRender(); // Обновляем интерфейс (например, убираем превью)
+    
+    TutorialHooks.onToolSelected(tool); // NEW: Notify tutorial
 }
 
 export async function initializeTools(engineData, cameraData, worldData) {
@@ -177,6 +182,10 @@ export async function initializeTools(engineData, cameraData, worldData) {
             case 'tnt-large':
                 const tntType = toolState.currentTool.replace('tnt-', '');
                 createTNT(world, startPoint, tntType);
+                requestRender();
+                break;
+            case 'ragdoll': // NEW
+                createRagdoll(world, startPoint);
                 requestRender();
                 break;
             case 'water':

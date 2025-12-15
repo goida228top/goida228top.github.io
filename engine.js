@@ -1,5 +1,7 @@
 
 
+
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { PHYSICS_SCALE } from './game_config.js';
@@ -25,6 +27,57 @@ let forceRenderNextFrame = false; // Флаг принудительной от�
 let fpsFrameCount = 0;
 let fpsLastTime = 0;
 
+// ИИ для Кукол (Ragdoll AI)
+function updateRagdolls(world, dt) {
+    if (isPaused) return;
+
+    for (let body = world.getBodyList(); body; body = body.getNext()) {
+        const userData = body.getUserData();
+        
+        // Ищем только ТОРС (центр управления)
+        if (userData?.label === 'ragdoll-torso' && userData.ragdollState) {
+            const state = userData.ragdollState;
+
+            // Если мертв, ничего не делаем (просто тряпка)
+            if (state.isDead) continue;
+
+            // Если в нокауте (оглушен), просто уменьшаем таймер
+            if (state.stunTimer > 0) {
+                state.stunTimer -= dt;
+                continue; // Лежим и отдыхаем
+            }
+
+            // --- ЛОГИКА БАЛАНСИРОВКИ (Active Ragdoll) ---
+            const angle = body.getAngle(); // Текущий наклон
+            const angularVelocity = body.getAngularVelocity();
+            
+            // Коэффициенты силы (PID-контроллер)
+            // Еще немного ослабили, чтобы он не был терминатором
+            const kP = 40;  
+            const kD = 10;  
+            
+            let torque = 0;
+            
+            if (Math.abs(angle) > 1.0) { 
+                // Режим "Встать"
+                torque = -angle * 20 * body.getMass(); 
+            } else {
+                // Режим "Баланс" (удержание вертикали)
+                torque = (-angle * kP) - (angularVelocity * kD);
+                torque *= body.getMass();
+            }
+            
+            const maxTorque = 150 * body.getMass();
+            torque = Math.max(-maxTorque, Math.min(maxTorque, torque));
+
+            body.applyTorque(torque);
+            
+            // Всегда будим тело, чтобы физика работала
+            body.setAwake(true);
+        }
+    }
+}
+
 // Новая функция для применения сил стабилизации (Wheelie Bar)
 function applyStabilizerForces(world) {
     if (isPaused) return;
@@ -42,24 +95,11 @@ function applyStabilizerForces(world) {
             const limitRad = limitDeg * (Math.PI / 180);
             
             // 2. Check if angle exceeds limit (relative to flat horizon 0)
-            // Positive angle = Tipping Right/Back (CW)
-            // Negative angle = Tipping Left/Front (CCW)
-            
             if (Math.abs(angle) > limitRad) {
-                // How far past the limit?
                 const excess = Math.abs(angle) - limitRad;
-                
-                // Direction to push back: if angle > 0, we need negative torque.
                 const correctionDir = angle > 0 ? -1 : 1;
-                
-                // PD Controller (Tuned for Wheelie)
-                // P (Proportional): Усилен до 1000 для жесткого удержания
                 const Kp = body.getMass() * 1000 * excess; 
-                
-                // D (Derivative): Dampen angular velocity to prevent oscillation
                 const Kd = body.getMass() * 40 * body.getAngularVelocity();
-                
-                // Total Torque
                 const torque = (correctionDir * Kp) - Kd;
                 
                 body.applyTorque(torque);
@@ -82,41 +122,21 @@ function applyMotorForces(world) {
 
     for (let body = world.getBodyList(); body; body = body.getNext()) {
         const userData = body.getUserData();
-        // Проверяем, включен ли мотор на этом объекте
         if (userData?.motor?.isEnabled) {
             const maxSpeed = userData.motor.speed !== undefined ? userData.motor.speed : 150.0;
-            // Получаем настроенную мощность (ускорение) или используем дефолт
             const power = userData.motor.power !== undefined ? userData.motor.power : 50.0;
             
-            // Гарантированно будим тело
             body.setAwake(true);
 
             if (moveDirection !== 0) {
-                // 1. ВРАЩЕНИЕ (Визуал + физическое сцепление)
-                // Задаем угловую скорость напрямую для стабильности
                 body.setAngularVelocity(moveDirection * maxSpeed);
-
-                // 2. ТЯГА (Аркадный импульс)
-                // Используем настройку Power для расчета силы рывка
-                // Значительно уменьшили делитель (с 20.0 до 80.0), чтобы не было "подлета" при старте
                 const thrustFactor = power / 80.0; 
                 const thrustForce = body.getMass() * thrustFactor; 
-                
-                // Прикладываем импульс к центру колеса
                 body.applyLinearImpulse(planck.Vec2(moveDirection * thrustForce, 0), body.getWorldCenter(), true);
-
-                // Убираем сопротивление воздуха при разгоне
                 body.setLinearDamping(0);
-                // Убираем сопротивление вращению при разгоне
                 body.setAngularDamping(0); 
             } else {
-                // 3. ТОРМОЗ (Мягкий)
-                
-                // Убрали setAngularVelocity(0), так как это вызывало резкий "клев" носом (stoppie).
-                // Вместо этого используем сильное угловое затухание.
                 body.setAngularDamping(5.0); 
-                
-                // Сильно снижаем линейное торможение, чтобы байк катился, а не вставал колом
                 body.setLinearDamping(0.05);
             }
         }
@@ -133,7 +153,6 @@ function manageBodyStates(world, cameraData) {
     );
 
     for (let body = world.getBodyList(); body; body = body.getNext()) {
-        // Не отключаем воду и песок через awake, они управляются отдельно
         const userData = body.getUserData() || {};
         if (!body.isDynamic() || userData.label === 'water' || userData.label === 'sand') {
             continue;
@@ -171,26 +190,65 @@ export function initializeEngine() {
     world.on('post-solve', (contact, impulse) => {
         const totalImpulse = impulse.normalImpulses[0] + (impulse.normalImpulses[1] || 0);
 
-        // 1. Проверка импульса (сила * время)
-        // Фильтруем совсем слабые касания
-        if (totalImpulse < 2.0) return;
+        // --- ИЗМЕНЕНИЕ: Снижен порог срабатывания звука и урона ---
+        // Теперь даже слабые удары считаются (было 2.0)
+        if (totalImpulse < 1.0) return;
 
         const bodyA = contact.getFixtureA().getBody();
         const bodyB = contact.getFixtureB().getBody();
         
-        // 2. НОВАЯ ПРОВЕРКА: Относительная скорость столкновения
-        // Импульс может быть большим, если тяжелый объект просто лежит на другом.
-        // Скорость же покажет, был ли это удар.
         const vA = bodyA.getLinearVelocity();
         const vB = bodyB.getLinearVelocity();
         const relVel = planck.Vec2.sub(vA, vB);
         const impactSpeed = relVel.length();
 
-        // Если скорость удара меньше 0.5 м/с, считаем это "качением" или "давлением", а не ударом
         if (impactSpeed < 0.5) return;
 
         const userDataA = bodyA.getUserData() || {};
         const userDataB = bodyB.getUserData() || {};
+        
+        // --- ОБРАБОТКА УРОНА RAGDOLL (от ударов) ---
+        const checkRagdollDamage = (userData) => {
+            if (userData.ragdollState && !userData.ragdollState.isDead) {
+                // Базовый множитель урона увеличен (было 5 -> 8)
+                let damageMultiplier = 8;
+                
+                // --- КРИТИЧЕСКИЙ УРОН В ГОЛОВУ ---
+                if (userData.label === 'ragdoll-head') {
+                    damageMultiplier = 40; // Удар головой почти всегда смертелен при падении
+                }
+
+                const damage = totalImpulse * damageMultiplier;
+                
+                // Порог срабатывания снижен (было 5.0 -> 1.0)
+                // Теперь любой ощутимый толчок наносит урон
+                if (totalImpulse > 1.0) {
+                    userData.ragdollState.hp -= damage;
+                    
+                    // --- МЕХАНИКА ОГЛУШЕНИЯ ---
+                    // При ударе кукла "вырубается" и лежит.
+                    const stunTime = Math.min(6.0, 1.0 + (totalImpulse / 5));
+                    
+                    if (stunTime > userData.ragdollState.stunTimer) {
+                        userData.ragdollState.stunTimer = stunTime;
+                    }
+
+                    if (userData.ragdollState.hp <= 0) {
+                        userData.ragdollState.isDead = true;
+                        // Отключаем мышцы
+                        if (userData.ragdollState.joints) {
+                            userData.ragdollState.joints.forEach(joint => {
+                                if (joint.m_enableLimit !== undefined) joint.enableLimit(false);
+                                if (joint.m_enableMotor !== undefined) joint.enableMotor(false);
+                            });
+                        }
+                    }
+                }
+            }
+        };
+
+        checkRagdollDamage(userDataA);
+        checkRagdollDamage(userDataB);
         
         if (userDataA.label === 'water' || userDataA.label === 'sand' || userDataB.label === 'water' || userDataB.label === 'sand') {
             return;
@@ -207,10 +265,9 @@ export function initializeEngine() {
         bodyA.setUserData(userDataA);
         bodyB.setUserData(userDataB);
         
-        // Громкость зависит и от импульса, и от скорости
         const volume = Math.min(1.0, (totalImpulse * impactSpeed) / 50.0);
         
-        if (volume < 0.05) return; // Слишком тихо
+        if (volume < 0.05) return; 
 
         const soundName = totalImpulse > 15.0 ? 'collision_heavy' : 'collision_light';
         
@@ -250,20 +307,15 @@ export function initializeEngine() {
         lastTime = time;
         frameCounter++;
 
-        // --- Честный FPS (Real FPS) ---
-        fpsFrameCount++;
-        if (time - fpsLastTime >= 500) { // Обновляем текст каждые 500мс
+        if (time - fpsLastTime >= 500) { 
             const fps = Math.round((fpsFrameCount * 1000) / (time - fpsLastTime));
             if (Dom.fpsIndicator) {
-                // Использование локализованной строки
                 Dom.fpsIndicator.textContent = t('debug-fps', { value: fps });
             }
             fpsFrameCount = 0;
             fpsLastTime = time;
         }
 
-        // --- Смарт-Рендеринг: Проверка на необходимость отрисовки ---
-        // Если пауза + камера не двигалась + нет ввода = пропускаем кадр
         let cameraMoved = false;
         if (cameraData) {
              if (
@@ -279,26 +331,15 @@ export function initializeEngine() {
         
         const userInteracting = isInteractionActive() || (cameraData && cameraData.isPanning());
         
-        // ПРОВЕРКА НА ЭФФЕКТЫ: Мы не знаем точно, есть ли активные эффекты, но если игра активна, мы должны рендерить.
-        // Если игра на паузе, эффекты замерли, но рендерить их надо (это обрабатывается ниже через forceRenderNextFrame или cameraMoved).
-        
-        // Если игра на паузе, камера стоит и игрок ничего не делает -> полностью пропускаем отрисовку
-        // НО: Если установлен флаг forceRenderNextFrame, мы рисуем кадр
         if (isPaused && !cameraMoved && !userInteracting && !forceRenderNextFrame) {
-            // Даже если мы пропускаем рендер, нужно обновлять время, чтобы при снятии с паузы не было скачка
             accumulator = 0; 
             return;
         }
 
-        // --- Троттлинг ---
-        // Запускаем тяжелую проверку видимости (Culling) только раз в 10 кадров
-        // или если камера сдвинулась.
         if (cameraData && (cameraMoved || frameCounter % 10 === 0)) {
             manageBodyStates(world, cameraData);
         }
 
-        // ОПТИМИЗАЦИЯ: Проверяем наличие активных частиц, чтобы не перебирать их зря
-        // Просто проверка пула дешевая, но рисование пустого слоя - нет.
         let hasActiveWater = false;
         for (let i = 0; i < waterParticlesPool.length; i++) {
             if (waterParticlesPool[i].isActive()) {
@@ -323,20 +364,19 @@ export function initializeEngine() {
             }
 
             while (accumulator >= timeStep) {
-                // Обновляем физику воды
                 if (hasActiveWater) {
                     updateWaterPhysics();
                 }
-                applyMotorForces(world); // Применяем физику моторов
-                applyStabilizerForces(world); // Применяем стабилизацию (NEW)
+                applyMotorForces(world); 
+                applyStabilizerForces(world); 
+                updateRagdolls(world, timeStep); 
                 world.step(timeStep, velocityIterations, positionIterations);
-                updateEffects(timeStep); // NEW: Обновляем визуальные эффекты только если игра идет
+                updateEffects(timeStep); 
                 accumulator -= timeStep;
             }
         }
         
         if (cameraData) {
-            // ОПТИМИЗАЦИЯ ФОНА: Перерисовываем только если камера изменилась
             if (cameraMoved || forceRenderNextFrame) {
                 beforeRenderCallback(cameraData);
                 lastCameraState.x = cameraData.viewOffset.x;
@@ -348,7 +388,6 @@ export function initializeEngine() {
 
             renderWorld(world, render, cameraData);
             
-            // ОПТИМИЗАЦИЯ ВОДЫ: Скрываем слой, если нет частиц
             if (hasActiveWater) {
                 if (Dom.waterEffectContainer.style.display === 'none') {
                     Dom.waterEffectContainer.style.display = 'block';
@@ -361,7 +400,6 @@ export function initializeEngine() {
                 }
             }
 
-            // ОПТИМИЗАЦИЯ ПЕСКА: Скрываем слой, если нет частиц
             if (hasActiveSand) {
                 if (Dom.sandEffectContainer.style.display === 'none') {
                     Dom.sandEffectContainer.style.display = 'block';
@@ -375,7 +413,6 @@ export function initializeEngine() {
             }
         }
 
-        // Сбрасываем флаг принудительной отрисовки после того, как кадр нарисован
         forceRenderNextFrame = false;
     }
     
@@ -395,6 +432,6 @@ export function initializeEngine() {
         setBeforeRenderCallback: (cb) => { beforeRenderCallback = cb; },
         setVelocityIterations: (value) => { velocityIterations = value; },
         setPositionIterations: (value) => { positionIterations = value; },
-        requestRender: () => { forceRenderNextFrame = true; } // Метод для вызова перерисовки извне
+        requestRender: () => { forceRenderNextFrame = true; } 
     };
 }

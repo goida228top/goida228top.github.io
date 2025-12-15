@@ -2,6 +2,7 @@
 import * as Dom from './dom.js';
 import { getSelectedBody, getSelectedSpring, deselectBody, deselectSpring, deleteSelectedBody, deleteSelectedSpring } from './selection.js';
 import { addTapListener } from './ui_common.js';
+import { TutorialHooks } from './tutorial.js'; // NEW
 
 export const panelState = {
     isPropertiesOpen: false,
@@ -140,6 +141,7 @@ export function showObjectPropertiesPanel(body, x, y) {
     // Используем новую функцию безопасного позиционирования
     clampPanelPosition(Dom.objectPropertiesPanel, x, y);
     panelState.isPropertiesOpen = true;
+    TutorialHooks.onPropertiesOpened(); // NEW
 }
 
 export function hideObjectPropertiesPanel() {
@@ -180,6 +182,7 @@ export function initializeObjectPropertiesPanel(world) {
     // Кнопка закрытия
     addTapListener(document.getElementById('object-properties-close-btn'), () => {
         hideObjectPropertiesPanel();
+        TutorialHooks.onPanelClosed(); // NEW
     });
 
     Dom.objColorInput.addEventListener('input', (e) => {
@@ -305,6 +308,8 @@ export function initializeObjectPropertiesPanel(world) {
             // Пересчитываем позицию меню, так как размер изменился
             const rect = Dom.objectPropertiesPanel.getBoundingClientRect();
             clampPanelPosition(Dom.objectPropertiesPanel, rect.left, rect.top);
+            
+            if (isEnabled) TutorialHooks.onMotorEnabled(); // NEW
         }
     });
 

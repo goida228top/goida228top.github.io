@@ -1,4 +1,6 @@
 
+
+
 // Этот файл централизует все обращения к DOM дереву.
 
 export const container = document.getElementById('simulation-container');
@@ -25,16 +27,16 @@ export const aboutPanelCloseBtn = document.getElementById('about-panel-close-btn
 // Эффекты
 export const waterEffectContainer = document.getElementById('water-effect-container');
 export const waterCanvas = document.getElementById('water-canvas');
-export const waterContext = waterCanvas.getContext('2d');
+export const waterContext = waterCanvas ? waterCanvas.getContext('2d') : null;
 
 export const sandEffectContainer = document.getElementById('sand-effect-container'); // Новый контейнер для песка
 export const sandCanvas = document.getElementById('sand-canvas'); // Новый канвас для песка
-export const sandContext = sandCanvas.getContext('2d'); // Новый контекст для песка
+export const sandContext = sandCanvas ? sandCanvas.getContext('2d') : null; // Новый контекст для песка
 
 
 // Фон
 export const backgroundCanvas = document.getElementById('background-canvas');
-export const backgroundContext = backgroundCanvas.getContext('2d');
+export const backgroundContext = backgroundCanvas ? backgroundCanvas.getContext('2d') : null;
 
 // Кнопки верхней панели
 export const moveButton = document.getElementById('move-btn');
@@ -46,6 +48,7 @@ export const brushButton = document.getElementById('brush-btn');
 export const weldButton = document.getElementById('weld-btn');
 export const springButton = document.getElementById('spring-btn'); // NEW
 export const rodButton = document.getElementById('rod-btn'); // NEW: Стержень
+export const ragdollButton = document.getElementById('ragdoll-btn'); // NEW: Ragdoll
 export const tntSmallButton = document.getElementById('tnt-small-btn');
 export const tntMediumButton = document.getElementById('tnt-medium-btn');
 export const tntLargeButton = document.getElementById('tnt-large-btn');
@@ -70,7 +73,7 @@ export const saveLoadCloseBtn = document.getElementById('save-load-close-btn');
 export const saveLoadTitle = document.getElementById('save-load-title');
 export const saveSlotsContainer = document.getElementById('save-slots-container');
 
-export const toolButtons = [moveButton, fingerButton, boxButton, circleButton, polygonButton, brushButton, weldButton, springButton, rodButton, tntSmallButton, tntMediumButton, tntLargeButton, waterButton, sandButton, eraserButton];
+export const toolButtons = [moveButton, fingerButton, boxButton, circleButton, polygonButton, brushButton, weldButton, springButton, rodButton, ragdollButton, tntSmallButton, tntMediumButton, tntLargeButton, waterButton, sandButton, eraserButton];
 
 // Кнопки нижней панели
 export const leftButton = document.getElementById('left-btn'); // NEW

@@ -3,13 +3,17 @@
 
 
 
+
+
+
 import * as Dom from './dom.js';
 import { SoundManager } from './sound.js';
 import { t } from './lang.js';
-import { showFullscreenAdv } from './yandex.js';
+import { showFullscreenAdv, savePlayer_Data } from './yandex.js';
 import { deleteAllWater, waterParticlesPool } from './water.js';
 import { deleteAllSand } from './sand.js';
 import { deselectBody, deselectSpring } from './selection.js';
+import { TOOL_PRICES } from './game_config.js'; // Import prices
 
 // Импорт новых модулей
 import { keyState, playerData, isGameStarted, setGameStarted, addTapListener, showToast, showConfirm, togglePanel, setPlayerData } from './ui_common.js';
@@ -17,6 +21,7 @@ import { updateCoinsDisplay, updateRewardButtonUI } from './ui_rewards.js';
 import { openSaveLoadPanel, closeSaveLoadPanel, saveLoadState } from './ui_saveload.js';
 import { initializeNewSettingsPanel, settingsState } from './ui_settings.js';
 import { showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel, initializeObjectPropertiesPanel, initializeSpringPropertiesPanel, panelState as propsState } from './ui_properties.js';
+import { checkTutorial } from './tutorial.js'; // NEW: Import Tutorial
 
 // Экспорт keyState для engine.js
 export { keyState, showObjectPropertiesPanel, hideObjectPropertiesPanel, showSpringPropertiesPanel, hideSpringPropertiesPanel, showToast };
@@ -36,8 +41,35 @@ export function initUIData(data) {
         if (!playerData.unlockedSlots) {
             playerData.unlockedSlots = [false, false, false, false, false];
         }
+        // Ensure unlockedTools exists (NEW)
+        if (!playerData.unlockedTools) {
+            playerData.unlockedTools = [];
+        }
         updateCoinsDisplay();
+        updateLockedToolsUI(); // Update UI locks on init
     }
+}
+
+// Function to update visual lock state of buttons
+function updateLockedToolsUI() {
+    Dom.toolButtons.forEach(button => {
+        const toolName = button.id.replace('-btn', '');
+        const price = TOOL_PRICES[toolName];
+        
+        // Remove existing lock if any
+        const existingLock = button.querySelector('.lock-overlay');
+        if (existingLock) {
+            button.removeChild(existingLock);
+        }
+
+        if (price && !playerData.unlockedTools.includes(toolName)) {
+            // Add lock overlay
+            const lock = document.createElement('div');
+            lock.className = 'lock-overlay';
+            lock.innerHTML = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z" /></svg>';
+            button.appendChild(lock);
+        }
+    });
 }
 
 // Безопасная очистка мира, которая не убивает пул воды/песка
@@ -166,12 +198,44 @@ export function initializeUI(engineData, cameraData, worldData) {
         closeSaveLoadPanel();
     });
 
+    // --- Tool Button Logic with Unlocking ---
     Dom.toolButtons.forEach(button => {
         addTapListener(button, () => {
+            const toolName = button.id.replace('-btn', '');
+            const price = TOOL_PRICES[toolName];
+
+            // If tool has a price AND is NOT yet unlocked
+            if (price && !playerData.unlockedTools.includes(toolName)) {
+                SoundManager.playSound('ui_click');
+                showConfirm(
+                    t('buy-tool-title'), 
+                    t('buy-tool-desc', { price: price, tool: t(toolName + '-title') }), 
+                    () => {
+                        if (playerData.coins >= price) {
+                            playerData.coins -= price;
+                            playerData.unlockedTools.push(toolName);
+                            
+                            updateCoinsDisplay();
+                            savePlayer_Data(playerData);
+                            updateLockedToolsUI(); // Remove lock icon
+                            SoundManager.playSound('reward'); // Success sound
+                            
+                            // Switch tool after purchase
+                            import('./tools.js').then(module => {
+                                module.switchTool(toolName);
+                            });
+                        } else {
+                            showToast(t('not-enough-resonances'), 'error');
+                        }
+                    }
+                );
+                return;
+            }
+
+            // Normal behavior
             SoundManager.playSound('ui_click', { pitch: 1.1 });
-            const newTool = button.id.replace('-btn', '');
             import('./tools.js').then(module => {
-                module.switchTool(newTool);
+                module.switchTool(toolName);
             });
         });
     });
@@ -311,6 +375,8 @@ export function startGame(engineData) {
         
         setTimeout(() => {
              Dom.container.classList.remove('game-start-zoom');
+             // NEW: Check tutorial after game starts and animations finish
+             checkTutorial();
         }, 800);
 
         engineData.runner.enabled = true;
