@@ -1,6 +1,8 @@
 
 
 
+
+
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -440,6 +442,9 @@ export async function initializeTools(engineData, cameraData, worldData) {
             
             // Если что-то нашли, активируем меню
             if (body || joint) {
+                // Если это вода или песок - игнорируем long press (сразу, до вызова triggerContextMenu, для надежности)
+                // Но лучше проверить внутри triggerContextMenu, чтобы логика была в одном месте.
+                
                 isLongPressTriggered = true;
                 
                 // Останавливаем текущее действие (например, чтобы не началась рисоваться коробка или не тащился объект)
@@ -448,7 +453,8 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 // Вызываем меню свойств
                 triggerContextMenu(worldPos, touchStartScreenPos);
                 
-                // Вибрация для отклика
+                // Вибрация для отклика (только если меню реально открылось бы, но тут уже сложно проверить без вызова. 
+                // В triggerContextMenu будет проверка на воду).
                 if (navigator.vibrate) navigator.vibrate(50);
             }
         }, LONG_PRESS_DELAY);
@@ -554,6 +560,13 @@ export async function initializeTools(engineData, cameraData, worldData) {
         
         const bodyFound = getBodyAt(world, pos);
         if (bodyFound) {
+            const userData = bodyFound.getUserData() || {};
+            // --- FIX: Запрещаем открывать меню свойств для воды и песка ---
+            if (userData.label === 'water' || userData.label === 'sand') {
+                return;
+            }
+            // --------------------------------------------------------------
+            
             selectBody(bodyFound);
             showObjectPropertiesPanel(bodyFound, screenPos.x, screenPos.y);
         } else {
