@@ -1,8 +1,4 @@
 
-
-
-
-
 import planck from './planck.js';
 import * as Dom from './dom.js';
 import { 
@@ -429,7 +425,6 @@ export async function initializeTools(engineData, cameraData, worldData) {
         
         longPressTimer = setTimeout(() => {
             // Имитируем событие для получения координат мира
-            // Создаем мок-объект, совместимый с getMousePos (который ожидает touches или clientX/Y)
             const mockEvent = { 
                 touches: [{ clientX: touchStartScreenPos.x, clientY: touchStartScreenPos.y }] 
             };
@@ -442,8 +437,14 @@ export async function initializeTools(engineData, cameraData, worldData) {
             
             // Если что-то нашли, активируем меню
             if (body || joint) {
-                // Если это вода или песок - игнорируем long press (сразу, до вызова triggerContextMenu, для надежности)
-                // Но лучше проверить внутри triggerContextMenu, чтобы логика была в одном месте.
+                // --- FIX: Если под пальцем вода или песок - НЕ останавливаем действия и НЕ запускаем меню ---
+                if (body) {
+                    const userData = body.getUserData() || {};
+                    if (userData.label === 'water' || userData.label === 'sand') {
+                        return; // Просто выходим, таймер сработал впустую, литье продолжается
+                    }
+                }
+                // -----------------------------------------------------------------------------------------
                 
                 isLongPressTriggered = true;
                 
@@ -453,8 +454,6 @@ export async function initializeTools(engineData, cameraData, worldData) {
                 // Вызываем меню свойств
                 triggerContextMenu(worldPos, touchStartScreenPos);
                 
-                // Вибрация для отклика (только если меню реально открылось бы, но тут уже сложно проверить без вызова. 
-                // В triggerContextMenu будет проверка на воду).
                 if (navigator.vibrate) navigator.vibrate(50);
             }
         }, LONG_PRESS_DELAY);
@@ -561,11 +560,10 @@ export async function initializeTools(engineData, cameraData, worldData) {
         const bodyFound = getBodyAt(world, pos);
         if (bodyFound) {
             const userData = bodyFound.getUserData() || {};
-            // --- FIX: Запрещаем открывать меню свойств для воды и песка ---
+            // Дополнительная проверка на всякий случай, хотя handleTouchStart ее уже делает
             if (userData.label === 'water' || userData.label === 'sand') {
                 return;
             }
-            // --------------------------------------------------------------
             
             selectBody(bodyFound);
             showObjectPropertiesPanel(bodyFound, screenPos.x, screenPos.y);
