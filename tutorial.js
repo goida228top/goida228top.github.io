@@ -21,8 +21,10 @@ function highlightElement(elementId, customTextKey = null, customTextParams = {}
     // Скрываем стрелку по умолчанию при каждом новом шаге, если она не запрошена явно
     if(arrowWrapper) arrowWrapper.style.display = 'none';
 
-    // Скроллим элемент в поле зрения, если он спрятан (для тулбара)
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    // ВАЖНО: Используем 'auto' для мгновенного скролла. 
+    // 'smooth' асинхронен, из-за чего getBoundingClientRect() возвращает старые координаты,
+    // и подсветка "уезжает" от кнопки.
+    el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
 
     const rect = el.getBoundingClientRect();
     
@@ -37,17 +39,28 @@ function highlightElement(elementId, customTextKey = null, customTextParams = {}
     mask.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.7)';
 
     // Позиционируем текст
-    let top = rect.bottom + 20;
+    // Центрируем относительно элемента
     let left = rect.left + rect.width / 2 - 150; 
-
-    // Адаптация: если элемент внизу экрана, текст сверху
-    if (top + 150 > window.innerHeight) {
-        top = rect.top - 180;
-    }
     
-    // Границы экрана по горизонтали
+    // Ограничиваем по горизонтали
     if (left < 10) left = 10;
     if (left + 300 > window.innerWidth) left = window.innerWidth - 310;
+
+    // Решаем, где показывать текст: сверху или снизу
+    // Предпочитаем снизу, если влезает
+    let top = rect.bottom + 20;
+    const uiHeightEstimate = 150; // Примерная высота UI
+
+    // Если внизу места нет (экран кончается), ставим сверху
+    if (top + uiHeightEstimate > window.innerHeight) {
+        top = rect.top - uiHeightEstimate - 20;
+        
+        // Если и сверху места нет (элемент у самого верха), пробуем в центре экрана (fallback)
+        if (top < 0) {
+             top = window.innerHeight / 2;
+             left = window.innerWidth / 2 - 150;
+        }
+    }
 
     uiContainer.style.top = `${top}px`;
     uiContainer.style.left = `${left}px`;
@@ -63,6 +76,7 @@ function showPointerAt(elementId, direction = 'down') {
     const arrowWrapper = document.getElementById('tutorial-pointer-wrapper');
     if (!el || !arrowWrapper) return;
 
+    // Пересчитываем позицию после скролла
     const rect = el.getBoundingClientRect();
     arrowWrapper.style.display = 'block';
     
@@ -141,9 +155,14 @@ const steps = [
         id: 'scroll',
         check: () => {
             const scrollArea = document.getElementById('toolbar-scroll-area');
+            // Проверяем, есть ли скролл вообще
             return scrollArea && scrollArea.scrollWidth > scrollArea.clientWidth;
         },
         action: () => {
+             // Скроллим в начало, чтобы показать движение
+             const scrollArea = document.getElementById('toolbar-scroll-area');
+             if(scrollArea) scrollArea.scrollLeft = 0;
+             
              highlightElement('toolbar-scroll-area', 'tut-scroll-toolbar');
         }
     },
@@ -167,6 +186,7 @@ const steps = [
             const centerX = window.innerWidth / 2 - 50;
             const centerY = window.innerHeight / 2 - 50;
             
+            mask.style.display = 'block'; // Ensure mask is visible
             mask.style.top = `${centerY}px`;
             mask.style.left = `${centerX}px`;
             mask.style.width = '100px';
@@ -196,11 +216,11 @@ const steps = [
         id: 'enable_motor',
         allowSkipStep: true,
         action: () => {
-            // Ждем отрисовки попапа
+            // Ждем отрисовки попапа (небольшая задержка для анимации/рендера)
             setTimeout(() => {
                  highlightElement('obj-motor-enable', 'tut-enable-motor');
                  showPointerAt('obj-motor-enable', 'right'); // Стрелка слева, указывает вправо
-            }, 100);
+            }, 150);
         },
         nextOnAction: 'motor_enabled'
     },
@@ -342,6 +362,9 @@ function showStep() {
         skipStepBtn.style.display = 'none';
     }
     
+    // Очищаем предыдущую подсветку перед новым шагом
+    clearHighlight(); 
+    
     step.action();
 }
 
@@ -366,29 +389,29 @@ export const TutorialHooks = {
         if (!isTutorialActive) return;
         const step = steps[currentStep];
         // Если текущий шаг - выбор круга, проверяем, реально ли выбрали круг
-        if (step.id === 'select_circle') {
+        if (step && step.id === 'select_circle') {
             if (toolName === 'circle') {
                 nextStep();
             }
         }
     },
     onObjectCreated: () => {
-        if (isTutorialActive && steps[currentStep].nextOnAction === 'object_created') {
+        if (isTutorialActive && steps[currentStep] && steps[currentStep].nextOnAction === 'object_created') {
             nextStep();
         }
     },
     onPropertiesOpened: () => {
-        if (isTutorialActive && steps[currentStep].nextOnAction === 'properties_opened') {
+        if (isTutorialActive && steps[currentStep] && steps[currentStep].nextOnAction === 'properties_opened') {
             nextStep();
         }
     },
     onMotorEnabled: () => {
-        if (isTutorialActive && steps[currentStep].nextOnAction === 'motor_enabled') {
+        if (isTutorialActive && steps[currentStep] && steps[currentStep].nextOnAction === 'motor_enabled') {
             nextStep();
         }
     },
     onPanelClosed: () => {
-        if (isTutorialActive && steps[currentStep].nextOnAction === 'panel_closed') {
+        if (isTutorialActive && steps[currentStep] && steps[currentStep].nextOnAction === 'panel_closed') {
             nextStep();
         }
     }
